@@ -226,7 +226,7 @@ export class SchedulerService {
               userId: subscription.userId,
               type: 'subscription_reminder',
               title: 'Upcoming Subscription Renewal',
-              message: `Your ${subscription.name} subscription will renew in ${daysUntilBilling} day(s) for ${subscription.currency} ${subscription.amount}`,
+              message: `Your ${subscription.name} subscription will renew in ${daysUntilBilling} day(s) for ${subscription.currency} ${Number(subscription.amount)}`,
               relatedEntityType: 'subscription',
               relatedEntityId: subscription.id,
               priority: 'normal',
