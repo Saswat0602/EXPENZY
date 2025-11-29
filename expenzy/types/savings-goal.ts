@@ -37,7 +37,9 @@ export interface CreateSavingsGoalDto {
     color?: string;
 }
 
-export interface UpdateSavingsGoalDto extends Partial<CreateSavingsGoalDto> { }
+
+export type UpdateSavingsGoalDto = Partial<CreateSavingsGoalDto>;
+
 
 export interface AddContributionDto {
     amount: number;

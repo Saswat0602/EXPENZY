@@ -32,7 +32,7 @@ export interface CreateExpenseDto {
     isRecurring?: boolean;
 }
 
-export interface UpdateExpenseDto extends Partial<CreateExpenseDto> { }
+export type UpdateExpenseDto = Partial<CreateExpenseDto>;
 
 export interface ExpenseFilters {
     startDate?: string;

@@ -3,7 +3,6 @@
 import { useAuth } from '@/contexts/auth-context';
 import { useTheme } from '@/contexts/theme-context';
 import { Bell, Moon, Sun, LogOut } from 'lucide-react';
-import { cn } from '@/lib/utils/cn';
 
 export function MobileHeader() {
     const { user, logout } = useAuth();

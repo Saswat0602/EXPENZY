@@ -14,7 +14,9 @@ export interface CreateTagDto {
     icon?: string;
 }
 
-export interface UpdateTagDto extends Partial<CreateTagDto> { }
+
+export type UpdateTagDto = Partial<CreateTagDto>;
+
 
 export interface TagWithCount {
     id: string;

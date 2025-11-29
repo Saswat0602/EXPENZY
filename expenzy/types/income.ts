@@ -34,7 +34,8 @@ export interface CreateIncomeDto {
     isRecurring?: boolean;
 }
 
-export interface UpdateIncomeDto extends Partial<CreateIncomeDto> { }
+export type UpdateIncomeDto = Partial<CreateIncomeDto>;
+
 
 export interface IncomeFilters {
     startDate?: string;

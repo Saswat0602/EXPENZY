@@ -17,4 +17,4 @@ export interface CreateCategoryDto {
     type: 'expense' | 'income';
 }
 
-export interface UpdateCategoryDto extends Partial<CreateCategoryDto> { }
+export type UpdateCategoryDto = Partial<CreateCategoryDto>;

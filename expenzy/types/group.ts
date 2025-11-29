@@ -46,7 +46,9 @@ export interface CreateGroupDto {
     memberEmails?: string[];
 }
 
-export interface UpdateGroupDto extends Partial<CreateGroupDto> { }
+
+export type UpdateGroupDto = Partial<CreateGroupDto>;
+
 
 export interface AddMemberDto {
     email: string;

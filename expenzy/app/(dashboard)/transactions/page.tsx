@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useExpenses } from '@/lib/hooks/use-expenses';
 import { useIncome } from '@/lib/hooks/use-income';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
-import { Plus, TrendingUp, TrendingDown, Filter, Search } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, Search } from 'lucide-react';
 
 type TransactionType = 'all' | 'expense' | 'income';
 
@@ -69,8 +69,8 @@ export default function TransactionsPage() {
                             key={t}
                             onClick={() => setType(t)}
                             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${type === t
-                                    ? 'bg-background shadow-sm'
-                                    : 'hover:bg-background/50'
+                                ? 'bg-background shadow-sm'
+                                : 'hover:bg-background/50'
                                 }`}
                         >
                             {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -102,8 +102,8 @@ export default function TransactionsPage() {
                                 <div className="flex items-center gap-4">
                                     <div
                                         className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${isIncome
-                                                ? 'bg-success/10 text-success'
-                                                : 'bg-destructive/10 text-destructive'
+                                            ? 'bg-success/10 text-success'
+                                            : 'bg-destructive/10 text-destructive'
                                             }`}
                                     >
                                         {isIncome ? (

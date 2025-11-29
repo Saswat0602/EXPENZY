@@ -2,7 +2,7 @@
 
 import { useBudgets, useBudgetPerformance } from '@/lib/hooks/use-budget';
 import { formatCurrency, formatPercentage } from '@/lib/utils/format';
-import { Plus, Wallet, AlertCircle, CheckCircle, TrendingUp } from 'lucide-react';
+import { Plus, Wallet, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function BudgetPage() {
     const { data: budgets = [], isLoading: budgetsLoading } = useBudgets();

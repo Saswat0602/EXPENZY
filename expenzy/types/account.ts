@@ -22,7 +22,9 @@ export interface CreateAccountDto {
     isDefault?: boolean;
 }
 
-export interface UpdateAccountDto extends Partial<CreateAccountDto> { }
+
+export type UpdateAccountDto = Partial<CreateAccountDto>;
+
 
 export interface AccountSummary {
     totalBalance: number;

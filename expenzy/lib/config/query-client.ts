@@ -4,7 +4,7 @@ export const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
             staleTime: 5 * 60 * 1000, // 5 minutes
-            gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+            gcTime: 10 * 60 * 1000, // 10 minutes
             refetchOnWindowFocus: false,
             retry: 1,
             refetchOnMount: true,
@@ -43,20 +43,23 @@ export const QUERY_KEYS = {
         DETAIL: (id: string) => ['budgets', 'detail', id] as const,
         PERFORMANCE: ['budgets', 'performance'] as const,
     },
-    ANALYTICS: {
-        DASHBOARD: (period?: string) => ['analytics', 'dashboard', period] as const,
-        SPENDING_TRENDS: (period?: string) => ['analytics', 'spending-trends', period] as const,
-        CATEGORY_BREAKDOWN: (period?: string) => ['analytics', 'category-breakdown', period] as const,
-        CASH_FLOW: (period?: string) => ['analytics', 'cash-flow', period] as const,
-    },
     SAVINGS: {
         ALL: ['savings'] as const,
         LIST: ['savings', 'list'] as const,
         DETAIL: (id: string) => ['savings', 'detail', id] as const,
+        PROGRESS: ['savings', 'progress'] as const,
     },
     SUBSCRIPTIONS: {
         ALL: ['subscriptions'] as const,
         LIST: ['subscriptions', 'list'] as const,
         DETAIL: (id: string) => ['subscriptions', 'detail', id] as const,
+        SUMMARY: ['subscriptions', 'summary'] as const,
+        UPCOMING: ['subscriptions', 'upcoming'] as const,
+    },
+    ANALYTICS: {
+        DASHBOARD: (period?: string) => ['analytics', 'dashboard', period] as const,
+        SPENDING_TRENDS: (period?: string) => ['analytics', 'spending-trends', period] as const,
+        CATEGORY_BREAKDOWN: (period?: string) => ['analytics', 'category-breakdown', period] as const,
+        CASH_FLOW: (period?: string) => ['analytics', 'cash-flow', period] as const,
     },
 } as const;

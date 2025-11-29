@@ -32,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (token && userStr) {
             try {
                 const user = JSON.parse(userStr) as User;
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setState({
                     user,
                     token,
@@ -124,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const user = await apiClient.get<User>(API_ENDPOINTS.AUTH.ME);
             localStorage.setItem('user', JSON.stringify(user));
             setState((prev) => ({ ...prev, user }));
-        } catch (error) {
+        } catch {
             logout();
         }
     };

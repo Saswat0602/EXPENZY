@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/auth-context';
 import { useTheme } from '@/contexts/theme-context';
-import { User, Mail, Palette, LogOut, Settings, Bell, Shield } from 'lucide-react';
+import { Palette, LogOut, Settings, Bell, Shield } from 'lucide-react';
 
 export default function ProfilePage() {
     const { user, logout } = useAuth();

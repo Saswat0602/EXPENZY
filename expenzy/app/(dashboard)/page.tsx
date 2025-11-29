@@ -1,13 +1,33 @@
 'use client';
 
 import { useDashboardSummary } from '@/lib/hooks/use-analytics';
-import { formatCurrency, formatPercentage } from '@/lib/utils/format';
-import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { useSavingsGoals } from '@/lib/hooks/use-savings';
+import { useUpcomingSubscriptions } from '@/lib/hooks/use-subscriptions';
+import { StatCard } from '@/components/shared/stat-card';
+import { EmptyState } from '@/components/shared/empty-state';
+import { LoadingSkeleton } from '@/components/shared/loading-skeleton';
+import { formatCurrency, formatPercentage, formatDate } from '@/lib/utils/format';
+import {
+    TrendingUp,
+    TrendingDown,
+    Wallet,
+    PiggyBank,
+    ArrowUpRight,
+    ArrowDownRight,
+    Target,
+    Calendar,
+    Plus
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import Link from 'next/link';
 
 export default function DashboardPage() {
-    const { data: dashboard, isLoading, error } = useDashboardSummary({ period: 'month' });
+    const { data: dashboard, isLoading: dashboardLoading } = useDashboardSummary({ period: 'month' });
+    const { data: savingsGoals = [], isLoading: savingsLoading } = useSavingsGoals();
+    const { data: upcomingSubscriptions = [], isLoading: subscriptionsLoading } = useUpcomingSubscriptions();
 
-    if (isLoading) {
+    if (dashboardLoading) {
         return (
             <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -19,67 +39,139 @@ export default function DashboardPage() {
         );
     }
 
-    if (error) {
-        return (
-            <div className="flex items-center justify-center h-64">
-                <p className="text-muted-foreground">Failed to load dashboard data</p>
-            </div>
-        );
-    }
-
     const summary = dashboard?.summary;
 
     return (
         <div className="space-y-6">
             {/* Page Header */}
-            <div>
-                <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
-                <p className="text-muted-foreground">Overview of your finances</p>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
+                    <p className="text-muted-foreground">Overview of your finances</p>
+                </div>
+                <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Transaction
+                </Button>
             </div>
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Total Balance */}
+                <StatCard
+                    title="Total Balance"
+                    value={formatCurrency(summary?.totalBalance || 0)}
+                    icon={Wallet}
+                />
+                <StatCard
+                    title="Income"
+                    value={formatCurrency(summary?.totalIncome || 0)}
+                    icon={ArrowUpRight}
+                    className="border-l-4 border-l-success"
+                />
+                <StatCard
+                    title="Expenses"
+                    value={formatCurrency(summary?.totalExpenses || 0)}
+                    icon={ArrowDownRight}
+                    className="border-l-4 border-l-destructive"
+                />
+                <StatCard
+                    title="Net Savings"
+                    value={formatCurrency(summary?.netSavings || 0)}
+                    description={`${formatPercentage(summary?.savingsRate || 0)} savings rate`}
+                    icon={PiggyBank}
+                />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Savings Goals Widget */}
                 <div className="bg-card border border-border rounded-lg p-6">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-muted-foreground">Total Balance</span>
-                        <Wallet className="w-5 h-5 text-muted-foreground" />
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-lg font-semibold flex items-center gap-2">
+                            <Target className="w-5 h-5 text-primary" />
+                            Savings Goals
+                        </h2>
+                        <Link href="/savings">
+                            <Button variant="ghost" size="sm">View All</Button>
+                        </Link>
                     </div>
-                    <p className="text-2xl font-bold">{formatCurrency(summary?.totalBalance || 0)}</p>
+
+                    {savingsLoading ? (
+                        <LoadingSkeleton count={2} />
+                    ) : savingsGoals.length === 0 ? (
+                        <EmptyState
+                            icon={Target}
+                            title="No savings goals yet"
+                            description="Create your first savings goal to start tracking progress"
+                            action={{
+                                label: 'Create Goal',
+                                onClick: () => { },
+                            }}
+                        />
+                    ) : (
+                        <div className="space-y-4">
+                            {savingsGoals.slice(0, 3).map((goal) => {
+                                const progress = (Number(goal.currentAmount) / Number(goal.targetAmount)) * 100;
+                                return (
+                                    <div key={goal.id} className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-medium">{goal.name}</span>
+                                            <span className="text-sm text-muted-foreground">
+                                                {formatCurrency(goal.currentAmount)} / {formatCurrency(goal.targetAmount)}
+                                            </span>
+                                        </div>
+                                        <Progress value={Math.min(progress, 100)} className="h-2" />
+                                        <p className="text-xs text-muted-foreground">
+                                            {formatPercentage(progress)} complete
+                                        </p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
 
-                {/* Total Income */}
+                {/* Upcoming Subscriptions Widget */}
                 <div className="bg-card border border-border rounded-lg p-6">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-muted-foreground">Income</span>
-                        <ArrowUpRight className="w-5 h-5 text-success" />
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-lg font-semibold flex items-center gap-2">
+                            <Calendar className="w-5 h-5 text-primary" />
+                            Upcoming Subscriptions
+                        </h2>
+                        <Link href="/subscriptions">
+                            <Button variant="ghost" size="sm">View All</Button>
+                        </Link>
                     </div>
-                    <p className="text-2xl font-bold text-success">
-                        {formatCurrency(summary?.totalIncome || 0)}
-                    </p>
-                </div>
 
-                {/* Total Expenses */}
-                <div className="bg-card border border-border rounded-lg p-6">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-muted-foreground">Expenses</span>
-                        <ArrowDownRight className="w-5 h-5 text-destructive" />
-                    </div>
-                    <p className="text-2xl font-bold text-destructive">
-                        {formatCurrency(summary?.totalExpenses || 0)}
-                    </p>
-                </div>
-
-                {/* Net Savings */}
-                <div className="bg-card border border-border rounded-lg p-6">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-muted-foreground">Net Savings</span>
-                        <PiggyBank className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                    <p className="text-2xl font-bold">{formatCurrency(summary?.netSavings || 0)}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        {formatPercentage(summary?.savingsRate || 0)} savings rate
-                    </p>
+                    {subscriptionsLoading ? (
+                        <LoadingSkeleton count={2} />
+                    ) : upcomingSubscriptions.length === 0 ? (
+                        <EmptyState
+                            icon={Calendar}
+                            title="No subscriptions"
+                            description="Add subscriptions to track recurring payments"
+                            action={{
+                                label: 'Add Subscription',
+                                onClick: () => { },
+                            }}
+                        />
+                    ) : (
+                        <div className="space-y-3">
+                            {upcomingSubscriptions.slice(0, 5).map((sub) => (
+                                <div
+                                    key={sub.id}
+                                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors"
+                                >
+                                    <div>
+                                        <p className="font-medium">{sub.name}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            Next: {formatDate(sub.nextBillingDate)}
+                                        </p>
+                                    </div>
+                                    <p className="font-semibold">{formatCurrency(sub.amount)}</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -124,7 +216,14 @@ export default function DashboardPage() {
                         ))}
                     </div>
                 ) : (
-                    <p className="text-center text-muted-foreground py-8">No transactions yet</p>
+                    <EmptyState
+                        title="No transactions yet"
+                        description="Start tracking your finances by adding your first transaction"
+                        action={{
+                            label: 'Add Transaction',
+                            onClick: () => { },
+                        }}
+                    />
                 )}
             </div>
 
@@ -141,17 +240,13 @@ export default function DashboardPage() {
                                         {formatCurrency(category.totalAmount)}
                                     </span>
                                 </div>
-                                <div className="w-full bg-muted rounded-full h-2">
-                                    <div
-                                        className="bg-primary h-2 rounded-full transition-all"
-                                        style={{
-                                            width: `${Math.min(
-                                                (category.totalAmount / (summary?.totalExpenses || 1)) * 100,
-                                                100
-                                            )}%`,
-                                        }}
-                                    />
-                                </div>
+                                <Progress
+                                    value={Math.min(
+                                        (category.totalAmount / (summary?.totalExpenses || 1)) * 100,
+                                        100
+                                    )}
+                                    className="h-2"
+                                />
                             </div>
                         ))}
                     </div>

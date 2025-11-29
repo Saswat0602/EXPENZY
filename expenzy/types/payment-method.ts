@@ -16,4 +16,6 @@ export interface CreatePaymentMethodDto {
     isDefault?: boolean;
 }
 
-export interface UpdatePaymentMethodDto extends Partial<CreatePaymentMethodDto> { }
+
+export type UpdatePaymentMethodDto = Partial<CreatePaymentMethodDto>;
+

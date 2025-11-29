@@ -16,15 +16,24 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const [theme, setThemeState] = useState<Theme>('light');
     const [mounted, setMounted] = useState(false);
 
+    const setTheme = (newTheme: Theme) => {
+        setThemeState(newTheme);
+    };
+
+    const toggleTheme = () => {
+        setThemeState((prev) => (prev === 'light' ? 'dark' : 'light'));
+    };
+
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
         const stored = localStorage.getItem('theme') as Theme | null;
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
         if (stored) {
-            setThemeState(stored);
+            setTheme(stored);
         } else if (prefersDark) {
-            setThemeState('dark');
+            setTheme('dark');
         }
     }, []);
 
@@ -36,14 +45,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         root.classList.add(theme);
         localStorage.setItem('theme', theme);
     }, [theme, mounted]);
-
-    const toggleTheme = () => {
-        setThemeState((prev) => (prev === 'light' ? 'dark' : 'light'));
-    };
-
-    const setTheme = (newTheme: Theme) => {
-        setThemeState(newTheme);
-    };
 
     if (!mounted) {
         return <>{children}</>;
