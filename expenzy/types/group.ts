@@ -1,3 +1,5 @@
+import type { Split } from './split';
+
 export interface Group {
     id: string;
     name: string;

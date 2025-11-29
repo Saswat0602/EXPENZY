@@ -76,11 +76,15 @@ export const API_ENDPOINTS = {
     PAYMENT_METHODS: {
         BASE: '/payment-methods',
         BY_ID: (id: string) => `/payment-methods/${id}`,
+        SET_DEFAULT: (id: string) => `/payment-methods/${id}/set-default`,
     },
 
-    // Accounts
-    ACCOUNTS: {
-        BASE: '/accounts',
-        BY_ID: (id: string) => `/accounts/${id}`,
+    // Notifications
+    NOTIFICATIONS: {
+        BASE: '/notifications',
+        BY_ID: (id: string) => `/notifications/${id}`,
+        MARK_READ: (id: string) => `/notifications/${id}/read`,
+        MARK_ALL_READ: '/notifications/read-all',
+        SUMMARY: '/notifications/summary',
     },
 } as const;
