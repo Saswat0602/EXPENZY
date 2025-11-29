@@ -40,6 +40,8 @@ model User {
   splitExpensesPaid   SplitExpense[]     @relation("PaidBy")
   splitParticipations SplitParticipant[]
   yearlySummaries     YearlySummary[]
+  groupsCreated       Group[]            @relation("GroupCreator")
+  groupMemberships    GroupMember[]      @relation("GroupMemberships")
 
   @@map("users")
 }
@@ -126,6 +128,7 @@ model RecurringPattern {
 model SplitExpense {
   id           String             @id @default(uuid())
   expenseId    String             @map("expense_id")
+  groupId      String?            @map("group_id")
   totalAmount  Decimal            @map("total_amount") @db.Decimal(15, 2)
   currency     String             @default("USD")
   splitType    String             @map("split_type")
@@ -136,6 +139,7 @@ model SplitExpense {
   createdAt    DateTime           @default(now()) @map("created_at")
   updatedAt    DateTime           @updatedAt @map("updated_at")
   expense      Expense            @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  group        Group?             @relation("GroupSplits", fields: [groupId], references: [id])
   paidByUser   User               @relation("PaidBy", fields: [paidByUserId], references: [id])
   participants SplitParticipant[]
 
@@ -326,4 +330,41 @@ model Attachment {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("attachments")
+}
+
+model Group {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  imageUrl        String?  @map("image_url")
+  createdByUserId String   @map("created_by_user_id")
+  createdBy       User     @relation("GroupCreator", fields: [createdByUserId], references: [id])
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  members       GroupMember[]
+  splitExpenses SplitExpense[] @relation("GroupSplits")
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id           String    @id @default(uuid())
+  groupId      String    @map("group_id")
+  group        Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId       String?   @map("user_id")
+  user         User?     @relation("GroupMemberships", fields: [userId], references: [id])
+  memberName   String?   @map("member_name")
+  memberEmail  String?   @map("member_email")
+  memberPhone  String?   @map("member_phone")
+  role         String    @default("member")
+  inviteToken  String?   @unique @map("invite_token")
+  inviteStatus String?   @default("pending") @map("invite_status")
+  joinedAt     DateTime? @map("joined_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@unique([groupId, userId])
+  @@map("group_members")
 }

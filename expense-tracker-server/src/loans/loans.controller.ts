@@ -14,7 +14,6 @@ import { LoansService } from './loans.service';
 import { CreateLoanDto } from './dto/create-loan.dto';
 import { UpdateLoanDto } from './dto/update-loan.dto';
 import { CreateLoanPaymentDto } from './dto/create-loan-payment.dto';
-import { InviteLoanDto } from './dto/invite-loan.dto';
 import { LoanQueryDto } from './dto/loan-query.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -28,11 +27,8 @@ export class LoansController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new loan' })
-  create(
-    @Body() createLoanDto: CreateLoanDto,
-    @CurrentUser() user: JwtPayload,
-  ) {
-    return this.loansService.create(createLoanDto, user.userId);
+  create(@Body() createLoanDto: CreateLoanDto) {
+    return this.loansService.create(createLoanDto);
   }
 
   @Get()
@@ -71,12 +67,5 @@ export class LoansController {
     return this.loansService.addPayment(id, createLoanPaymentDto, user.userId);
   }
 
-  @Post(':id/invite')
-  inviteToLoan(
-    @Param('id') id: string,
-    @Body() inviteLoanDto: InviteLoanDto,
-    @CurrentUser() user: JwtPayload,
-  ) {
-    return this.loansService.inviteToLoan(id, inviteLoanDto, user.userId);
-  }
+  // Note: Invite functionality removed - see loans.service.ts for details
 }

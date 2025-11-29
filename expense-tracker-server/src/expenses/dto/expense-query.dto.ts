@@ -1,15 +1,7 @@
-import {
-  IsOptional,
-  IsString,
-  IsDateString,
-  IsNumber,
-  IsArray,
-  IsEnum,
-} from 'class-validator';
+import { IsOptional, IsString, IsDateString, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
-import { SortQueryDto } from '../../common/dto/sort-query.dto';
 
 export class ExpenseFilterDto {
   @ApiPropertyOptional({

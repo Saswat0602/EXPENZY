@@ -4,7 +4,7 @@ import {
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, SplitExpense } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSplitExpenseDto } from './dto/create-split-expense.dto';
 import { UpdateSplitExpenseDto } from './dto/update-split-expense.dto';
@@ -38,12 +38,16 @@ export class SplitsService {
 
     return this.prisma.splitExpense.create({
       data: {
-        ...splitData,
+        expenseId: splitData.expenseId!,
+        totalAmount: splitData.totalAmount,
+        currency: splitData.currency || 'USD',
+        splitType: splitData.splitType,
+        description: splitData.description,
         paidByUserId: userId,
         participants: {
           create: participants.map((p) => ({
-            userId: p.userId,
-            amountOwed: p.amountOwed,
+            user: { connect: { id: p.userId! } },
+            amountOwed: p.amountOwed!,
             percentage: p.percentage,
             shares: p.shares,
           })),
@@ -195,9 +199,7 @@ export class SplitsService {
       where: { id },
       include: {
         expense: true,
-        group: true,
         paidByUser: true,
-        createdBy: true,
         participants: {
           include: {
             user: true,
@@ -233,10 +235,10 @@ export class SplitsService {
       throw new NotFoundException(`Split expense with ID ${id} not found`);
     }
 
-    // Only creator can update
-    if (split.createdByUserId !== userId) {
+    // Only payer can update
+    if (split.paidByUserId !== userId) {
       throw new ForbiddenException(
-        'Only the split creator can update this split expense',
+        'Only the person who paid can update this split expense',
       );
     }
 
@@ -266,10 +268,10 @@ export class SplitsService {
       throw new NotFoundException(`Split expense with ID ${id} not found`);
     }
 
-    // Only creator can delete
-    if (split.createdByUserId !== userId) {
+    // Only payer can delete
+    if (split.paidByUserId !== userId) {
       throw new ForbiddenException(
-        'Only the split creator can delete this split expense',
+        'Only the person who paid can delete this split expense',
       );
     }
 
@@ -397,7 +399,6 @@ export class SplitsService {
   ): boolean {
     return (
       split.paidByUserId === userId ||
-      split.createdByUserId === userId ||
       split.participants.some((p) => p.userId === userId)
     );
   }

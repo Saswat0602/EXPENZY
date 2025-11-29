@@ -4,7 +4,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
-import * as compression from 'compression';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+import compression = require('compression');
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

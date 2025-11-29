@@ -9,40 +9,24 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateLoanDto } from './dto/create-loan.dto';
 import { UpdateLoanDto } from './dto/update-loan.dto';
 import { CreateLoanPaymentDto } from './dto/create-loan-payment.dto';
-import { InviteLoanDto } from './dto/invite-loan.dto';
 import { LoanQueryDto, LoanRole } from './dto/loan-query.dto';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 import { QueryBuilder } from '../common/utils/query-builder.util';
-import * as crypto from 'crypto';
 
 @Injectable()
 export class LoansService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createLoanDto: CreateLoanDto, userId: string) {
-    // Validation: At least one lender and one borrower identifier must be provided
-    const hasLender = createLoanDto.lenderUserId || createLoanDto.lenderName;
-    const hasBorrower =
-      createLoanDto.borrowerUserId || createLoanDto.borrowerName;
-
-    if (!hasLender || !hasBorrower) {
+  async create(createLoanDto: CreateLoanDto) {
+    // Validation: Both lender and borrower user IDs must be provided
+    if (!createLoanDto.lenderUserId || !createLoanDto.borrowerUserId) {
       throw new BadRequestException(
-        'Both lender and borrower information must be provided',
+        'Both lender and borrower user IDs must be provided',
       );
     }
 
     // Prevent self-loans
-    if (
-      createLoanDto.lenderUserId === createLoanDto.borrowerUserId &&
-      createLoanDto.lenderUserId
-    ) {
-      throw new BadRequestException('Cannot create a loan to yourself');
-    }
-
-    if (
-      createLoanDto.lenderUserId === userId &&
-      createLoanDto.borrowerUserId === userId
-    ) {
+    if (createLoanDto.lenderUserId === createLoanDto.borrowerUserId) {
       throw new BadRequestException('Cannot create a loan to yourself');
     }
 
@@ -51,14 +35,7 @@ export class LoansService {
     return this.prisma.loan.create({
       data: {
         lenderUserId: createLoanDto.lenderUserId,
-        lenderName: createLoanDto.lenderName,
-        lenderEmail: createLoanDto.lenderEmail,
-        lenderPhone: createLoanDto.lenderPhone,
         borrowerUserId: createLoanDto.borrowerUserId,
-        borrowerName: createLoanDto.borrowerName,
-        borrowerEmail: createLoanDto.borrowerEmail,
-        borrowerPhone: createLoanDto.borrowerPhone,
-        createdByUserId: userId,
         amount: createLoanDto.amount,
         currency: createLoanDto.currency || 'USD',
         interestRate: createLoanDto.interestRate || 0,
@@ -71,7 +48,6 @@ export class LoansService {
       include: {
         lender: true,
         borrower: true,
-        createdBy: true,
       },
     });
   }
@@ -201,7 +177,6 @@ export class LoansService {
       include: {
         lender: true,
         borrower: true,
-        createdBy: true,
         payments: {
           orderBy: { paymentDate: 'desc' },
         },
@@ -231,10 +206,10 @@ export class LoansService {
       throw new NotFoundException(`Loan with ID ${id} not found`);
     }
 
-    // Only creator can update loan details
-    if (loan.createdByUserId !== userId) {
+    // Only lender or borrower can update loan details
+    if (loan.lenderUserId !== userId && loan.borrowerUserId !== userId) {
       throw new ForbiddenException(
-        'Only the loan creator can update loan details',
+        'Only the lender or borrower can update loan details',
       );
     }
 
@@ -257,7 +232,6 @@ export class LoansService {
       include: {
         lender: true,
         borrower: true,
-        payments: true,
       },
     });
   }
@@ -271,15 +245,17 @@ export class LoansService {
       throw new NotFoundException(`Loan with ID ${id} not found`);
     }
 
-    // Only creator can delete
-    if (loan.createdByUserId !== userId) {
-      throw new ForbiddenException(
-        'Only the loan creator can delete this loan',
-      );
+    // Only lender can delete
+    if (loan.lenderUserId !== userId) {
+      throw new ForbiddenException('Only the lender can delete this loan');
     }
 
-    return this.prisma.loan.delete({
+    // Soft delete by updating status
+    return this.prisma.loan.update({
       where: { id },
+      data: {
+        status: 'cancelled',
+      },
     });
   }
 
@@ -348,98 +324,11 @@ export class LoansService {
     });
   }
 
-  async inviteToLoan(id: string, inviteLoanDto: InviteLoanDto, userId: string) {
-    const loan = await this.prisma.loan.findUnique({
-      where: { id },
-    });
-
-    if (!loan) {
-      throw new NotFoundException(`Loan with ID ${id} not found`);
-    }
-
-    // Only creator can invite
-    if (loan.createdByUserId !== userId) {
-      throw new ForbiddenException('Only the loan creator can send invites');
-    }
-
-    // Generate invite token
-    const inviteToken = crypto.randomBytes(32).toString('hex');
-
-    // Update loan with invite details
-    const updateData: Prisma.LoanUpdateInput = {
-      inviteToken,
-      inviteStatus: 'pending',
-      invitedAt: new Date(),
-    };
-
-    // Update the appropriate user fields based on role
-    if (inviteLoanDto.role === 'lender') {
-      updateData.lenderEmail = inviteLoanDto.email;
-      updateData.lenderPhone = inviteLoanDto.phone;
-    } else {
-      updateData.borrowerEmail = inviteLoanDto.email;
-      updateData.borrowerPhone = inviteLoanDto.phone;
-    }
-
-    const updatedLoan = await this.prisma.loan.update({
-      where: { id },
-      data: updateData,
-    });
-
-    // TODO: Send invite email/SMS here
-    // await this.emailService.sendLoanInvite(inviteLoanDto.email, inviteToken, loan);
-
-    return {
-      ...updatedLoan,
-      inviteLink: `${process.env.APP_URL || 'http://localhost:3000'}/invites/loan/${inviteToken}`,
-    };
-  }
-
-  async acceptInvite(token: string, userId: string) {
-    const loan = await this.prisma.loan.findUnique({
-      where: { inviteToken: token },
-    });
-
-    if (!loan) {
-      throw new NotFoundException('Invalid invite token');
-    }
-
-    if (loan.inviteStatus === 'accepted') {
-      throw new BadRequestException('This invite has already been accepted');
-    }
-
-    // Determine which role to assign based on which userId is empty
-    const updateData: Record<string, string | null | Date> = {
-      inviteStatus: 'accepted',
-    };
-
-    if (!loan.lenderUserId && loan.lenderEmail) {
-      updateData.lenderUserId = userId;
-      updateData.lenderName = null;
-    } else if (!loan.borrowerUserId && loan.borrowerEmail) {
-      updateData.borrowerUserId = userId;
-      updateData.borrowerName = null;
-    } else {
-      throw new BadRequestException('No pending invite for this loan');
-    }
-
-    return this.prisma.loan.update({
-      where: { id: loan.id },
-      data: updateData,
-      include: {
-        lender: true,
-        borrower: true,
-        createdBy: true,
-      },
-    });
-  }
+  // Note: Invite functionality removed due to schema limitations
+  // To re-enable, add inviteToken, inviteStatus, lenderEmail, borrowerEmail fields to Loan model
 
   // Helper method to check if user has access to loan
   private hasAccessToLoan(loan: Loan, userId: string): boolean {
-    return (
-      loan.lenderUserId === userId ||
-      loan.borrowerUserId === userId ||
-      loan.createdByUserId === userId
-    );
+    return loan.lenderUserId === userId || loan.borrowerUserId === userId;
   }
 }
