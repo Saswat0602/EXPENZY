@@ -1,26 +1,168 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Background Colors */
+    --background: 0 0% 100%;              /* #ffffff */
+    --surface: 210 20% 98%;               /* #f9fafb */
+    --surface-elevated: 0 0% 100%;        /* #ffffff */
+    
+    /* Foreground (Text) Colors */
+    --foreground: 222 47% 11%;            /* #111827 */
+    --foreground-muted: 215 16% 47%;      /* #6b7280 */
+    
+    /* Primary Brand Color (Emerald for Income/Positive) */
+    --primary: 160 84% 39%;               /* #10b981 */
+    --primary-foreground: 0 0% 100%;      /* White */
+    
+    /* Secondary (Red for Expenses/Negative) */
+    --secondary: 0 84% 60%;               /* #ef4444 */
+    --secondary-foreground: 0 0% 100%;    /* White */
+    
+    /* Accent (Blue for Actions/Links) */
+    --accent: 217 91% 60%;                /* #3b82f6 */
+    --accent-foreground: 0 0% 100%;       /* White */
+    
+    /* Muted (Subtle backgrounds) */
+    --muted: 210 20% 98%;                 /* #f9fafb */
+    --muted-foreground: 215 16% 47%;      /* #6b7280 */
+    
+    /* Border Colors */
+    --border: 214 32% 91%;                /* #e5e7eb */
+    --border-strong: 215 16% 47%;         /* #9ca3af */
+    
+    /* Input Colors */
+    --input: 214 32% 91%;                 /* #e5e7eb */
+    --input-focus: 217 91% 60%;           /* #3b82f6 */
+    
+    /* Card Colors */
+    --card: 0 0% 100%;                    /* #ffffff */
+    --card-foreground: 222 47% 11%;       /* #111827 */
+    
+    /* Popover/Modal Colors */
+    --popover: 0 0% 100%;                 /* #ffffff */
+    --popover-foreground: 222 47% 11%;    /* #111827 */
+    
+    /* Destructive (Delete actions) */
+    --destructive: 0 84% 60%;             /* #ef4444 */
+    --destructive-foreground: 0 0% 100%;  /* White */
+    
+    /* Success (Confirmations) */
+    --success: 160 84% 39%;               /* #10b981 */
+    --success-foreground: 0 0% 100%;      /* White */
+    
+    /* Warning */
+    --warning: 38 92% 50%;                /* #f59e0b */
+    --warning-foreground: 0 0% 100%;      /* White */
+    
+    /* Info */
+    --info: 217 91% 60%;                  /* #3b82f6 */
+    --info-foreground: 0 0% 100%;         /* White */
+    
+    /* Ring (Focus rings) */
+    --ring: 217 91% 60%;                  /* #3b82f6 */
+    
+    /* Chart Colors */
+    --chart-1: 160 84% 39%;               /* #10b981 */
+    --chart-2: 0 84% 60%;                 /* #ef4444 */
+    --chart-3: 217 91% 60%;               /* #3b82f6 */
+    --chart-4: 280 89% 60%;               /* #a855f7 */
+    --chart-5: 38 92% 50%;                /* #f59e0b */
+    
+    /* Radius */
+    --radius: 0.5rem;                     /* 8px */
+  }
+
+  .dark {
+    /* Background Colors */
+    --background: 222 47% 11%;            /* #0f172a */
+    --surface: 217 33% 17%;               /* #1e293b */
+    --surface-elevated: 215 25% 27%;      /* #334155 */
+    
+    /* Foreground (Text) Colors */
+    --foreground: 210 20% 98%;            /* #f1f5f9 */
+    --foreground-muted: 215 20% 65%;      /* #94a3b8 */
+    
+    /* Primary Brand Color (Brighter Emerald) */
+    --primary: 160 84% 60%;               /* #34d399 */
+    --primary-foreground: 222 47% 11%;    /* Dark text */
+    
+    /* Secondary (Brighter Red) */
+    --secondary: 0 91% 71%;               /* #f87171 */
+    --secondary-foreground: 222 47% 11%;  /* Dark text */
+    
+    /* Accent (Brighter Blue) */
+    --accent: 217 91% 70%;                /* #60a5fa */
+    --accent-foreground: 222 47% 11%;     /* Dark text */
+    
+    /* Muted (Dark subtle backgrounds) */
+    --muted: 217 33% 17%;                 /* #1e293b */
+    --muted-foreground: 215 20% 65%;      /* #94a3b8 */
+    
+    /* Border Colors */
+    --border: 215 25% 27%;                /* #334155 */
+    --border-strong: 215 20% 65%;         /* #64748b */
+    
+    /* Input Colors */
+    --input: 215 25% 27%;                 /* #334155 */
+    --input-focus: 217 91% 70%;           /* #60a5fa */
+    
+    /* Card Colors */
+    --card: 217 33% 17%;                  /* #1e293b */
+    --card-foreground: 210 20% 98%;       /* #f1f5f9 */
+    
+    /* Popover/Modal Colors */
+    --popover: 215 25% 27%;               /* #334155 */
+    --popover-foreground: 210 20% 98%;    /* #f1f5f9 */
+    
+    /* Destructive */
+    --destructive: 0 91% 71%;             /* #f87171 */
+    --destructive-foreground: 222 47% 11%; /* Dark text */
+    
+    /* Success */
+    --success: 160 84% 60%;               /* #34d399 */
+    --success-foreground: 222 47% 11%;    /* Dark text */
+    
+    /* Warning */
+    --warning: 38 92% 60%;                /* #fbbf24 */
+    --warning-foreground: 222 47% 11%;    /* Dark text */
+    
+    /* Info */
+    --info: 217 91% 70%;                  /* #60a5fa */
+    --info-foreground: 222 47% 11%;       /* Dark text */
+    
+    /* Ring (Focus rings) */
+    --ring: 217 91% 70%;                  /* #60a5fa */
+    
+    /* Chart Colors (Brighter for dark mode) */
+    --chart-1: 160 84% 60%;               /* #34d399 */
+    --chart-2: 0 91% 71%;                 /* #f87171 */
+    --chart-3: 217 91% 70%;               /* #60a5fa */
+    --chart-4: 280 89% 70%;               /* #c084fc */
+    --chart-5: 38 92% 60%;                /* #fbbf24 */
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Mobile-first responsive utilities */
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
 }
