@@ -12,12 +12,14 @@ import { SummariesModule } from './summaries/summaries.module';
 import { AuthModule } from './auth/auth.module';
 import { GroupsModule } from './groups/groups.module';
 import { InvitesModule } from './invites/invites.module';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    CommonModule,
     PrismaModule,
     UsersModule,
     CategoriesModule,
@@ -32,4 +34,5 @@ import { InvitesModule } from './invites/invites.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
+
