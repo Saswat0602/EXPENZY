@@ -22,7 +22,10 @@ class ApiClient {
         this.client.interceptors.request.use(
             (config) => {
                 const token = this.getToken();
+                console.log('[API Client] Request to:', config.url);
+                console.log('[API Client] Token exists:', !!token);
                 if (token) {
+                    console.log('[API Client] Token (first 20 chars):', token.substring(0, 20));
                     config.headers.Authorization = `Bearer ${token}`;
                 }
                 return config;
@@ -34,10 +37,19 @@ class ApiClient {
 
         // Response interceptor - handle errors
         this.client.interceptors.response.use(
-            (response: AxiosResponse) => response,
+            (response: AxiosResponse) => {
+                console.log('[API Client] Response from:', response.config.url, 'Status:', response.status);
+                return response;
+            },
             async (error: AxiosError<ApiError>) => {
+                console.error('[API Client] Error:', error.message);
+                console.error('[API Client] Error response:', error.response?.status, error.response?.data);
+
                 if (error.response?.status === 401) {
-                    // Token expired or invalid
+                    console.error('[API Client] 401 Unauthorized - Token expired or invalid');
+                    console.error('[API Client] Clearing token and redirecting to login');
+
+                    // Token expired or invalid - clear and redirect
                     this.clearToken();
                     if (typeof window !== 'undefined') {
                         window.location.href = '/login';

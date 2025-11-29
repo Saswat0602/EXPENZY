@@ -62,20 +62,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 credentials
             );
 
-            const { user, accessToken } = response;
+            const { user, access_token } = response;
 
-            localStorage.setItem('token', accessToken);
+            localStorage.setItem('token', access_token);
             localStorage.setItem('user', JSON.stringify(user));
-            apiClient.setToken(accessToken);
+            apiClient.setToken(access_token);
 
             setState({
                 user,
-                token: accessToken,
+                token: access_token,
                 isAuthenticated: true,
                 isLoading: false,
             });
 
-            router.push('/');
+            router.push(ROUTES.DASHBOARD);
         } catch (error) {
             throw error;
         }
@@ -88,20 +88,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 credentials
             );
 
-            const { user, accessToken } = response;
+            const { user, access_token } = response;
 
-            localStorage.setItem('token', accessToken);
+            localStorage.setItem('token', access_token);
             localStorage.setItem('user', JSON.stringify(user));
-            apiClient.setToken(accessToken);
+            apiClient.setToken(access_token);
 
             setState({
                 user,
-                token: accessToken,
+                token: access_token,
                 isAuthenticated: true,
                 isLoading: false,
             });
 
-            router.push('/');
+            router.push(ROUTES.DASHBOARD);
         } catch (error) {
             throw error;
         }

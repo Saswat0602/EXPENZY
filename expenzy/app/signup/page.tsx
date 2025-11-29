@@ -10,7 +10,7 @@ import { ROUTES } from '@/lib/routes';
 export default function SignupPage() {
     const router = useRouter();
     const { signup, isAuthenticated } = useAuth();
-    const [name, setName] = useState('');
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +37,7 @@ export default function SignupPage() {
         setIsLoading(true);
 
         try {
-            await signup({ name, email, password });
+            await signup({ username, email, password });
             toast.success('Account created successfully!');
         } catch (error) {
             const err = error as { message: string };
@@ -59,18 +59,18 @@ export default function SignupPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                    <label htmlFor="name" className="text-sm font-medium">
-                        Full Name
+                    <label htmlFor="username" className="text-sm font-medium">
+                        Username
                     </label>
                     <div className="relative">
                         <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                         <input
-                            id="name"
+                            id="username"
                             type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
                             className="w-full pl-10 pr-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                            placeholder="John Doe"
+                            placeholder="johndoe"
                             required
                         />
                     </div>

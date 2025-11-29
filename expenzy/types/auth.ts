@@ -16,12 +16,12 @@ export interface LoginCredentials {
 export interface SignupCredentials {
     email: string;
     password: string;
-    name: string;
+    username: string;  // Backend expects 'username' not 'name'
 }
 
 export interface AuthResponse {
     user: User;
-    accessToken: string;
+    access_token: string;  // Backend returns 'access_token' not 'accessToken'
     refreshToken?: string;
 }
 

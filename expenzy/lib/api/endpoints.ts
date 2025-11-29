@@ -2,10 +2,10 @@ export const API_ENDPOINTS = {
     // Auth
     AUTH: {
         LOGIN: '/auth/login',
-        SIGNUP: '/auth/signup',
+        SIGNUP: '/auth/register',  // Backend uses 'register' not 'signup'
         LOGOUT: '/auth/logout',
         REFRESH: '/auth/refresh',
-        ME: '/auth/me',
+        ME: '/auth/profile',  // Backend uses 'profile' not 'me'
     },
 
     // Users
@@ -60,10 +60,20 @@ export const API_ENDPOINTS = {
         CONTRIBUTE: (id: string) => `/savings/${id}/contribute`,
     },
 
+    // Alias for backwards compatibility
+    SAVINGS_GOALS: {
+        BASE: '/savings',
+        BY_ID: (id: string) => `/savings/${id}`,
+        CONTRIBUTE: (id: string) => `/savings/${id}/contribute`,
+        PROGRESS: '/savings/progress',
+    },
+
     // Subscriptions
     SUBSCRIPTIONS: {
         BASE: '/subscriptions',
         BY_ID: (id: string) => `/subscriptions/${id}`,
+        UPCOMING: '/subscriptions/upcoming',
+        SUMMARY: '/subscriptions/summary',
     },
 
     // Tags
