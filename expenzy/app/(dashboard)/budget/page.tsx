@@ -51,31 +51,35 @@ export default function BudgetPage() {
             </div>
 
             {/* Summary Cards */}
-            {performance && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-card border border-border rounded-lg p-6">
-                        <div className="flex items-center gap-2 mb-2">
-                            <CheckCircle className="w-5 h-5 text-success" />
-                            <span className="text-sm text-muted-foreground">On Track</span>
-                        </div>
-                        <p className="text-2xl font-bold">{performance.summary.onTrackCount}</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-card border border-border rounded-lg p-6">
+                    <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="w-5 h-5 text-success" />
+                        <span className="text-sm text-muted-foreground">On Track</span>
                     </div>
-                    <div className="bg-card border border-border rounded-lg p-6">
-                        <div className="flex items-center gap-2 mb-2">
-                            <AlertCircle className="w-5 h-5 text-warning" />
-                            <span className="text-sm text-muted-foreground">Warning</span>
-                        </div>
-                        <p className="text-2xl font-bold">{performance.summary.warningCount}</p>
-                    </div>
-                    <div className="bg-card border border-border rounded-lg p-6">
-                        <div className="flex items-center gap-2 mb-2">
-                            <AlertCircle className="w-5 h-5 text-destructive" />
-                            <span className="text-sm text-muted-foreground">Exceeded</span>
-                        </div>
-                        <p className="text-2xl font-bold">{performance.summary.exceededCount}</p>
-                    </div>
+                    <p className="text-2xl font-bold">
+                        {performance?.budgets.filter(b => b.status === 'on_track').length || 0}
+                    </p>
                 </div>
-            )}
+                <div className="bg-card border border-border rounded-lg p-6">
+                    <div className="flex items-center gap-2 mb-2">
+                        <AlertCircle className="w-5 h-5 text-warning" />
+                        <span className="text-sm text-muted-foreground">Warning</span>
+                    </div>
+                    <p className="text-2xl font-bold">
+                        {performance?.budgets.filter(b => b.status === 'warning').length || 0}
+                    </p>
+                </div>
+                <div className="bg-card border border-border rounded-lg p-6">
+                    <div className="flex items-center gap-2 mb-2">
+                        <AlertCircle className="w-5 h-5 text-destructive" />
+                        <span className="text-sm text-muted-foreground">Exceeded</span>
+                    </div>
+                    <p className="text-2xl font-bold">
+                        {performance?.budgets.filter(b => b.status === 'exceeded').length || 0}
+                    </p>
+                </div>
+            </div>
 
             {/* Budgets List */}
             <div className="space-y-4">
@@ -132,10 +136,10 @@ export default function BudgetPage() {
                                     <div className="w-full bg-muted rounded-full h-3">
                                         <div
                                             className={`h-3 rounded-full transition-all ${status === 'exceeded'
-                                                    ? 'bg-destructive'
-                                                    : status === 'warning'
-                                                        ? 'bg-warning'
-                                                        : 'bg-success'
+                                                ? 'bg-destructive'
+                                                : status === 'warning'
+                                                    ? 'bg-warning'
+                                                    : 'bg-success'
                                                 }`}
                                             style={{ width: `${Math.min(utilization, 100)}%` }}
                                         />
