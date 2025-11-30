@@ -13,7 +13,7 @@ import { QueryBuilder } from '../common/utils/query-builder.util';
 
 @Injectable()
 export class ExpensesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(createExpenseDto: CreateExpenseDto, userId: string) {
     return this.prisma.expense.create({
@@ -56,10 +56,16 @@ export class ExpensesService {
     }
 
     if (query.startDate || query.endDate) {
-      where.expenseDate = QueryBuilder.buildDateRangeFilter(
+      const dateFilter = QueryBuilder.buildDateRangeFilter(
         query.startDate,
         query.endDate,
       );
+      console.log('Date filter:', {
+        startDate: query.startDate,
+        endDate: query.endDate,
+        filter: dateFilter,
+      });
+      where.expenseDate = dateFilter;
     }
 
     if (query.paymentMethod) {
@@ -80,15 +86,11 @@ export class ExpensesService {
       }
     }
 
-    // Build orderBy clause
-    const allowedSortFields = [
-      'expenseDate',
-      'amount',
-      'createdAt',
-      'updatedAt',
-    ];
+    // Build sorting
     const sortBy =
-      query.sortBy && allowedSortFields.includes(query.sortBy)
+      query.sortBy === 'amount' ||
+        query.sortBy === 'createdAt' ||
+        query.sortBy === 'updatedAt'
         ? query.sortBy
         : 'expenseDate';
     const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
@@ -99,22 +101,30 @@ export class ExpensesService {
 
     // Get total count
     const total = await this.prisma.expense.count({ where });
+    console.log('Total expenses found:', total, 'Where clause:', JSON.stringify(where, null, 2));
 
-    // Get paginated data
-    const data = await this.prisma.expense.findMany({
+    // Build find options
+    const findOptions: Prisma.ExpenseFindManyArgs = {
       where,
       include: {
         category: true,
       },
       orderBy,
-      skip: query.skip,
-      take: query.take,
-    });
+    };
+
+    // Only apply pagination if page and limit are provided
+    if (query.page !== undefined && query.limit !== undefined) {
+      findOptions.skip = query.skip;
+      findOptions.take = query.take;
+    }
+
+    // Get data (paginated or all)
+    const data = await this.prisma.expense.findMany(findOptions);
 
     return new PaginatedResponseDto(
       data,
       query.page || 1,
-      query.limit || 20,
+      query.limit || total, // If no limit, use total count
       total,
     );
   }

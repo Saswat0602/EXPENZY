@@ -4,40 +4,100 @@ import { useState } from 'react';
 import { useExpenses } from '@/lib/hooks/use-expenses';
 import { useIncome } from '@/lib/hooks/use-income';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
-import { Plus, TrendingUp, TrendingDown, Search } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { AddTransactionModal } from '@/components/modals/add-transaction-modal';
-
-type TransactionType = 'all' | 'expense' | 'income';
+import { Button } from '@/components/ui/button';
+import {
+    ITEMS_PER_PAGE,
+    type TransactionType,
+    calculatePaginationMeta,
+    getDisplayTransactions,
+    getDisplayIndices,
+    getPageNumbers,
+    combineTransactions,
+} from '@/lib/utils/transaction-helpers';
 
 export default function TransactionsPage() {
     const [type, setType] = useState<TransactionType>('all');
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
 
-    const { data: expenses = [], isLoading: expensesLoading } = useExpenses();
+    // Get current year date range
+    const currentYear = new Date().getFullYear();
+    const startDate = `${currentYear}-01-01`;
+    const endDate = `${currentYear}-12-31`;
+
+    // Fetch expenses with server-side pagination ONLY for expense-only view
+    // For 'all' and 'income', fetch ALL expenses without limit
+    const { data: expensesResponse, isLoading: expensesLoading } = useExpenses({
+        page: type === 'expense' ? currentPage : undefined,
+        limit: type === 'expense' ? ITEMS_PER_PAGE : undefined,
+        startDate,
+        endDate,
+        search: search || undefined,
+    });
+
     const { data: income, isLoading: incomeLoading } = useIncome();
 
     const isLoading = expensesLoading || incomeLoading;
 
-    // Ensure income is an array
+    // Extract data
+    const expenses = expensesResponse?.data || [];
+    const expensesMeta = expensesResponse?.meta;
     const incomeArray = Array.isArray(income) ? income : [];
 
-    // Combine and sort transactions
-    const allTransactions = [
-        ...expenses.map(e => ({ ...e, type: 'expense' as const })),
-        ...incomeArray.map(i => ({ ...i, type: 'income' as const, description: i.source })),
-    ].sort((a, b) => {
-        const dateA = 'expenseDate' in a ? new Date(a.expenseDate) : new Date(a.incomeDate);
-        const dateB = 'expenseDate' in b ? new Date(b.expenseDate) : new Date(b.incomeDate);
-        return dateB.getTime() - dateA.getTime();
-    });
+    // Combine transactions based on type filter
+    const allTransactions = combineTransactions(type, expenses, incomeArray);
 
-    // Filter transactions
-    const filteredTransactions = allTransactions.filter(t => {
-        if (type !== 'all' && t.type !== type) return false;
-        if (search && !t.description.toLowerCase().includes(search.toLowerCase())) return false;
-        return true;
-    });
+    // Calculate pagination metadata
+    const { totalPages, totalCount } = calculatePaginationMeta(
+        type,
+        expensesMeta,
+        allTransactions.length,
+        currentPage
+    );
+
+    // Get transactions to display
+    const displayTransactions = getDisplayTransactions(
+        type,
+        allTransactions,
+        currentPage,
+        type === 'expense' && !!expensesMeta
+    );
+
+    // Calculate display indices
+    const { startIndex, endIndex } = getDisplayIndices(currentPage, totalCount);
+
+    // Debug logging
+    console.log('=== Pagination Debug ===');
+    console.log('Type:', type);
+    console.log('Current Page:', currentPage);
+    console.log('Total Count:', totalCount);
+    console.log('Total Pages:', totalPages);
+    console.log('All Transactions Length:', allTransactions.length);
+    console.log('Display Transactions Length:', displayTransactions.length);
+    console.log('Expenses Meta:', expensesMeta);
+    console.log('========================');
+
+    // Event handlers
+    const handleFilterChange = (newType: TransactionType) => {
+        setType(newType);
+        setCurrentPage(1);
+    };
+
+    const handleSearchChange = (value: string) => {
+        setSearch(value);
+        setCurrentPage(1);
+    };
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // Get page numbers for pagination UI
+    const pageNumbers = getPageNumbers(currentPage, totalPages);
 
     return (
         <div className="space-y-6">
@@ -45,7 +105,7 @@ export default function TransactionsPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold">Transactions</h1>
-                    <p className="text-muted-foreground">Track your income and expenses</p>
+                    <p className="text-muted-foreground">Track your {currentYear} income and expenses</p>
                 </div>
                 <button
                     onClick={() => setIsModalOpen(true)}
@@ -67,7 +127,7 @@ export default function TransactionsPage() {
                         type="text"
                         placeholder="Search transactions..."
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => handleSearchChange(e.target.value)}
                         className="w-full pl-10 pr-4 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                 </div>
@@ -77,7 +137,7 @@ export default function TransactionsPage() {
                     {(['all', 'expense', 'income'] as TransactionType[]).map((t) => (
                         <button
                             key={t}
-                            onClick={() => setType(t)}
+                            onClick={() => handleFilterChange(t)}
                             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${type === t
                                 ? 'bg-background shadow-sm'
                                 : 'hover:bg-background/50'
@@ -89,18 +149,25 @@ export default function TransactionsPage() {
                 </div>
             </div>
 
+            {/* Results count */}
+            {!isLoading && totalCount > 0 && (
+                <p className="text-sm text-muted-foreground">
+                    Showing {startIndex + 1}-{endIndex} of {totalCount} transactions
+                </p>
+            )}
+
             {/* Transactions List */}
             <div className="bg-card border border-border rounded-lg divide-y divide-border">
                 {isLoading ? (
                     <div className="p-8 text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
                     </div>
-                ) : filteredTransactions.length === 0 ? (
+                ) : displayTransactions.length === 0 ? (
                     <div className="p-8 text-center text-muted-foreground">
-                        No transactions found
+                        No transactions found for {currentYear}
                     </div>
                 ) : (
-                    filteredTransactions.map((transaction) => {
+                    displayTransactions.map((transaction) => {
                         const date = 'expenseDate' in transaction ? transaction.expenseDate : transaction.incomeDate;
                         const isIncome = transaction.type === 'income';
 
@@ -147,6 +214,66 @@ export default function TransactionsPage() {
                     })
                 )}
             </div>
+
+            {/* Pagination */}
+            {!isLoading && totalPages > 1 && (
+                <>
+                    {/* Desktop Pagination */}
+                    <div className="hidden md:flex items-center justify-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                            Previous
+                        </Button>
+
+                        {pageNumbers.map((page, index) => (
+                            page === '...' ? (
+                                <span key={`ellipsis-${index}`} className="px-2">...</span>
+                            ) : (
+                                <Button
+                                    key={page}
+                                    variant={currentPage === page ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => handlePageChange(page as number)}
+                                    className="min-w-[40px]"
+                                >
+                                    {page}
+                                </Button>
+                            )
+                        ))}
+
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                        >
+                            Next
+                            <ChevronRight className="w-4 h-4" />
+                        </Button>
+                    </div>
+
+                    {/* Mobile Show More */}
+                    <div className="md:hidden flex flex-col items-center gap-2">
+                        {currentPage < totalPages && (
+                            <Button
+                                variant="outline"
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                className="w-full"
+                            >
+                                Show More ({totalCount - endIndex} remaining)
+                            </Button>
+                        )}
+                        <p className="text-sm text-muted-foreground text-center">
+                            Page {currentPage} of {totalPages}
+                        </p>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

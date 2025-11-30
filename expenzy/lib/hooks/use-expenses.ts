@@ -1,22 +1,53 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { QUERY_KEYS } from '@/lib/config/query-client';
 import type { Expense, CreateExpenseDto, UpdateExpenseDto, ExpenseFilters } from '@/types';
 import { toast } from 'sonner';
 
-export function useExpenses(filters?: ExpenseFilters) {
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+interface PaginatedResponse<T> {
+    data: T[];
+    meta: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    };
+}
+
+function getToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('token');
+}
+
+export function useExpenses(filters?: ExpenseFilters & { page?: number; limit?: number }) {
     return useQuery({
         queryKey: QUERY_KEYS.EXPENSES.LIST(filters),
         queryFn: async () => {
             const params = new URLSearchParams();
+
+            // Pagination
+            if (filters?.page) params.append('page', filters.page.toString());
+            if (filters?.limit) params.append('limit', filters.limit.toString());
+
+            // Filters
             if (filters?.startDate) params.append('startDate', filters.startDate);
             if (filters?.endDate) params.append('endDate', filters.endDate);
             if (filters?.categoryId) params.append('categoryId', filters.categoryId);
             if (filters?.search) params.append('search', filters.search);
 
             const url = `${API_ENDPOINTS.EXPENSES.BASE}?${params.toString()}`;
-            return apiClient.get<Expense[]>(url);
+
+            // Use axios directly to get the full response
+            const token = getToken();
+            const response = await axios.get<PaginatedResponse<Expense>>(`${API_URL}/expenses?${params.toString()}`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+
+            return response.data;
         },
     });
 }
