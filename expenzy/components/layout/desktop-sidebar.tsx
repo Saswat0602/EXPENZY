@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils/cn';
-import { LogOut, LayoutDashboard, Receipt, BarChart3, Wallet, User, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LogOut, LayoutDashboard, Receipt, BarChart3, Wallet, User, ChevronLeft, ChevronRight, PiggyBank, Calendar, Users, HandCoins } from 'lucide-react';
 import { ROUTES } from '@/lib/routes';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,10 @@ const navigation = [
     { name: 'Transactions', route: ROUTES.TRANSACTIONS, icon: Receipt },
     { name: 'Analytics', route: ROUTES.ANALYTICS, icon: BarChart3 },
     { name: 'Budget', route: ROUTES.BUDGET, icon: Wallet },
+    { name: 'Savings', route: ROUTES.SAVINGS, icon: PiggyBank },
+    { name: 'Subscriptions', route: ROUTES.SUBSCRIPTIONS, icon: Calendar },
+    { name: 'Groups', route: ROUTES.GROUPS, icon: Users },
+    { name: 'Loans', route: ROUTES.LOANS, icon: HandCoins },
     { name: 'Profile', route: ROUTES.PROFILE, icon: User },
 ];
 

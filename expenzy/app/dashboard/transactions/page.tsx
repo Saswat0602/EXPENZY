@@ -13,14 +13,17 @@ export default function TransactionsPage() {
     const [search, setSearch] = useState('');
 
     const { data: expenses = [], isLoading: expensesLoading } = useExpenses();
-    const { data: income = [], isLoading: incomeLoading } = useIncome();
+    const { data: income, isLoading: incomeLoading } = useIncome();
 
     const isLoading = expensesLoading || incomeLoading;
+
+    // Ensure income is an array
+    const incomeArray = Array.isArray(income) ? income : [];
 
     // Combine and sort transactions
     const allTransactions = [
         ...expenses.map(e => ({ ...e, type: 'expense' as const })),
-        ...income.map(i => ({ ...i, type: 'income' as const, description: i.source })),
+        ...incomeArray.map(i => ({ ...i, type: 'income' as const, description: i.source })),
     ].sort((a, b) => {
         const dateA = 'expenseDate' in a ? new Date(a.expenseDate) : new Date(a.incomeDate);
         const dateB = 'expenseDate' in b ? new Date(b.expenseDate) : new Date(b.incomeDate);
