@@ -1,6 +1,14 @@
 // Re-export all types
 export * from './api';
 export * from './auth';
+export interface User {
+    id: string;
+    email: string;
+    name: string;
+    avatar?: string;
+    defaultCurrency?: 'INR' | 'USD' | 'EUR';
+    createdAt: string;
+}
 export * from './category';
 export * from './expense';
 export * from './income';

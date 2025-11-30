@@ -7,13 +7,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Currency {
+  INR // Indian Rupee
+  USD // US Dollar
+  EUR // Euro
+}
+
 model User {
   id                   String             @id @default(uuid())
   email                String             @unique
   username             String             @unique
   passwordHash         String?            @map("password_hash")
   phone                String?
-  defaultCurrency      String             @default("USD") @map("default_currency")
+  defaultCurrency      Currency           @default(INR) @map("default_currency")
   timezone             String             @default("UTC")
   profilePictureUrl    String?            @map("profile_picture_url")
   isActive             Boolean            @default(true) @map("is_active")
@@ -96,7 +102,7 @@ model Expense {
   userId             String            @map("user_id")
   categoryId         String?           @map("category_id")
   amount             Decimal           @db.Decimal(15, 2)
-  currency           String            @default("USD")
+  currency           Currency          @default(INR)
   originalAmount     Decimal?          @map("original_amount") @db.Decimal(15, 2)
   originalCurrency   String?           @map("original_currency")
   exchangeRate       Decimal?          @map("exchange_rate") @db.Decimal(10, 4)

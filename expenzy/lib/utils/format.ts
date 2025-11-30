@@ -5,11 +5,10 @@ export function formatDate(date: string | Date, formatStr: string = 'MMM dd, yyy
     return format(dateObj, formatStr);
 }
 
-export function formatCurrency(amount: number, currency: string = 'USD'): string {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency,
-    }).format(amount);
+import { formatCurrency as formatCurrencyUtil, CurrencyCode } from './currency';
+
+export function formatCurrency(amount: number | string, currency: CurrencyCode = 'INR'): string {
+    return formatCurrencyUtil(amount, currency);
 }
 
 export function formatRelativeTime(date: string | Date): string {
