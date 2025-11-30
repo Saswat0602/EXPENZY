@@ -11,6 +11,7 @@ import { LoadingSkeleton } from '@/components/shared/loading-skeleton';
 import { EmptyState } from '@/components/shared/empty-state';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { HandCoins, Plus, Trash2, DollarSign } from 'lucide-react';
+import { AddLoanModal } from '@/components/modals/add-loan-modal';
 
 interface LoanCardProps {
     id: string;
@@ -26,6 +27,7 @@ interface LoanCardProps {
 
 export default function LoansPage() {
     const [activeTab, setActiveTab] = useState('lent');
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const { data: lentLoans = [], isLoading: lentLoading } = useLentLoans();
     const { data: borrowedLoans = [], isLoading: borrowedLoading } = useBorrowedLoans();
     const deleteLoan = useDeleteLoan();
@@ -119,11 +121,13 @@ export default function LoansPage() {
                     <h1 className="text-2xl md:text-3xl font-bold">Loans</h1>
                     <p className="text-muted-foreground">Track money you&apos;ve lent and borrowed</p>
                 </div>
-                <Button>
+                <Button onClick={() => setIsModalOpen(true)}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Loan
                 </Button>
             </div>
+
+            <AddLoanModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>

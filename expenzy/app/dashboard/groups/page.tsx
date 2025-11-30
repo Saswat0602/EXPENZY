@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useGroups, useDeleteGroup } from '@/lib/hooks/use-groups';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -7,8 +8,10 @@ import { LoadingSkeleton } from '@/components/shared/loading-skeleton';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Users, Plus, Trash2, Settings } from 'lucide-react';
 import { formatDate } from '@/lib/utils/format';
+import { AddGroupModal } from '@/components/modals/add-group-modal';
 
 export default function GroupsPage() {
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const { data: groups = [], isLoading } = useGroups();
     const deleteGroup = useDeleteGroup();
 
@@ -30,11 +33,13 @@ export default function GroupsPage() {
                     <h1 className="text-2xl md:text-3xl font-bold">Groups</h1>
                     <p className="text-muted-foreground">Manage shared expenses with groups</p>
                 </div>
-                <Button>
+                <Button onClick={() => setIsModalOpen(true)}>
                     <Plus className="w-4 h-4 mr-2" />
                     Create Group
                 </Button>
             </div>
+
+            <AddGroupModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
             {/* Groups List */}
             {groups.length === 0 ? (

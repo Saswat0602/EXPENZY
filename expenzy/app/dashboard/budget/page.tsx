@@ -1,10 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { useBudgets, useBudgetPerformance } from '@/lib/hooks/use-budget';
 import { formatCurrency, formatPercentage } from '@/lib/utils/format';
 import { Plus, Wallet, AlertCircle, CheckCircle } from 'lucide-react';
+import { AddBudgetModal } from '@/components/modals/add-budget-modal';
 
 export default function BudgetPage() {
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const { data: budgets = [], isLoading: budgetsLoading } = useBudgets();
     const { data: performance, isLoading: performanceLoading } = useBudgetPerformance();
 
@@ -44,11 +47,16 @@ export default function BudgetPage() {
                     <h1 className="text-2xl md:text-3xl font-bold">Budgets</h1>
                     <p className="text-muted-foreground">Manage your spending limits</p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+                <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                >
                     <Plus className="w-5 h-5" />
                     <span className="hidden sm:inline">Create Budget</span>
                 </button>
             </div>
+
+            <AddBudgetModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

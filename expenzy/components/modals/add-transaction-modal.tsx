@@ -138,7 +138,10 @@ export function AddTransactionModal({ open, onClose }: AddTransactionModalProps)
                                     categories.map((category) => (
                                         <SelectItem key={category.id} value={category.id}>
                                             <div className="flex items-center gap-2">
-                                                <span>{category.icon}</span>
+                                                <div
+                                                    className="w-3 h-3 rounded-full"
+                                                    style={{ backgroundColor: category.color }}
+                                                />
                                                 <span>{category.name}</span>
                                             </div>
                                         </SelectItem>
