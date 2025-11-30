@@ -1,12 +1,4 @@
-export interface User {
-    id: string;
-    email: string;
-    name: string;
-    avatar?: string;
-    currency: string;
-    createdAt: string;
-    updatedAt: string;
-}
+import type { User } from './index';
 
 export interface LoginCredentials {
     email: string;

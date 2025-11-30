@@ -42,8 +42,8 @@ export default function DashboardLayout({
             <DesktopSidebar />
 
             {/* Main Content */}
-            <main className="pb-20 md:pb-0 md:pl-64">
-                <div className="container max-w-7xl mx-auto px-4 py-6">
+            <main className="pb-20 md:pb-0 md:ml-64">
+                <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     {children}
                 </div>
             </main>
