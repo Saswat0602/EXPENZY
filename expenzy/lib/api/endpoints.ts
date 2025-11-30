@@ -79,19 +79,45 @@ export const API_ENDPOINTS = {
     // Tags
     TAGS: {
         BASE: '/tags',
+        LIST: '/tags',
         BY_ID: (id: string) => `/tags/${id}`,
     },
 
     // Payment Methods
     PAYMENT_METHODS: {
         BASE: '/payment-methods',
+        LIST: '/payment-methods',
         BY_ID: (id: string) => `/payment-methods/${id}`,
         SET_DEFAULT: (id: string) => `/payment-methods/${id}/set-default`,
+    },
+
+    // Groups
+    GROUPS: {
+        LIST: '/groups',
+        BY_ID: (id: string) => `/groups/${id}`,
+        MEMBERS: (id: string) => `/groups/${id}/members`,
+        EXPENSES: (id: string) => `/groups/${id}/expenses`,
+    },
+
+    // Loans
+    LOANS: {
+        LIST: '/loans',
+        BY_ID: (id: string) => `/loans/${id}`,
+        PAYMENTS: (id: string) => `/loans/${id}/payments`,
+    },
+
+    // Accounts
+    ACCOUNTS: {
+        LIST: '/accounts',
+        BY_ID: (id: string) => `/accounts/${id}`,
+        TRANSACTIONS: (id: string) => `/accounts/${id}/transactions`,
+        TOTAL_BALANCE: '/accounts/total-balance',
     },
 
     // Notifications
     NOTIFICATIONS: {
         BASE: '/notifications',
+        LIST: '/notifications',
         BY_ID: (id: string) => `/notifications/${id}`,
         MARK_READ: (id: string) => `/notifications/${id}/read`,
         MARK_ALL_READ: '/notifications/read-all',

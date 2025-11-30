@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '@/contexts/auth-context';
 import { CurrencyProvider } from '@/contexts/currency-context';
+import { ThemeProvider } from '@/contexts/theme-context';
 import { useState } from 'react';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -22,13 +23,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     return (
         <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-                <CurrencyProvider>
-                    {children}
-                    <Toaster position="top-right" richColors />
-                    <ReactQueryDevtools initialIsOpen={false} />
-                </CurrencyProvider>
-            </AuthProvider>
+            <ThemeProvider>
+                <AuthProvider>
+                    <CurrencyProvider>
+                        {children}
+                        <Toaster position="top-right" richColors />
+                        <ReactQueryDevtools initialIsOpen={false} />
+                    </CurrencyProvider>
+                </AuthProvider>
+            </ThemeProvider>
         </QueryClientProvider>
     );
 }

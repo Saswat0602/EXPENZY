@@ -30,7 +30,7 @@ export function formatCurrency(
     currency: CurrencyCode = 'INR'
 ): string {
     const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-    const { symbol, locale, code } = CURRENCIES[currency];
+    const { locale, code } = CURRENCIES[currency];
 
     return new Intl.NumberFormat(locale, {
         style: 'currency',
@@ -49,8 +49,8 @@ export function getCurrencyName(currency: CurrencyCode = 'INR'): string {
 }
 
 export function getAllCurrencies() {
-    return Object.entries(CURRENCIES).map(([code, info]) => ({
-        code: code as CurrencyCode,
+    return Object.entries(CURRENCIES).map(([currencyCode, info]) => ({
         ...info,
+        code: currencyCode as CurrencyCode,
     }));
 }

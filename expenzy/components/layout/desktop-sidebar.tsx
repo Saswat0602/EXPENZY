@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils/cn';
 import { LogOut, LayoutDashboard, Receipt, BarChart3, Wallet, User, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ROUTES } from '@/lib/routes';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 const navigation = [
@@ -20,15 +20,13 @@ export function DesktopSidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const { user, logout } = useAuth();
-    const [isCollapsed, setIsCollapsed] = useState(false);
-
-    // Load collapsed state from localStorage
-    useEffect(() => {
-        const saved = localStorage.getItem('sidebar-collapsed');
-        if (saved) {
-            setIsCollapsed(saved === 'true');
+    const [isCollapsed, setIsCollapsed] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('sidebar-collapsed');
+            return saved === 'true';
         }
-    }, []);
+        return false;
+    });
 
     // Save collapsed state to localStorage
     const toggleCollapsed = () => {
