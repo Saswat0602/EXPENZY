@@ -24,6 +24,7 @@ export interface UpdateProfileDto {
     phone?: string;
     avatar?: string;
     timezone?: string;
+    defaultCurrency?: 'USD' | 'EUR' | 'GBP' | 'INR';
 }
 
 export interface ChangePasswordDto {
