@@ -42,4 +42,6 @@ export interface ExpenseFilters {
     maxAmount?: number;
     paymentMethod?: string;
     search?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
 }

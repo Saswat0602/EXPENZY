@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -29,13 +29,13 @@ export function DeleteAccountModal({ open, onClose }: DeleteAccountModalProps) {
         register,
         handleSubmit,
         formState: { errors },
+        control,
         reset,
-        watch,
     } = useForm<DeleteAccountFormData>({
         resolver: zodResolver(deleteAccountSchema),
     });
 
-    const confirmation = watch('confirmation');
+    const confirmation = useWatch({ control, name: 'confirmation' });
     const isConfirmationValid =
         confirmation?.toLowerCase() === 'delete my account';
 

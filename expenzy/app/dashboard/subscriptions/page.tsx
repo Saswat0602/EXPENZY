@@ -10,7 +10,6 @@ import { AddSubscriptionModal } from '@/components/modals/add-subscription-modal
 import { ConfirmationModal } from '@/components/modals/confirmation-modal';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { Plus, Calendar, Trash2, Edit, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
 
 export default function SubscriptionsPage() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);

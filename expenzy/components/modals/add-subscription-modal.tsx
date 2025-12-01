@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCreateSubscription } from '@/lib/hooks/use-subscriptions';
 import { createSubscriptionSchema, type CreateSubscriptionInput } from '@/lib/validations/subscription.schema';
@@ -29,7 +29,7 @@ export function AddSubscriptionModal({ open, onClose }: AddSubscriptionModalProp
         handleSubmit,
         formState: { errors },
         setValue,
-        watch,
+        control,
         reset,
     } = useForm<CreateSubscriptionInput>({
         resolver: zodResolver(createSubscriptionSchema),
@@ -40,10 +40,10 @@ export function AddSubscriptionModal({ open, onClose }: AddSubscriptionModalProp
         },
     });
 
-    const billingCycle = watch('billingCycle');
-    const startDate = watch('startDate');
-    const nextBillingDate = watch('nextBillingDate');
-    const endDate = watch('endDate');
+    const billingCycle = useWatch({ control, name: 'billingCycle' });
+    const startDate = useWatch({ control, name: 'startDate' });
+    const nextBillingDate = useWatch({ control, name: 'nextBillingDate' });
+    const endDate = useWatch({ control, name: 'endDate' });
 
     const onSubmit = async (data: CreateSubscriptionInput) => {
         try {
@@ -125,7 +125,7 @@ export function AddSubscriptionModal({ open, onClose }: AddSubscriptionModalProp
                         <Label>Billing Cycle *</Label>
                         <Select
                             value={billingCycle}
-                            onValueChange={(value: any) => setValue('billingCycle', value)}
+                            onValueChange={(value) => setValue('billingCycle', value as CreateSubscriptionInput['billingCycle'])}
                         >
                             <SelectTrigger className={errors.billingCycle ? 'border-destructive' : ''}>
                                 <SelectValue />

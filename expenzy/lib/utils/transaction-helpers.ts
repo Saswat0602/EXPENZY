@@ -2,6 +2,9 @@
  * Helper functions for transaction page logic
  */
 
+import type { Expense } from '@/types/expense';
+import type { Income } from '@/types/income';
+
 export const ITEMS_PER_PAGE = 20;
 
 export type TransactionType = 'all' | 'expense' | 'income';
@@ -11,7 +14,7 @@ export type TransactionType = 'all' | 'expense' | 'income';
  */
 export function calculatePaginationMeta(
     type: TransactionType,
-    expensesMeta: any,
+    expensesMeta: { totalPages: number; total: number; hasNext: boolean; hasPrevious: boolean } | null,
     allTransactionsLength: number,
     currentPage: number
 ) {
@@ -42,7 +45,7 @@ export function calculatePaginationMeta(
  */
 export function getDisplayTransactions(
     type: TransactionType,
-    allTransactions: any[],
+    allTransactions: (Expense | Income)[],
     currentPage: number,
     isServerPaginated: boolean
 ) {
@@ -104,8 +107,8 @@ export function getPageNumbers(currentPage: number, totalPages: number) {
  */
 export function combineTransactions(
     type: TransactionType,
-    expenses: any[],
-    income: any[]
+    expenses: Expense[],
+    income: Income[]
 ) {
     if (type === 'expense') {
         return expenses.map(e => ({ ...e, type: 'expense' as const }));

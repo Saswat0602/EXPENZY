@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useCreateLoan } from '@/lib/hooks/use-loans';
+import { useCreateLoan, type CreateLoanData } from '@/lib/hooks/use-loans';
 import { createLoanSchema, type CreateLoanInput } from '@/lib/validations/schemas';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -30,7 +30,7 @@ export function AddLoanModal({ open, onClose }: AddLoanModalProps) {
         handleSubmit,
         formState: { errors },
         setValue,
-        watch,
+        control,
         reset,
     } = useForm<CreateLoanInput>({
         resolver: zodResolver(createLoanSchema),
@@ -39,16 +39,17 @@ export function AddLoanModal({ open, onClose }: AddLoanModalProps) {
         },
     });
 
-    const dueDate = watch('dueDate');
+    const dueDate = useWatch({ control, name: 'dueDate' });
 
     const onSubmit = async (data: CreateLoanInput) => {
         try {
             // Prepare data based on loan type
-            const loanData: any = {
+            const loanData: CreateLoanData = {
                 amount: data.amount,
                 description: data.description,
                 loanDate: data.loanDate?.toISOString() || new Date().toISOString(),
                 dueDate: data.dueDate?.toISOString(),
+                type: loanType,
             };
 
             // For LENT loans, we provide borrower info
@@ -80,7 +81,7 @@ export function AddLoanModal({ open, onClose }: AddLoanModalProps) {
                     <DialogTitle>Add Loan</DialogTitle>
                 </DialogHeader>
 
-                <Tabs value={loanType} onValueChange={(v: any) => setLoanType(v)}>
+                <Tabs value={loanType} onValueChange={(v) => setLoanType(v as 'LENT' | 'BORROWED')}>
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="LENT">Money I Lent</TabsTrigger>
                         <TabsTrigger value="BORROWED">Money I Borrowed</TabsTrigger>

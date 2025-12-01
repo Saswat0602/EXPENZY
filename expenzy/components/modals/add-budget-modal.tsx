@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCategories } from '@/lib/hooks/use-categories';
 import { useCreateBudget } from '@/lib/hooks/use-budget';
@@ -30,7 +30,7 @@ export function AddBudgetModal({ open, onClose }: AddBudgetModalProps) {
         handleSubmit,
         formState: { errors },
         setValue,
-        watch,
+        control,
         reset,
     } = useForm<CreateBudgetInput>({
         resolver: zodResolver(createBudgetSchema),
@@ -40,8 +40,8 @@ export function AddBudgetModal({ open, onClose }: AddBudgetModalProps) {
         },
     });
 
-    const periodType = watch('periodType');
-    const startDate = watch('startDate');
+    const periodType = useWatch({ control, name: 'periodType' });
+    const startDate = useWatch({ control, name: 'startDate' });
 
     const onSubmit = async (data: CreateBudgetInput) => {
         try {
@@ -115,7 +115,7 @@ export function AddBudgetModal({ open, onClose }: AddBudgetModalProps) {
                         <Label>Period *</Label>
                         <Select
                             value={periodType}
-                            onValueChange={(value: any) => setValue('periodType', value)}
+                            onValueChange={(value) => setValue('periodType', value as CreateBudgetInput['periodType'])}
                         >
                             <SelectTrigger>
                                 <SelectValue />

@@ -10,7 +10,6 @@ import { AddSavingsGoalModal } from '@/components/modals/add-savings-goal-modal'
 import { ConfirmationModal } from '@/components/modals/confirmation-modal';
 import { formatCurrency, formatDate, formatPercentage } from '@/lib/utils/format';
 import { Plus, Target, Trash2, Edit, TrendingUp } from 'lucide-react';
-import { toast } from 'sonner';
 
 export default function SavingsGoalsPage() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);

@@ -40,11 +40,14 @@ export interface LoanPayment {
 export interface CreateLoanData {
     borrowerId?: string;
     borrowerEmail?: string;
+    borrowerName?: string;
+    lenderName?: string;
     amount: number;
     currency?: string;
     description?: string;
+    loanDate: string;
     dueDate?: string;
-    type: 'LENT' | 'BORROWED';
+    type?: 'LENT' | 'BORROWED';
 }
 
 export interface AddPaymentData {

@@ -26,7 +26,7 @@ export interface CreateBudgetDto {
     currency?: string;
     periodType: 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'custom';
     startDate: string;
-    endDate: string;
+    endDate?: string;
     alertThreshold?: number;
 }
 

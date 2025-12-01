@@ -6,7 +6,7 @@ export interface User {
     lastName?: string;
     phone?: string;
     avatar?: string;
-    defaultCurrency: string;
+    defaultCurrency: 'USD' | 'EUR' | 'GBP' | 'INR';
     timezone: string;
     isActive: boolean;
     isVerified: boolean;

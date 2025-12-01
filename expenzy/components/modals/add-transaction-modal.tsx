@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useCategories } from '@/lib/hooks/use-categories';
@@ -49,7 +49,7 @@ export function AddTransactionModal({ open, onClose }: AddTransactionModalProps)
         handleSubmit,
         formState: { errors },
         setValue,
-        watch,
+        control,
         reset,
     } = useForm<TransactionFormData>({
         resolver: zodResolver(transactionSchema),
@@ -59,13 +59,13 @@ export function AddTransactionModal({ open, onClose }: AddTransactionModalProps)
         },
     });
 
-    const selectedDate = watch('date');
-    const selectedCategory = watch('categoryId');
+    const selectedDate = useWatch({ control, name: 'date' });
+    const selectedCategory = useWatch({ control, name: 'categoryId' });
 
     const handleTypeChange = (type: 'income' | 'expense') => {
         setTransactionType(type);
         setValue('type', type);
-        setValue('categoryId', undefined as any); // Reset category when type changes
+        setValue('categoryId', ''); // Reset category when type changes
     };
 
     const onSubmit = async (data: TransactionFormData) => {

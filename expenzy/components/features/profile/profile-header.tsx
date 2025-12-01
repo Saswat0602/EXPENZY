@@ -25,6 +25,7 @@ export function ProfileHeader({ user, onEditProfile }: ProfileHeaderProps) {
         <div className="rounded-xl bg-card border border-border p-8 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                 {user?.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                         src={user.avatar}
                         alt={displayName}

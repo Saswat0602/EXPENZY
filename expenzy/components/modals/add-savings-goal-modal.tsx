@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCreateSavingsGoal } from '@/lib/hooks/use-savings';
 import { createSavingsGoalSchema, type CreateSavingsGoalInput } from '@/lib/validations/savings.schema';
@@ -40,7 +40,7 @@ export function AddSavingsGoalModal({ open, onClose }: AddSavingsGoalModalProps)
         handleSubmit,
         formState: { errors },
         setValue,
-        watch,
+        control,
         reset,
     } = useForm<CreateSavingsGoalInput>({
         resolver: zodResolver(createSavingsGoalSchema),
@@ -50,9 +50,9 @@ export function AddSavingsGoalModal({ open, onClose }: AddSavingsGoalModalProps)
         },
     });
 
-    const targetDate = watch('targetDate');
-    const priority = watch('priority');
-    const selectedColor = watch('color');
+    const targetDate = useWatch({ control, name: 'targetDate' });
+    const priority = useWatch({ control, name: 'priority' });
+    const selectedColor = useWatch({ control, name: 'color' });
 
     const onSubmit = async (data: CreateSavingsGoalInput) => {
         try {
@@ -168,7 +168,7 @@ export function AddSavingsGoalModal({ open, onClose }: AddSavingsGoalModalProps)
                         <Label>Priority (Optional)</Label>
                         <Select
                             value={priority}
-                            onValueChange={(value: any) => setValue('priority', value)}
+                            onValueChange={(value) => setValue('priority', value as CreateSavingsGoalInput['priority'])}
                         >
                             <SelectTrigger>
                                 <SelectValue />
