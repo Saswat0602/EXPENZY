@@ -4,18 +4,20 @@ import { useAuth } from '@/contexts/auth-context';
 import { useTheme } from '@/contexts/theme-context';
 import { Bell, Moon, Sun, LogOut } from 'lucide-react';
 
-export function MobileHeader() {
+export function DesktopHeader() {
     const { user, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
 
     return (
-        <header className="md:hidden sticky top-0 z-40 w-full bg-card border-b border-border safe-top">
-            <div className="flex items-center justify-between h-14 px-4">
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground font-bold text-sm">
+        <header className="hidden md:block fixed top-0 left-0 right-0 z-50 h-16 bg-card border-b border-border">
+            <div className="flex items-center justify-between h-full px-6">
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold shadow-lg">
                         E
                     </div>
-                    <h1 className="text-lg font-bold">Expenzy</h1>
+                    <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                        Expenzy
+                    </span>
                 </div>
 
                 <div className="flex items-center gap-2">

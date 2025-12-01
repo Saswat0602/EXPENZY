@@ -53,31 +53,12 @@ export function DesktopSidebar() {
     return (
         <aside
             className={cn(
-                'hidden md:flex md:flex-col md:fixed md:inset-y-0 md:border-r md:border-border md:bg-card transition-all duration-300',
+                'hidden md:flex md:flex-col md:fixed md:inset-y-0 md:border-r md:border-border md:bg-card transition-all duration-300 pt-16',
                 isCollapsed ? 'md:w-20' : 'md:w-64'
             )}
         >
-            {/* Logo */}
-            <div className="flex items-center justify-between h-16 px-6">
-                {!isCollapsed && (
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold shadow-lg">
-                            E
-                        </div>
-                        <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                            Expenzy
-                        </span>
-                    </div>
-                )}
-                {isCollapsed && (
-                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold shadow-lg mx-auto">
-                        E
-                    </div>
-                )}
-            </div>
-
             {/* Toggle Button */}
-            <div className="px-4 py-3">
+            <div className="px-4 py-4 mt-2">
                 <Button
                     variant="ghost"
                     size="sm"

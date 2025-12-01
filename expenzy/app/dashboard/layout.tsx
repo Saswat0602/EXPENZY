@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { MobileHeader } from '@/components/layout/mobile-header';
 import { BottomNav } from '@/components/layout/bottom-nav';
 import { DesktopSidebar } from '@/components/layout/desktop-sidebar';
+import { DesktopHeader } from '@/components/layout/desktop-header';
 
 export default function DashboardLayout({
     children,
@@ -38,11 +39,14 @@ export default function DashboardLayout({
             {/* Mobile Header - visible only on mobile */}
             <MobileHeader />
 
+            {/* Desktop Header - visible only on desktop */}
+            <DesktopHeader />
+
             {/* Desktop Sidebar - visible only on desktop */}
             <DesktopSidebar />
 
             {/* Main Content */}
-            <main className="pb-20 md:pb-0 md:ml-64">
+            <main className="pb-20 md:pb-0 md:ml-64 md:pt-16">
                 <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     {children}
                 </div>
