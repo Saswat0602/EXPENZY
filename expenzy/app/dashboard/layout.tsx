@@ -3,10 +3,42 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
+import { SidebarProvider, useSidebar } from '@/contexts/sidebar-context';
 import { MobileHeader } from '@/components/layout/mobile-header';
 import { BottomNav } from '@/components/layout/bottom-nav';
 import { DesktopSidebar } from '@/components/layout/desktop-sidebar';
 import { DesktopHeader } from '@/components/layout/desktop-header';
+import { cn } from '@/lib/utils/cn';
+
+function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
+    const { isCollapsed } = useSidebar();
+
+    return (
+        <div className="min-h-screen bg-background">
+            {/* Mobile Header - visible only on mobile */}
+            <MobileHeader />
+
+            {/* Desktop Header - visible only on desktop */}
+            <DesktopHeader />
+
+            {/* Desktop Sidebar - visible only on desktop */}
+            <DesktopSidebar />
+
+            {/* Main Content - dynamically adjusts based on sidebar state */}
+            <main className={cn(
+                "pb-20 md:pb-0 md:pt-16 transition-all duration-300",
+                isCollapsed ? "md:ml-20" : "md:ml-64"
+            )}>
+                <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                    {children}
+                </div>
+            </main>
+
+            {/* Mobile Bottom Nav - visible only on mobile */}
+            <BottomNav />
+        </div>
+    );
+}
 
 export default function DashboardLayout({
     children,
@@ -35,25 +67,8 @@ export default function DashboardLayout({
     }
 
     return (
-        <div className="min-h-screen bg-background">
-            {/* Mobile Header - visible only on mobile */}
-            <MobileHeader />
-
-            {/* Desktop Header - visible only on desktop */}
-            <DesktopHeader />
-
-            {/* Desktop Sidebar - visible only on desktop */}
-            <DesktopSidebar />
-
-            {/* Main Content */}
-            <main className="pb-20 md:pb-0 md:ml-64 md:pt-16">
-                <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                    {children}
-                </div>
-            </main>
-
-            {/* Mobile Bottom Nav - visible only on mobile */}
-            <BottomNav />
-        </div>
+        <SidebarProvider>
+            <DashboardLayoutContent>{children}</DashboardLayoutContent>
+        </SidebarProvider>
     );
 }

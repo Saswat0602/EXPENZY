@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
+import { useSidebar } from '@/contexts/sidebar-context';
 import { cn } from '@/lib/utils/cn';
 import {
     LayoutDashboard,
@@ -17,7 +18,6 @@ import {
     HandCoins
 } from 'lucide-react';
 import { ROUTES } from '@/lib/routes';
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 const navigation = [
@@ -36,19 +36,7 @@ export function DesktopSidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const { user } = useAuth();
-    const [isCollapsed, setIsCollapsed] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('sidebar-collapsed');
-            return saved === 'true';
-        }
-        return false;
-    });
-
-    const toggleCollapsed = () => {
-        const newState = !isCollapsed;
-        setIsCollapsed(newState);
-        localStorage.setItem('sidebar-collapsed', String(newState));
-    };
+    const { isCollapsed, toggleSidebar } = useSidebar();
 
     return (
         <aside
@@ -62,7 +50,7 @@ export function DesktopSidebar() {
                 <Button
                     variant="ghost"
                     size="sm"
-                    onClick={toggleCollapsed}
+                    onClick={toggleSidebar}
                     className={cn(
                         'w-full justify-start gap-2 hover:bg-accent',
                         isCollapsed && 'justify-center px-2'
