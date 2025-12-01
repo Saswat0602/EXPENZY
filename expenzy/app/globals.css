@@ -258,3 +258,41 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Theme Transition Effect */
+::view-transition-group(root) {
+  animation-duration: 0.5s;
+}
+
+::view-transition-new(root) {
+  mix-blend-mode: normal;
+  animation: none;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+.dark::view-transition-old(root) {
+  z-index: 1;
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  z-index: 2147483646;
+  clip-path: circle(0px at var(--x) var(--y));
+  animation: reveal 0.5s ease-in-out forwards;
+}
+
+@keyframes reveal {
+  from {
+    clip-path: circle(0px at var(--x) var(--y));
+  }
+
+  to {
+    clip-path: circle(150% at var(--x) var(--y));
+  }
+}

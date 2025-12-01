@@ -22,7 +22,20 @@ export function DesktopHeader() {
 
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={toggleTheme}
+                        onClick={(e) => {
+                            if (!document.startViewTransition) {
+                                toggleTheme();
+                                return;
+                            }
+
+                            const root = document.documentElement;
+                            root.style.setProperty('--x', `${e.clientX}px`);
+                            root.style.setProperty('--y', `${e.clientY}px`);
+
+                            document.startViewTransition(() => {
+                                toggleTheme();
+                            });
+                        }}
                         className="p-2 rounded-lg hover:bg-muted transition-colors"
                         aria-label="Toggle theme"
                     >
