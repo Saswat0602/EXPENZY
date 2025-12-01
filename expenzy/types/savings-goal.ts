@@ -31,7 +31,8 @@ export interface CreateSavingsGoalDto {
     description?: string;
     targetAmount: number;
     currency?: string;
-    deadline?: string;
+    targetDate?: string;
+    priority?: 'low' | 'medium' | 'high';
     category?: string;
     icon?: string;
     color?: string;

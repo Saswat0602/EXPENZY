@@ -25,6 +25,7 @@ export interface CreateSubscriptionDto {
     currency?: string;
     billingCycle: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
     startDate: string;
+    nextBillingDate: string;
     endDate?: string;
     category?: string;
     paymentMethod?: string;

@@ -1,25 +1,28 @@
 'use client';
 
+import { useState } from 'react';
 import { useSavingsGoals, useDeleteSavingsGoal } from '@/lib/hooks/use-savings';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { EmptyState } from '@/components/shared/empty-state';
 import { LoadingSkeleton } from '@/components/shared/loading-skeleton';
+import { AddSavingsGoalModal } from '@/components/modals/add-savings-goal-modal';
+import { ConfirmationModal } from '@/components/modals/confirmation-modal';
 import { formatCurrency, formatDate, formatPercentage } from '@/lib/utils/format';
 import { Plus, Target, Trash2, Edit, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function SavingsGoalsPage() {
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [goalToDelete, setGoalToDelete] = useState<string | null>(null);
+
     const { data: goals = [], isLoading } = useSavingsGoals();
     const deleteGoal = useDeleteSavingsGoal();
 
-    const handleDelete = async (id: string) => {
-        try {
-            await deleteGoal.mutateAsync(id);
-            toast.success('Savings goal deleted');
-        } catch {
-            toast.error('Failed to delete savings goal');
-        }
+    const handleDeleteClick = (id: string) => {
+        setGoalToDelete(id);
+        setDeleteModalOpen(true);
     };
 
     if (isLoading) {
@@ -38,7 +41,7 @@ export default function SavingsGoalsPage() {
                     <h1 className="text-2xl md:text-3xl font-bold">Savings Goals</h1>
                     <p className="text-muted-foreground">Track your progress towards financial goals</p>
                 </div>
-                <Button>
+                <Button onClick={() => setIsAddModalOpen(true)}>
                     <Plus className="w-4 h-4 mr-2" />
                     New Goal
                 </Button>
@@ -52,7 +55,7 @@ export default function SavingsGoalsPage() {
                     description="Create your first savings goal to start tracking your progress"
                     action={{
                         label: 'Create Goal',
-                        onClick: () => { },
+                        onClick: () => setIsAddModalOpen(true),
                     }}
                 />
             ) : (
@@ -92,8 +95,7 @@ export default function SavingsGoalsPage() {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => handleDelete(goal.id)}
-                                            disabled={deleteGoal.isPending}
+                                            onClick={() => handleDeleteClick(goal.id)}
                                         >
                                             <Trash2 className="w-4 h-4 text-destructive" />
                                         </Button>
@@ -149,6 +151,29 @@ export default function SavingsGoalsPage() {
                     })}
                 </div>
             )}
+
+            {/* Modals */}
+            <AddSavingsGoalModal
+                open={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+            />
+
+            <ConfirmationModal
+                open={deleteModalOpen}
+                onClose={() => {
+                    setDeleteModalOpen(false);
+                    setGoalToDelete(null);
+                }}
+                onConfirm={async () => {
+                    if (goalToDelete) {
+                        await deleteGoal.mutateAsync(goalToDelete);
+                    }
+                }}
+                title="Delete Savings Goal"
+                description="Are you sure you want to delete this savings goal? This action cannot be undone."
+                confirmText="Delete"
+                isLoading={deleteGoal.isPending}
+            />
         </div>
     );
 }

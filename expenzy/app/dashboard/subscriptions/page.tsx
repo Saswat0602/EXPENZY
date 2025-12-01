@@ -1,39 +1,30 @@
 'use client';
 
+import { useState } from 'react';
 import { useSubscriptions, useDeleteSubscription } from '@/lib/hooks/use-subscriptions';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/shared/empty-state';
 import { LoadingSkeleton } from '@/components/shared/loading-skeleton';
+import { AddSubscriptionModal } from '@/components/modals/add-subscription-modal';
+import { ConfirmationModal } from '@/components/modals/confirmation-modal';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { Plus, Calendar, Trash2, Edit, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function SubscriptionsPage() {
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [subscriptionToDelete, setSubscriptionToDelete] = useState<string | null>(null);
+
     const { data: subscriptions = [], isLoading } = useSubscriptions();
     const deleteSubscription = useDeleteSubscription();
 
-    const handleDelete = async (id: string) => {
-        try {
-            await deleteSubscription.mutateAsync(id);
-            toast.success('Subscription deleted');
-        } catch {
-            toast.error('Failed to delete subscription');
-        }
+    const handleDeleteClick = (id: string) => {
+        setSubscriptionToDelete(id);
+        setDeleteModalOpen(true);
     };
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'active':
-                return 'bg-success/10 text-success';
-            case 'paused':
-                return 'bg-warning/10 text-warning';
-            case 'cancelled':
-                return 'bg-destructive/10 text-destructive';
-            default:
-                return 'bg-muted text-muted-foreground';
-        }
-    };
 
     const getFrequencyLabel = (frequency: string) => {
         switch (frequency) {
@@ -60,7 +51,7 @@ export default function SubscriptionsPage() {
 
     // Calculate total monthly cost
     const totalMonthlyCost = subscriptions.reduce((sum, sub) => {
-        if (sub.status !== 'active') return sum;
+        if (!sub.isActive) return sum;
         const amount = Number(sub.amount);
         switch (sub.billingCycle) {
             case 'daily':
@@ -84,7 +75,7 @@ export default function SubscriptionsPage() {
                     <h1 className="text-2xl md:text-3xl font-bold">Subscriptions</h1>
                     <p className="text-muted-foreground">Manage your recurring subscriptions</p>
                 </div>
-                <Button>
+                <Button onClick={() => setIsAddModalOpen(true)}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Subscription
                 </Button>
@@ -101,7 +92,7 @@ export default function SubscriptionsPage() {
                         <div>
                             <p className="text-sm text-muted-foreground mb-1">Active Subscriptions</p>
                             <p className="text-2xl font-bold">
-                                {subscriptions.filter((s) => s.status === 'active').length}
+                                {subscriptions.filter((s) => s.isActive).length}
                             </p>
                         </div>
                         <div>
@@ -120,7 +111,7 @@ export default function SubscriptionsPage() {
                     description="Add your first subscription to start tracking recurring payments"
                     action={{
                         label: 'Add Subscription',
-                        onClick: () => { },
+                        onClick: () => setIsAddModalOpen(true),
                     }}
                 />
             ) : (
@@ -134,9 +125,11 @@ export default function SubscriptionsPage() {
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-2">
                                         <h3 className="text-lg font-semibold">{subscription.name}</h3>
-                                        <Badge className={getStatusColor(subscription.status)}>
-                                            {subscription.status}
-                                        </Badge>
+                                        {subscription.isActive && (
+                                            <Badge className="bg-success/10 text-success">
+                                                Active
+                                            </Badge>
+                                        )}
                                     </div>
 
                                     {subscription.description && (
@@ -181,8 +174,7 @@ export default function SubscriptionsPage() {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => handleDelete(subscription.id)}
-                                        disabled={deleteSubscription.isPending}
+                                        onClick={() => handleDeleteClick(subscription.id)}
                                     >
                                         <Trash2 className="w-4 h-4 text-destructive" />
                                     </Button>
@@ -192,6 +184,29 @@ export default function SubscriptionsPage() {
                     ))}
                 </div>
             )}
+
+            {/* Modals */}
+            <AddSubscriptionModal
+                open={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+            />
+
+            <ConfirmationModal
+                open={deleteModalOpen}
+                onClose={() => {
+                    setDeleteModalOpen(false);
+                    setSubscriptionToDelete(null);
+                }}
+                onConfirm={async () => {
+                    if (subscriptionToDelete) {
+                        await deleteSubscription.mutateAsync(subscriptionToDelete);
+                    }
+                }}
+                title="Delete Subscription"
+                description="Are you sure you want to delete this subscription? This action cannot be undone."
+                confirmText="Delete"
+                isLoading={deleteSubscription.isPending}
+            />
         </div>
     );
 }
