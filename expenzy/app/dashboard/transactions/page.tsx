@@ -1,33 +1,29 @@
 'use client';
 
 import { useState } from 'react';
-import { useExpenses, useDeleteExpense } from '@/lib/hooks/use-expenses';
-import { useIncome, useDeleteIncome } from '@/lib/hooks/use-income';
+import { useDeleteExpense } from '@/lib/hooks/use-expenses';
+import { useDeleteIncome } from '@/lib/hooks/use-income';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
-import { Plus, Search, ChevronLeft, ChevronRight, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
 import { TransactionModal } from '@/components/modals/transaction-modal';
 import { ConfirmationModal } from '@/components/modals/confirmation-modal';
-import { Button } from '@/components/ui/button';
-import {
-    ITEMS_PER_PAGE,
-    type TransactionType,
-    type Transaction,
-    calculatePaginationMeta,
-    getDisplayTransactions,
-    getDisplayIndices,
-    getPageNumbers,
-    combineTransactions,
-} from '@/lib/utils/transaction-helpers';
+import { VirtualList } from '@/components/shared/virtual-list';
 import { PageHeader } from '@/components/layout/page-header';
+import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import type { Expense } from '@/types/expense';
 import type { Income } from '@/types/income';
+
+type TransactionType = 'expense' | 'income';
+type Transaction = (Expense | Income) & { type: TransactionType };
+
+const ITEMS_PER_PAGE = 20;
 
 export default function TransactionsPage() {
     const [type, setType] = useState<TransactionType>('expense');
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [editTransaction, setEditTransaction] = useState<((Expense | Income) & { type: 'expense' | 'income' }) | null>(null);
+    const [editTransaction, setEditTransaction] = useState<Transaction | null>(null);
     const [deleteItem, setDeleteItem] = useState<Transaction | null>(null);
 
     const deleteExpense = useDeleteExpense();
@@ -38,72 +34,66 @@ export default function TransactionsPage() {
     const startDate = `${currentYear}-01-01`;
     const endDate = `${currentYear}-12-31`;
 
-    // Fetch expenses ONLY when type is 'expense'
-    const { data: expensesResponse, isLoading: expensesLoading } = useExpenses({
-        page: currentPage,
-        limit: ITEMS_PER_PAGE,
-        startDate,
-        endDate,
-        search: search || undefined,
-    }, { enabled: type === 'expense' });
+    // Fetch function for VirtualList
+    const fetchTransactions = async (page: number) => {
+        const params = new URLSearchParams();
+        params.append('page', page.toString());
+        params.append('limit', ITEMS_PER_PAGE.toString());
+        params.append('startDate', startDate);
+        params.append('endDate', endDate);
+        if (search) params.append('search', search);
 
-    // Fetch income ONLY when type is 'income'
-    const { data: income, isLoading: incomeLoading } = useIncome({
-        startDate,
-        endDate,
-        search: search || undefined,
-    }, { enabled: type === 'income' });
+        if (type === 'expense') {
+            const url = `${API_ENDPOINTS.EXPENSES.BASE}?${params.toString()}`;
+            const response = await apiClient.getRaw<{
+                data: Expense[];
+                meta: {
+                    total: number;
+                    page: number;
+                    limit: number;
+                    totalPages: number;
+                    hasNext: boolean;
+                    hasPrevious: boolean;
+                };
+            }>(url);
 
-    const isLoading = expensesLoading || incomeLoading;
+            return {
+                data: response.data.map(item => ({ ...item, type: 'expense' as const })),
+                hasMore: response.meta.hasNext,
+                total: response.meta.total,
+            };
+        } else {
+            // Income - fetch all for now (backend doesn't have pagination)
+            const url = `${API_ENDPOINTS.INCOME.BASE}?${params.toString()}`;
+            const response = await apiClient.get<Income[]>(url);
 
-    // Extract data
-    const expenses = expensesResponse?.data || [];
-    const expensesMeta = expensesResponse?.meta;
-    const incomeArray = Array.isArray(income) ? income : [];
+            // Ensure we have an array
+            const dataArray = Array.isArray(response) ? response : [];
 
-    // Combine transactions based on type filter
-    const allTransactions = combineTransactions(type, expenses, incomeArray);
+            // Client-side pagination for income
+            const startIdx = (page - 1) * ITEMS_PER_PAGE;
+            const endIdx = startIdx + ITEMS_PER_PAGE;
+            const paginatedData = dataArray.slice(startIdx, endIdx);
 
-    // Calculate pagination metadata
-    const { totalPages, totalCount } = calculatePaginationMeta(
-        type,
-        expensesMeta,
-        allTransactions.length,
-        currentPage
-    );
-
-    // Get transactions to display
-    const displayTransactions = getDisplayTransactions(
-        type,
-        allTransactions,
-        currentPage,
-        type === 'expense' && !!expensesMeta
-    );
-
-    // Calculate display indices
-    const { startIndex, endIndex } = getDisplayIndices(currentPage, totalCount);
+            return {
+                data: paginatedData.map(item => ({ ...item, type: 'income' as const })),
+                hasMore: endIdx < dataArray.length,
+                total: dataArray.length,
+            };
+        }
+    };
 
     // Event handlers
     const handleFilterChange = (newType: TransactionType) => {
         setType(newType);
-        setCurrentPage(1);
     };
 
     const handleSearchChange = (value: string) => {
         setSearch(value);
-        setCurrentPage(1);
-    };
-
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleEdit = (transaction: Transaction) => {
-        setEditTransaction({
-            ...transaction,
-            type: transaction.type,
-        } as (Expense | Income) & { type: 'expense' | 'income' });
+        setEditTransaction(transaction);
     };
 
     const handleDelete = (transaction: Transaction) => {
@@ -121,14 +111,71 @@ export default function TransactionsPage() {
         setDeleteItem(null);
     };
 
-    // Get page numbers for pagination UI
-    const pageNumbers = getPageNumbers(currentPage, totalPages);
-
     const deleteDescription = deleteItem
         ? (deleteItem.type === 'income'
             ? (deleteItem as Income).source
             : (deleteItem as Expense).description)
         : '';
+
+    // Render transaction card
+    const renderTransactionCard = (transaction: Transaction) => {
+        const date = transaction.type === 'expense'
+            ? (transaction as Expense).expenseDate
+            : (transaction as Income).incomeDate;
+        const description = transaction.type === 'income'
+            ? (transaction as Income).source
+            : (transaction as Expense).description;
+        const categoryColor = transaction.category?.color || '#6B7280';
+
+        return (
+            <div className="bg-card border border-border rounded-lg p-4 hover:bg-accent/5 transition-colors">
+                <div className="flex items-start gap-3">
+                    {/* Category Color Dot */}
+                    <div
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5"
+                        style={{ backgroundColor: categoryColor }}
+                    />
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-base mb-1 truncate">
+                            {description}
+                        </h3>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <span>{transaction.category?.name || 'Other'}</span>
+                            <span>•</span>
+                            <span>{formatDate(date)}</span>
+                        </div>
+                    </div>
+
+                    {/* Amount and Actions */}
+                    <div className="flex items-start gap-3 flex-shrink-0">
+                        <p className="font-semibold text-base tabular-nums">
+                            ₹ {formatCurrency(transaction.amount)}
+                        </p>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => handleEdit(transaction)}
+                                className="p-1.5 hover:bg-muted rounded-md transition-colors"
+                                aria-label="Edit transaction"
+                            >
+                                <Edit2 className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                            <button
+                                onClick={() => handleDelete(transaction)}
+                                className="p-1.5 hover:bg-destructive/10 rounded-md transition-colors"
+                                aria-label="Delete transaction"
+                            >
+                                <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="space-y-6">
@@ -213,149 +260,15 @@ export default function TransactionsPage() {
                 </div>
             </div>
 
-            {/* Results count */}
-            {!isLoading && totalCount > 0 && (
-                <p className="text-sm text-muted-foreground">
-                    Showing {startIndex + 1}-{endIndex} of {totalCount} transactions
-                </p>
-            )}
-
-            {/* Transactions List - Card Design */}
-            <div className="space-y-2">
-                {isLoading ? (
-                    <div className="p-12 text-center">
-                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto" />
-                    </div>
-                ) : displayTransactions.length === 0 ? (
-                    <div className="p-12 text-center text-muted-foreground">
-                        <div className="w-16 h-16 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
-                            <Search className="w-8 h-8 text-muted-foreground" />
-                        </div>
-                        <p className="text-lg font-medium mb-1">No transactions found</p>
-                        <p className="text-sm">Try adjusting your search or filters</p>
-                    </div>
-                ) : (
-                    displayTransactions.map((transaction) => {
-                        const date = 'expenseDate' in transaction ? transaction.expenseDate : transaction.incomeDate;
-                        const description = transaction.type === 'income'
-                            ? (transaction as Income).source
-                            : (transaction as Expense).description;
-                        const categoryColor = transaction.category?.color || '#6B7280';
-
-                        return (
-                            <div
-                                key={transaction.id}
-                                className="bg-card border border-border rounded-lg p-4 hover:bg-accent/5 transition-colors"
-                            >
-                                <div className="flex items-start gap-3">
-                                    {/* Category Color Dot */}
-                                    <div
-                                        className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5"
-                                        style={{ backgroundColor: categoryColor }}
-                                    />
-
-                                    {/* Content */}
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-medium text-base mb-1 truncate">
-                                            {description}
-                                        </h3>
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                            <span>{transaction.category?.name || 'Other'}</span>
-                                            <span>•</span>
-                                            <span>{formatDate(date)}</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Amount and Actions */}
-                                    <div className="flex items-start gap-3 flex-shrink-0">
-                                        <p className="font-semibold text-base tabular-nums">
-                                            ₹ {formatCurrency(transaction.amount)}
-                                        </p>
-
-                                        {/* Action Buttons */}
-                                        <div className="flex items-center gap-1">
-                                            <button
-                                                onClick={() => handleEdit(transaction)}
-                                                className="p-1.5 hover:bg-muted rounded-md transition-colors"
-                                                aria-label="Edit transaction"
-                                            >
-                                                <Edit2 className="w-4 h-4 text-muted-foreground" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(transaction)}
-                                                className="p-1.5 hover:bg-destructive/10 rounded-md transition-colors"
-                                                aria-label="Delete transaction"
-                                            >
-                                                <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })
-                )}
-            </div>
-
-            {/* Pagination */}
-            {!isLoading && totalPages > 1 && (
-                <>
-                    {/* Desktop Pagination */}
-                    <div className="hidden md:flex items-center justify-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                            Previous
-                        </Button>
-
-                        {pageNumbers.map((page, index) => (
-                            page === '...' ? (
-                                <span key={`ellipsis-${index}`} className="px-2">...</span>
-                            ) : (
-                                <Button
-                                    key={page}
-                                    variant={currentPage === page ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => handlePageChange(page as number)}
-                                    className="min-w-[40px]"
-                                >
-                                    {page}
-                                </Button>
-                            )
-                        ))}
-
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage === totalPages}
-                        >
-                            Next
-                            <ChevronRight className="w-4 h-4" />
-                        </Button>
-                    </div>
-
-                    {/* Mobile Show More */}
-                    <div className="md:hidden flex flex-col items-center gap-2">
-                        {currentPage < totalPages && (
-                            <Button
-                                variant="outline"
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                className="w-full"
-                            >
-                                Show More ({totalCount - endIndex} remaining)
-                            </Button>
-                        )}
-                        <p className="text-sm text-muted-foreground text-center">
-                            Page {currentPage} of {totalPages}
-                        </p>
-                    </div>
-                </>
-            )}
+            {/* Virtual List */}
+            <VirtualList
+                fetchData={fetchTransactions}
+                renderItem={renderTransactionCard}
+                getItemKey={(item) => item.id}
+                dependencies={[type, search]}
+                itemsPerPage={ITEMS_PER_PAGE}
+                enableDesktopPagination={true}
+            />
         </div>
     );
 }
