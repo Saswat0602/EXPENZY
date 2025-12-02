@@ -1,8 +1,15 @@
 import { format, parseISO, formatDistanceToNow, isToday, isYesterday, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 
 export function formatDate(date: string | Date, formatStr: string = 'MMM dd, yyyy'): string {
-    const dateObj = typeof date === 'string' ? parseISO(date) : date;
-    return format(dateObj, formatStr);
+    try {
+        if (!date) return 'N/A';
+        const dateObj = typeof date === 'string' ? parseISO(date) : date;
+        if (isNaN(dateObj.getTime())) return 'Invalid Date';
+        return format(dateObj, formatStr);
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return 'Invalid Date';
+    }
 }
 
 import { formatCurrency as formatCurrencyUtil, CurrencyCode } from './currency';

@@ -10,8 +10,6 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { LoadingSkeleton } from '@/components/shared/loading-skeleton';
 import { formatCurrency, formatPercentage, formatDate } from '@/lib/utils/format';
 import {
-    TrendingUp,
-    TrendingDown,
     Wallet,
     PiggyBank,
     ArrowUpRight,
@@ -186,43 +184,44 @@ export default function DashboardPage() {
 
             {/* Recent Transactions */}
             <div className="bg-card border border-border rounded-lg p-6">
-                <h2 className="text-lg font-semibold mb-4">Recent Transactions</h2>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold">Recent Transactions</h2>
+                    <Button variant="ghost" size="sm" onClick={() => router.push(ROUTES.TRANSACTIONS)}>View All</Button>
+                </div>
                 {dashboard?.recentTransactions && dashboard.recentTransactions.length > 0 ? (
-                    <div className="space-y-3">
-                        {dashboard.recentTransactions.slice(0, 5).map((transaction) => (
-                            <div
-                                key={transaction.id}
-                                className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className={`w-10 h-10 rounded-full flex items-center justify-center ${transaction.type === 'income'
-                                            ? 'bg-success/10 text-success'
-                                            : 'bg-destructive/10 text-destructive'
-                                            }`}
-                                    >
-                                        {transaction.type === 'income' ? (
-                                            <TrendingUp className="w-5 h-5" />
-                                        ) : (
-                                            <TrendingDown className="w-5 h-5" />
-                                        )}
-                                    </div>
-                                    <div>
-                                        <p className="font-medium">{transaction.description}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            {transaction.category?.name || 'Uncategorized'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <p
-                                    className={`font-semibold ${transaction.type === 'income' ? 'text-success' : 'text-destructive'
-                                        }`}
+                    <div className="space-y-2">
+                        {dashboard.recentTransactions.slice(0, 5).map((transaction) => {
+                            const categoryColor = transaction.category?.color || '#6B7280';
+
+                            return (
+                                <div
+                                    key={transaction.id}
+                                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent/5 transition-colors cursor-pointer"
+                                    onClick={() => router.push(ROUTES.TRANSACTIONS)}
                                 >
-                                    {transaction.type === 'income' ? '+' : '-'}
-                                    {formatCurrency(transaction.amount)}
-                                </p>
-                            </div>
-                        ))}
+                                    {/* Category Color Dot */}
+                                    <div
+                                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                        style={{ backgroundColor: categoryColor }}
+                                    />
+
+                                    {/* Content */}
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-sm truncate">{transaction.description}</p>
+                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                            <span>{transaction.category?.name || 'Other'}</span>
+                                            <span>•</span>
+                                            <span>{formatDate(transaction.date)}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Amount */}
+                                    <p className="text-sm font-semibold tabular-nums flex-shrink-0">
+                                        ₹ {formatCurrency(transaction.amount)}
+                                    </p>
+                                </div>
+                            );
+                        })}
                     </div>
                 ) : (
                     <EmptyState
@@ -230,7 +229,7 @@ export default function DashboardPage() {
                         description="Start tracking your finances by adding your first transaction"
                         action={{
                             label: 'Add Transaction',
-                            onClick: () => { },
+                            onClick: () => setIsTransactionModalOpen(true),
                         }}
                     />
                 )}

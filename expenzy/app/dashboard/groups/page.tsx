@@ -3,28 +3,27 @@
 import { useState } from 'react';
 import { useGroups, useDeleteGroup } from '@/lib/hooks/use-groups';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { LoadingSkeleton } from '@/components/shared/loading-skeleton';
-import { EmptyState } from '@/components/shared/empty-state';
-import { Users, Plus, Trash2, Settings } from 'lucide-react';
+import { Users, Plus, Edit2, Trash2 } from 'lucide-react';
 import { formatDate } from '@/lib/utils/format';
 import { AddGroupModal } from '@/components/modals/add-group-modal';
+import { ConfirmationModal } from '@/components/modals/confirmation-modal';
 import { PageHeader } from '@/components/layout/page-header';
 
 export default function GroupsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null);
     const { data: groups = [], isLoading } = useGroups();
     const deleteGroup = useDeleteGroup();
 
-    const handleDelete = async (id: string) => {
-        if (confirm('Are you sure you want to delete this group?')) {
-            await deleteGroup.mutateAsync(id);
-        }
+    const handleDelete = (group: { id: string; name: string }) => {
+        setDeleteItem(group);
     };
 
-    if (isLoading) {
-        return <LoadingSkeleton count={3} />;
-    }
+    const confirmDelete = async () => {
+        if (!deleteItem) return;
+        await deleteGroup.mutateAsync(deleteItem.id);
+        setDeleteItem(null);
+    };
 
     return (
         <div className="space-y-6">
@@ -42,60 +41,87 @@ export default function GroupsPage() {
 
             <AddGroupModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
+            <ConfirmationModal
+                open={!!deleteItem}
+                onClose={() => setDeleteItem(null)}
+                onConfirm={confirmDelete}
+                title="Delete Group"
+                description="Are you sure you want to delete this group? This action cannot be undone."
+                confirmText="Delete"
+                isLoading={deleteGroup.isPending}
+            >
+                {deleteItem && (
+                    <div className="bg-muted p-4 rounded-lg">
+                        <p className="font-medium">{deleteItem.name}</p>
+                    </div>
+                )}
+            </ConfirmationModal>
+
             {/* Groups List */}
-            {groups.length === 0 ? (
-                <EmptyState
-                    icon={Users}
-                    title="No groups yet"
-                    description="Create a group to split expenses with friends and family"
-                    action={{
-                        label: 'Create Group',
-                        onClick: () => { },
-                    }}
-                />
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {groups.map((group) => (
-                        <Card key={group.id} className="p-6">
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                                        <Users className="w-6 h-6 text-primary" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold">{group.name}</h3>
-                                        <p className="text-sm text-muted-foreground">
-                                            {group._count?.members || 0} members
-                                        </p>
-                                    </div>
+            <div className="space-y-2">
+                {isLoading ? (
+                    <div className="p-12 text-center">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto" />
+                    </div>
+                ) : groups.length === 0 ? (
+                    <div className="p-12 text-center text-muted-foreground">
+                        <div className="w-16 h-16 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
+                            <Users className="w-8 h-8 text-muted-foreground" />
+                        </div>
+                        <p className="text-lg font-medium mb-1">No groups yet</p>
+                        <p className="text-sm">Create a group to split expenses with friends and family</p>
+                    </div>
+                ) : (
+                    groups.map((group) => (
+                        <div
+                            key={group.id}
+                            className="bg-card border border-border rounded-lg p-4 hover:bg-accent/5 transition-colors"
+                        >
+                            <div className="flex items-start gap-3">
+                                {/* Group Icon */}
+                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <Users className="w-5 h-5 text-primary" />
                                 </div>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleDelete(group.id)}
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </Button>
-                            </div>
 
-                            {group.description && (
-                                <p className="text-sm text-muted-foreground mb-4">
-                                    {group.description}
-                                </p>
-                            )}
+                                {/* Content */}
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-medium text-base mb-1 truncate">
+                                        {group.name}
+                                    </h3>
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                                        <span>{group._count?.members || 0} members</span>
+                                        <span>•</span>
+                                        <span>Created {formatDate(group.createdAt)}</span>
+                                    </div>
+                                    {group.description && (
+                                        <p className="text-sm text-muted-foreground line-clamp-2">
+                                            {group.description}
+                                        </p>
+                                    )}
+                                </div>
 
-                            <div className="flex items-center justify-between text-sm">
-                                <span className="text-muted-foreground">
-                                    Created {formatDate(group.createdAt)}
-                                </span>
-                                <Button variant="ghost" size="sm">
-                                    <Settings className="w-4 h-4" />
-                                </Button>
+                                {/* Action Buttons */}
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                    <button
+                                        onClick={() => {/* TODO: Add edit functionality */ }}
+                                        className="p-1.5 hover:bg-muted rounded-md transition-colors"
+                                        aria-label="Edit group"
+                                    >
+                                        <Edit2 className="w-4 h-4 text-muted-foreground" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete({ id: group.id, name: group.name })}
+                                        className="p-1.5 hover:bg-destructive/10 rounded-md transition-colors"
+                                        aria-label="Delete group"
+                                    >
+                                        <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                                    </button>
+                                </div>
                             </div>
-                        </Card>
-                    ))}
-                </div>
-            )}
+                        </div>
+                    ))
+                )}
+            </div>
         </div>
     );
 }
