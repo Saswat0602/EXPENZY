@@ -8,6 +8,7 @@ import { LoadingSkeleton } from '@/components/shared/loading-skeleton';
 import { EmptyState } from '@/components/shared/empty-state';
 import { formatDate } from '@/lib/utils/format';
 import { Bell, Check, CheckCheck, Trash2, Info, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { PageWrapper } from '@/components/layout/page-wrapper';
 
 export default function NotificationsPage() {
     const { data: notifications = [], isLoading } = useNotifications();
@@ -35,87 +36,89 @@ export default function NotificationsPage() {
     }
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold">Notifications</h1>
-                    <p className="text-muted-foreground">
-                        {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : 'All caught up!'}
-                    </p>
+        <PageWrapper>
+            <div className="space-y-6">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-bold">Notifications</h1>
+                        <p className="text-muted-foreground">
+                            {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : 'All caught up!'}
+                        </p>
+                    </div>
+                    {unreadCount > 0 && (
+                        <Button onClick={() => markAllAsRead.mutate()}>
+                            <CheckCheck className="w-4 h-4 mr-2" />
+                            Mark All Read
+                        </Button>
+                    )}
                 </div>
-                {unreadCount > 0 && (
-                    <Button onClick={() => markAllAsRead.mutate()}>
-                        <CheckCheck className="w-4 h-4 mr-2" />
-                        Mark All Read
-                    </Button>
-                )}
-            </div>
 
-            {/* Notifications List */}
-            {notifications.length === 0 ? (
-                <EmptyState
-                    icon={Bell}
-                    title="No notifications"
-                    description="You're all caught up! Notifications will appear here."
-                />
-            ) : (
-                <div className="space-y-3">
-                    {notifications.map((notification) => (
-                        <Card
-                            key={notification.id}
-                            className={`p-4 ${!notification.isRead ? 'border-l-4 border-l-primary bg-primary/5' : ''}`}
-                        >
-                            <div className="flex items-start gap-4">
-                                <div className="flex-shrink-0 mt-1">
-                                    {getIcon(notification.type)}
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-start justify-between gap-2 mb-1">
-                                        <h3 className="font-semibold">{notification.title}</h3>
-                                        {!notification.isRead && (
-                                            <Badge variant="default" className="flex-shrink-0">
-                                                New
-                                            </Badge>
-                                        )}
+                {/* Notifications List */}
+                {notifications.length === 0 ? (
+                    <EmptyState
+                        icon={Bell}
+                        title="No notifications"
+                        description="You're all caught up! Notifications will appear here."
+                    />
+                ) : (
+                    <div className="space-y-3">
+                        {notifications.map((notification) => (
+                            <Card
+                                key={notification.id}
+                                className={`p-4 ${!notification.isRead ? 'border-l-4 border-l-primary bg-primary/5' : ''}`}
+                            >
+                                <div className="flex items-start gap-4">
+                                    <div className="flex-shrink-0 mt-1">
+                                        {getIcon(notification.type)}
                                     </div>
 
-                                    <p className="text-sm text-muted-foreground mb-2">
-                                        {notification.message}
-                                    </p>
-
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs text-muted-foreground">
-                                            {formatDate(notification.createdAt)}
-                                        </span>
-
-                                        <div className="flex gap-2">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-start justify-between gap-2 mb-1">
+                                            <h3 className="font-semibold">{notification.title}</h3>
                                             {!notification.isRead && (
+                                                <Badge variant="default" className="flex-shrink-0">
+                                                    New
+                                                </Badge>
+                                            )}
+                                        </div>
+
+                                        <p className="text-sm text-muted-foreground mb-2">
+                                            {notification.message}
+                                        </p>
+
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-muted-foreground">
+                                                {formatDate(notification.createdAt)}
+                                            </span>
+
+                                            <div className="flex gap-2">
+                                                {!notification.isRead && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => markAsRead.mutate(notification.id)}
+                                                    >
+                                                        <Check className="w-4 h-4 mr-1" />
+                                                        Mark Read
+                                                    </Button>
+                                                )}
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => markAsRead.mutate(notification.id)}
+                                                    onClick={() => deleteNotification.mutate(notification.id)}
                                                 >
-                                                    <Check className="w-4 h-4 mr-1" />
-                                                    Mark Read
+                                                    <Trash2 className="w-4 h-4" />
                                                 </Button>
-                                            )}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => deleteNotification.mutate(notification.id)}
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </Card>
-                    ))}
-                </div>
-            )}
-        </div>
+                            </Card>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </PageWrapper>
     );
 }

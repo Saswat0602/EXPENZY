@@ -29,7 +29,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                 "pb-20 md:pb-0 md:pt-16 transition-all duration-300",
                 isCollapsed ? "md:ml-20" : "md:ml-64"
             )}>
-                <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div className="container max-w-7xl mx-auto">
                     {children}
                 </div>
             </main>

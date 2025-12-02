@@ -13,6 +13,7 @@ import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { HandCoins, Plus, Trash2, DollarSign } from 'lucide-react';
 import { AddLoanModal } from '@/components/modals/add-loan-modal';
 import { PageHeader } from '@/components/layout/page-header';
+import { PageWrapper } from '@/components/layout/page-wrapper';
 
 interface LoanCardProps {
     id: string;
@@ -115,68 +116,70 @@ export default function LoansPage() {
     };
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <PageHeader
-                title="Loans"
-                description="Track money you've lent and borrowed"
-                action={
-                    <Button onClick={() => setIsModalOpen(true)}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Loan
-                    </Button>
-                }
-            />
+        <PageWrapper>
+            <div className="space-y-6">
+                {/* Header */}
+                <PageHeader
+                    title="Loans"
+                    description="Track money you've lent and borrowed"
+                    action={
+                        <Button onClick={() => setIsModalOpen(true)}>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Loan
+                        </Button>
+                    }
+                />
 
-            <AddLoanModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
+                <AddLoanModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
-            {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full max-w-md grid-cols-2">
-                    <TabsTrigger value="lent">Money I Lent</TabsTrigger>
-                    <TabsTrigger value="borrowed">Money I Borrowed</TabsTrigger>
-                </TabsList>
+                {/* Tabs */}
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                    <TabsList className="grid w-full max-w-md grid-cols-2">
+                        <TabsTrigger value="lent">Money I Lent</TabsTrigger>
+                        <TabsTrigger value="borrowed">Money I Borrowed</TabsTrigger>
+                    </TabsList>
 
-                <TabsContent value="lent" className="space-y-4">
-                    {lentLoading ? (
-                        <LoadingSkeleton count={3} />
-                    ) : lentLoans.length === 0 ? (
-                        <EmptyState
-                            icon={HandCoins}
-                            title="No loans lent"
-                            description="Track money you've lent to others"
-                            action={{
-                                label: 'Add Loan',
-                                onClick: () => { },
-                            }}
-                        />
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {lentLoans.map(renderLoanCard)}
-                        </div>
-                    )}
-                </TabsContent>
+                    <TabsContent value="lent" className="space-y-4">
+                        {lentLoading ? (
+                            <LoadingSkeleton count={3} />
+                        ) : lentLoans.length === 0 ? (
+                            <EmptyState
+                                icon={HandCoins}
+                                title="No loans lent"
+                                description="Track money you've lent to others"
+                                action={{
+                                    label: 'Add Loan',
+                                    onClick: () => { },
+                                }}
+                            />
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {lentLoans.map(renderLoanCard)}
+                            </div>
+                        )}
+                    </TabsContent>
 
-                <TabsContent value="borrowed" className="space-y-4">
-                    {borrowedLoading ? (
-                        <LoadingSkeleton count={3} />
-                    ) : borrowedLoans.length === 0 ? (
-                        <EmptyState
-                            icon={HandCoins}
-                            title="No loans borrowed"
-                            description="Track money you've borrowed from others"
-                            action={{
-                                label: 'Add Loan',
-                                onClick: () => { },
-                            }}
-                        />
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {borrowedLoans.map(renderLoanCard)}
-                        </div>
-                    )}
-                </TabsContent>
-            </Tabs>
-        </div>
+                    <TabsContent value="borrowed" className="space-y-4">
+                        {borrowedLoading ? (
+                            <LoadingSkeleton count={3} />
+                        ) : borrowedLoans.length === 0 ? (
+                            <EmptyState
+                                icon={HandCoins}
+                                title="No loans borrowed"
+                                description="Track money you've borrowed from others"
+                                action={{
+                                    label: 'Add Loan',
+                                    onClick: () => { },
+                                }}
+                            />
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {borrowedLoans.map(renderLoanCard)}
+                            </div>
+                        )}
+                    </TabsContent>
+                </Tabs>
+            </div>
+        </PageWrapper>
     );
 }

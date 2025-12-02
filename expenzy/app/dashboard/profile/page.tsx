@@ -17,6 +17,7 @@ import {
     DangerZone,
 } from '@/components/features/profile';
 import type { ChangePasswordFormData } from '@/lib/validations/profile.schema';
+import { PageWrapper } from '@/components/layout/page-wrapper';
 
 export default function ProfilePage() {
     const { logout } = useAuth();
@@ -58,60 +59,62 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto space-y-6 pb-8">
-            {/* Header */}
-            <div className="mb-6">
-                <h1 className="text-3xl md:text-4xl font-bold">Profile & Settings</h1>
-                <p className="text-muted-foreground mt-1">Manage your account and preferences</p>
-            </div>
+        <PageWrapper>
+            <div className="space-y-6">
+                {/* Header */}
+                <div className="mb-6">
+                    <h1 className="text-3xl md:text-4xl font-bold">Profile & Settings</h1>
+                    <p className="text-muted-foreground mt-1">Manage your account and preferences</p>
+                </div>
 
-            {/* Profile Header */}
-            <ProfileHeader user={user} onEditProfile={() => setIsEditProfileOpen(true)} />
+                {/* Profile Header */}
+                <ProfileHeader user={user} onEditProfile={() => setIsEditProfileOpen(true)} />
 
-            {/* Settings Grid */}
-            <div className="grid lg:grid-cols-2 gap-6">
-                <AppearanceSettings settings={settings} onSettingChange={handleSettingChange} />
-                <PreferencesSettings user={user} onCurrencyChange={handleCurrencyChange} />
-                <NotificationSettings settings={settings} onToggle={handleToggle} />
-                <DataPrivacySettings
-                    settings={settings}
-                    onSettingChange={handleSettingChange}
-                    onToggle={handleToggle}
+                {/* Settings Grid */}
+                <div className="grid lg:grid-cols-2 gap-6">
+                    <AppearanceSettings settings={settings} onSettingChange={handleSettingChange} />
+                    <PreferencesSettings user={user} onCurrencyChange={handleCurrencyChange} />
+                    <NotificationSettings settings={settings} onToggle={handleToggle} />
+                    <DataPrivacySettings
+                        settings={settings}
+                        onSettingChange={handleSettingChange}
+                        onToggle={handleToggle}
+                    />
+                </div>
+
+                {/* Security - Full Width */}
+                <SecuritySettings
+                    user={user}
+                    onPasswordChange={handlePasswordChange}
+                    isChangingPassword={changePassword.isPending}
+                />
+
+                {/* Danger Zone */}
+                <DangerZone
+                    onLogout={() => setIsLogoutConfirmOpen(true)}
+                    onDeleteAccount={() => setIsDeleteAccountOpen(true)}
+                />
+
+                {/* Modals */}
+                <EditProfileModal
+                    open={isEditProfileOpen}
+                    onClose={() => setIsEditProfileOpen(false)}
+                />
+                <DeleteAccountModal
+                    open={isDeleteAccountOpen}
+                    onClose={() => setIsDeleteAccountOpen(false)}
+                />
+                <ConfirmationModal
+                    open={isLogoutConfirmOpen}
+                    onClose={() => setIsLogoutConfirmOpen(false)}
+                    onConfirm={logout}
+                    title="Logout Confirmation"
+                    description="Are you sure you want to logout? You'll need to sign in again to access your account."
+                    confirmText="Logout"
+                    cancelText="Cancel"
+                    variant="destructive"
                 />
             </div>
-
-            {/* Security - Full Width */}
-            <SecuritySettings
-                user={user}
-                onPasswordChange={handlePasswordChange}
-                isChangingPassword={changePassword.isPending}
-            />
-
-            {/* Danger Zone */}
-            <DangerZone
-                onLogout={() => setIsLogoutConfirmOpen(true)}
-                onDeleteAccount={() => setIsDeleteAccountOpen(true)}
-            />
-
-            {/* Modals */}
-            <EditProfileModal
-                open={isEditProfileOpen}
-                onClose={() => setIsEditProfileOpen(false)}
-            />
-            <DeleteAccountModal
-                open={isDeleteAccountOpen}
-                onClose={() => setIsDeleteAccountOpen(false)}
-            />
-            <ConfirmationModal
-                open={isLogoutConfirmOpen}
-                onClose={() => setIsLogoutConfirmOpen(false)}
-                onConfirm={logout}
-                title="Logout Confirmation"
-                description="Are you sure you want to logout? You'll need to sign in again to access your account."
-                confirmText="Logout"
-                cancelText="Cancel"
-                variant="destructive"
-            />
-        </div>
+        </PageWrapper>
     );
 }

@@ -9,6 +9,7 @@ import { TransactionModal } from '@/components/modals/transaction-modal';
 import { ConfirmationModal } from '@/components/modals/confirmation-modal';
 import { VirtualList } from '@/components/shared/virtual-list';
 import { PageHeader } from '@/components/layout/page-header';
+import { PageWrapper } from '@/components/layout/page-wrapper';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import type { Expense } from '@/types/expense';
@@ -151,7 +152,7 @@ export default function TransactionsPage() {
                     {/* Amount and Actions */}
                     <div className="flex items-start gap-3 flex-shrink-0">
                         <p className="font-semibold text-base tabular-nums">
-                            ₹ {formatCurrency(transaction.amount)}
+                            {formatCurrency(transaction.amount)}
                         </p>
 
                         {/* Action Buttons */}
@@ -178,97 +179,99 @@ export default function TransactionsPage() {
     };
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <PageHeader
-                title="Transactions"
-                description={`Track your ${currentYear} income and expenses`}
-                action={
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-                    >
-                        <Plus className="w-5 h-5" />
-                        <span className="hidden sm:inline">Add Transaction</span>
-                    </button>
-                }
-            />
-
-            <TransactionModal
-                open={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                mode="add"
-            />
-
-            <TransactionModal
-                open={!!editTransaction}
-                onClose={() => setEditTransaction(null)}
-                mode="edit"
-                transaction={editTransaction || undefined}
-            />
-
-            <ConfirmationModal
-                open={!!deleteItem}
-                onClose={() => setDeleteItem(null)}
-                onConfirm={confirmDelete}
-                title="Delete Transaction"
-                description="Are you sure you want to delete this transaction? This action cannot be undone."
-                confirmText="Delete"
-                isLoading={deleteExpense.isPending || deleteIncome.isPending}
-            >
-                {deleteItem && (
-                    <div className="bg-muted p-4 rounded-lg space-y-1">
-                        <p className="font-medium">{deleteDescription}</p>
-                        <p className="text-lg font-semibold">
-                            ₹ {formatCurrency(deleteItem.amount)}
-                        </p>
-                        <p className="text-sm text-muted-foreground capitalize">
-                            {deleteItem.type}
-                        </p>
-                    </div>
-                )}
-            </ConfirmationModal>
-
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-4">
-                {/* Search */}
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <input
-                        type="text"
-                        placeholder="Search transactions..."
-                        value={search}
-                        onChange={(e) => handleSearchChange(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                </div>
-
-                {/* Type Filter */}
-                <div className="grid grid-cols-2 gap-2 bg-muted p-1 rounded-lg w-full sm:w-auto">
-                    {(['expense', 'income'] as TransactionType[]).map((t) => (
+        <PageWrapper>
+            <div className="space-y-6">
+                {/* Header */}
+                <PageHeader
+                    title="Transactions"
+                    description={`Track your ${currentYear} income and expenses`}
+                    action={
                         <button
-                            key={t}
-                            onClick={() => handleFilterChange(t)}
-                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${type === t
-                                ? 'bg-background shadow-sm'
-                                : 'hover:bg-background/50'
-                                }`}
+                            onClick={() => setIsModalOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                         >
-                            {t.charAt(0).toUpperCase() + t.slice(1)}
+                            <Plus className="w-5 h-5" />
+                            <span className="hidden sm:inline">Add Transaction</span>
                         </button>
-                    ))}
-                </div>
-            </div>
+                    }
+                />
 
-            {/* Virtual List */}
-            <VirtualList
-                fetchData={fetchTransactions}
-                renderItem={renderTransactionCard}
-                getItemKey={(item) => item.id}
-                dependencies={[type, search]}
-                itemsPerPage={ITEMS_PER_PAGE}
-                enableDesktopPagination={true}
-            />
-        </div>
+                <TransactionModal
+                    open={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    mode="add"
+                />
+
+                <TransactionModal
+                    open={!!editTransaction}
+                    onClose={() => setEditTransaction(null)}
+                    mode="edit"
+                    transaction={editTransaction || undefined}
+                />
+
+                <ConfirmationModal
+                    open={!!deleteItem}
+                    onClose={() => setDeleteItem(null)}
+                    onConfirm={confirmDelete}
+                    title="Delete Transaction"
+                    description="Are you sure you want to delete this transaction? This action cannot be undone."
+                    confirmText="Delete"
+                    isLoading={deleteExpense.isPending || deleteIncome.isPending}
+                >
+                    {deleteItem && (
+                        <div className="bg-muted p-4 rounded-lg space-y-1">
+                            <p className="font-medium">{deleteDescription}</p>
+                            <p className="font-medium">
+                                {formatCurrency(deleteItem.amount)}
+                            </p>
+                            <p className="text-sm text-muted-foreground capitalize">
+                                {deleteItem.type}
+                            </p>
+                        </div>
+                    )}
+                </ConfirmationModal>
+
+                {/* Filters */}
+                <div className="flex flex-col sm:flex-row gap-4">
+                    {/* Search */}
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                        <input
+                            type="text"
+                            placeholder="Search transactions..."
+                            value={search}
+                            onChange={(e) => handleSearchChange(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                    </div>
+
+                    {/* Type Filter */}
+                    <div className="grid grid-cols-2 gap-2 bg-muted p-1 rounded-lg w-full sm:w-auto">
+                        {(['expense', 'income'] as TransactionType[]).map((t) => (
+                            <button
+                                key={t}
+                                onClick={() => handleFilterChange(t)}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${type === t
+                                    ? 'bg-background shadow-sm'
+                                    : 'hover:bg-background/50'
+                                    }`}
+                            >
+                                {t.charAt(0).toUpperCase() + t.slice(1)}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Virtual List */}
+                <VirtualList
+                    fetchData={fetchTransactions}
+                    renderItem={renderTransactionCard}
+                    getItemKey={(item) => item.id}
+                    dependencies={[type, search]}
+                    itemsPerPage={ITEMS_PER_PAGE}
+                    enableDesktopPagination={true}
+                />
+            </div>
+        </PageWrapper>
     );
 }
