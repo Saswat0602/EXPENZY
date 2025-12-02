@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/config/query-client';
-import type { CreateBudgetDto, UpdateBudgetDto } from '@/types';
+import type { CreateBudgetDto, UpdateBudgetDto, Budget, BudgetPerformance } from '@/types';
 import { toast } from 'sonner';
 
 // NOTE: Budget API endpoints are not yet implemented on the backend
@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 export function useBudgets() {
     return useQuery({
         queryKey: QUERY_KEYS.BUDGETS.LIST,
-        queryFn: () => Promise.resolve([]),
+        queryFn: () => Promise.resolve([] as Budget[]),
         enabled: false, // Disabled until backend is ready
     });
 }
@@ -17,7 +17,7 @@ export function useBudgets() {
 export function useBudget(id: string) {
     return useQuery({
         queryKey: QUERY_KEYS.BUDGETS.DETAIL(id),
-        queryFn: () => Promise.resolve(null),
+        queryFn: () => Promise.resolve(null as Budget | null),
         enabled: false, // Disabled until backend is ready
     });
 }
@@ -25,7 +25,7 @@ export function useBudget(id: string) {
 export function useBudgetPerformance() {
     return useQuery({
         queryKey: QUERY_KEYS.BUDGETS.PERFORMANCE,
-        queryFn: () => Promise.resolve({ budgets: [] }),
+        queryFn: () => Promise.resolve({ budgets: [] as BudgetPerformance[] }),
         enabled: false, // Disabled until backend is ready
     });
 }

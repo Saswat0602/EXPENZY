@@ -33,6 +33,5 @@ export interface ChangePasswordDto {
 }
 
 export interface DeleteAccountDto {
-    confirmation: string;
     password: string;
 }

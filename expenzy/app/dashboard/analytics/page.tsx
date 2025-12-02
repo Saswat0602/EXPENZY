@@ -5,6 +5,7 @@ import { useSpendingTrends, useCategoryBreakdown, useCashFlow } from '@/lib/hook
 import { formatCurrency } from '@/lib/utils/format';
 import { BarChart3, PieChart, TrendingUp } from 'lucide-react';
 import type { AnalyticsPeriod } from '@/types';
+import { PageHeader } from '@/components/layout/page-header';
 
 export default function AnalyticsPage() {
     const [period, setPeriod] = useState<AnalyticsPeriod>('month');
@@ -18,24 +19,22 @@ export default function AnalyticsPage() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold">Analytics</h1>
-                    <p className="text-muted-foreground">Insights into your spending</p>
-                </div>
-
-                {/* Period Selector */}
-                <select
-                    value={period}
-                    onChange={(e) => setPeriod(e.target.value as AnalyticsPeriod)}
-                    className="px-4 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                    <option value="week">This Week</option>
-                    <option value="month">This Month</option>
-                    <option value="quarter">This Quarter</option>
-                    <option value="year">This Year</option>
-                </select>
-            </div>
+            <PageHeader
+                title="Analytics"
+                description="Insights into your spending"
+                action={
+                    <select
+                        value={period}
+                        onChange={(e) => setPeriod(e.target.value as AnalyticsPeriod)}
+                        className="px-4 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="quarter">This Quarter</option>
+                        <option value="year">This Year</option>
+                    </select>
+                }
+            />
 
             {isLoading ? (
                 <div className="flex items-center justify-center h-64">

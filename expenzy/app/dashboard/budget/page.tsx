@@ -5,6 +5,7 @@ import { useBudgets, useBudgetPerformance } from '@/lib/hooks/use-budget';
 import { formatCurrency, formatPercentage } from '@/lib/utils/format';
 import { Plus, Wallet, AlertCircle, CheckCircle } from 'lucide-react';
 import { AddBudgetModal } from '@/components/modals/add-budget-modal';
+import { PageHeader } from '@/components/layout/page-header';
 
 export default function BudgetPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,19 +43,19 @@ export default function BudgetPage() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold">Budgets</h1>
-                    <p className="text-muted-foreground">Manage your spending limits</p>
-                </div>
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-                >
-                    <Plus className="w-5 h-5" />
-                    <span className="hidden sm:inline">Create Budget</span>
-                </button>
-            </div>
+            <PageHeader
+                title="Budgets"
+                description="Manage your spending limits"
+                action={
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                    >
+                        <Plus className="w-5 h-5" />
+                        <span className="hidden sm:inline">Create Budget</span>
+                    </button>
+                }
+            />
 
             <AddBudgetModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
 

@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ROUTES } from '@/lib/routes';
 import { AddTransactionModal } from '@/components/modals/add-transaction-modal';
+import { PageHeader } from '@/components/layout/page-header';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -49,16 +50,16 @@ export default function DashboardPage() {
     return (
         <div className="space-y-6">
             {/* Page Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
-                    <p className="text-muted-foreground">Overview of your finances</p>
-                </div>
-                <Button onClick={() => setIsTransactionModalOpen(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Transaction
-                </Button>
-            </div>
+            <PageHeader
+                title="Dashboard"
+                description="Overview of your finances"
+                action={
+                    <Button onClick={() => setIsTransactionModalOpen(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Transaction
+                    </Button>
+                }
+            />
 
             <AddTransactionModal
                 open={isTransactionModalOpen}

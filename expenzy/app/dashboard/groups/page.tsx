@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { Users, Plus, Trash2, Settings } from 'lucide-react';
 import { formatDate } from '@/lib/utils/format';
 import { AddGroupModal } from '@/components/modals/add-group-modal';
+import { PageHeader } from '@/components/layout/page-header';
 
 export default function GroupsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,16 +29,16 @@ export default function GroupsPage() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold">Groups</h1>
-                    <p className="text-muted-foreground">Manage shared expenses with groups</p>
-                </div>
-                <Button onClick={() => setIsModalOpen(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Group
-                </Button>
-            </div>
+            <PageHeader
+                title="Groups"
+                description="Manage shared expenses with groups"
+                action={
+                    <Button onClick={() => setIsModalOpen(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Group
+                    </Button>
+                }
+            />
 
             <AddGroupModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
 

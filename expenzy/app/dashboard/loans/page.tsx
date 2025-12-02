@@ -12,6 +12,7 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { HandCoins, Plus, Trash2, DollarSign } from 'lucide-react';
 import { AddLoanModal } from '@/components/modals/add-loan-modal';
+import { PageHeader } from '@/components/layout/page-header';
 
 interface LoanCardProps {
     id: string;
@@ -116,16 +117,16 @@ export default function LoansPage() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold">Loans</h1>
-                    <p className="text-muted-foreground">Track money you&apos;ve lent and borrowed</p>
-                </div>
-                <Button onClick={() => setIsModalOpen(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Loan
-                </Button>
-            </div>
+            <PageHeader
+                title="Loans"
+                description="Track money you've lent and borrowed"
+                action={
+                    <Button onClick={() => setIsModalOpen(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Loan
+                    </Button>
+                }
+            />
 
             <AddLoanModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
 

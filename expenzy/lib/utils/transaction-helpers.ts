@@ -8,13 +8,14 @@ import type { Income } from '@/types/income';
 export const ITEMS_PER_PAGE = 20;
 
 export type TransactionType = 'all' | 'expense' | 'income';
+export type Transaction = ((Expense | Income) & { type: 'expense' | 'income' });
 
 /**
  * Calculate pagination metadata
  */
 export function calculatePaginationMeta(
     type: TransactionType,
-    expensesMeta: { totalPages: number; total: number; hasNext: boolean; hasPrevious: boolean } | null,
+    expensesMeta: { totalPages: number; total: number; hasNext: boolean; hasPrevious: boolean } | null | undefined,
     allTransactionsLength: number,
     currentPage: number
 ) {
@@ -45,7 +46,7 @@ export function calculatePaginationMeta(
  */
 export function getDisplayTransactions(
     type: TransactionType,
-    allTransactions: (Expense | Income)[],
+    allTransactions: Transaction[],
     currentPage: number,
     isServerPaginated: boolean
 ) {
@@ -109,7 +110,7 @@ export function combineTransactions(
     type: TransactionType,
     expenses: Expense[],
     income: Income[]
-) {
+): Transaction[] {
     if (type === 'expense') {
         return expenses.map(e => ({ ...e, type: 'expense' as const }));
     }
@@ -123,7 +124,7 @@ export function combineTransactions(
     }
 
     // Combine all transactions and sort by date
-    const allTransactions = [
+    const allTransactions: Transaction[] = [
         ...expenses.map(e => ({ ...e, type: 'expense' as const })),
         ...income.map(i => ({
             ...i,

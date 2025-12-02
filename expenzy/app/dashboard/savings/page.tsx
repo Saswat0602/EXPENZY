@@ -10,6 +10,7 @@ import { AddSavingsGoalModal } from '@/components/modals/add-savings-goal-modal'
 import { ConfirmationModal } from '@/components/modals/confirmation-modal';
 import { formatCurrency, formatDate, formatPercentage } from '@/lib/utils/format';
 import { Plus, Target, Trash2, Edit, TrendingUp } from 'lucide-react';
+import { PageHeader } from '@/components/layout/page-header';
 
 export default function SavingsGoalsPage() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -35,16 +36,16 @@ export default function SavingsGoalsPage() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold">Savings Goals</h1>
-                    <p className="text-muted-foreground">Track your progress towards financial goals</p>
-                </div>
-                <Button onClick={() => setIsAddModalOpen(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    New Goal
-                </Button>
-            </div>
+            <PageHeader
+                title="Savings Goals"
+                description="Track your progress towards financial goals"
+                action={
+                    <Button onClick={() => setIsAddModalOpen(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        New Goal
+                    </Button>
+                }
+            />
 
             {/* Goals Grid */}
             {goals.length === 0 ? (

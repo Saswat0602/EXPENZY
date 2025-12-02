@@ -10,6 +10,7 @@ import { AddSubscriptionModal } from '@/components/modals/add-subscription-modal
 import { ConfirmationModal } from '@/components/modals/confirmation-modal';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { Plus, Calendar, Trash2, Edit, AlertCircle } from 'lucide-react';
+import { PageHeader } from '@/components/layout/page-header';
 
 export default function SubscriptionsPage() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -69,16 +70,16 @@ export default function SubscriptionsPage() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold">Subscriptions</h1>
-                    <p className="text-muted-foreground">Manage your recurring subscriptions</p>
-                </div>
-                <Button onClick={() => setIsAddModalOpen(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Subscription
-                </Button>
-            </div>
+            <PageHeader
+                title="Subscriptions"
+                description="Manage your recurring subscriptions"
+                action={
+                    <Button onClick={() => setIsAddModalOpen(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Subscription
+                    </Button>
+                }
+            />
 
             {/* Summary Card */}
             {subscriptions.length > 0 && (
