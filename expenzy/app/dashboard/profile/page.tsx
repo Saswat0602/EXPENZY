@@ -37,7 +37,7 @@ export default function ProfilePage() {
     };
 
     const handleCurrencyChange = (currency: string) => {
-        updateProfile.mutate({ defaultCurrency: currency as 'USD' | 'EUR' | 'GBP' | 'INR' });
+        updateProfile.mutate({ defaultCurrency: currency as 'USD' | 'EUR' | 'INR' });
     };
 
     const handlePasswordChange = async (data: ChangePasswordFormData) => {

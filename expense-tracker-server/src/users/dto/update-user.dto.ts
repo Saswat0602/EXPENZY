@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsEnum } from 'class-validator';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -20,4 +20,8 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   timezone?: string;
+
+  @IsOptional()
+  @IsEnum(['INR', 'USD', 'EUR'])
+  defaultCurrency?: 'INR' | 'USD' | 'EUR';
 }
