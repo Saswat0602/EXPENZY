@@ -120,9 +120,11 @@ export function useKeywordMatcher() {
         if (!matcher.isReady()) {
             matcher.loadKeywords().then(() => {
                 setIsReady(true);
+            }).catch(() => {
+                // Silently fail
             });
         }
-    }, []);
+    }, [matcher]);
 
     return {
         match: (description: string) => matcher.match(description),

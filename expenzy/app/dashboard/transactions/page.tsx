@@ -5,6 +5,7 @@ import { useDeleteExpense } from '@/lib/hooks/use-expenses';
 import { useDeleteIncome } from '@/lib/hooks/use-income';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
+import { CategoryIcon, getCategoryLabel } from '@/lib/categorization/category-icons';
 import { TransactionModal } from '@/components/modals/transaction-modal';
 import { ConfirmationModal } from '@/components/modals/confirmation-modal';
 import { VirtualList } from '@/components/shared/virtual-list';
@@ -126,16 +127,18 @@ export default function TransactionsPage() {
         const description = transaction.type === 'income'
             ? (transaction as Income).source
             : (transaction as Expense).description;
-        const categoryColor = transaction.category?.color || '#6B7280';
+        const categoryName = transaction.category?.name.toLowerCase() || 'other';
 
         return (
             <div className="bg-card border border-border rounded-lg p-4 hover:bg-accent/5 transition-colors">
                 <div className="flex items-start gap-3">
-                    {/* Category Color Dot */}
-                    <div
-                        className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5"
-                        style={{ backgroundColor: categoryColor }}
-                    />
+                    {/* Category Icon */}
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-secondary/30">
+                        <CategoryIcon
+                            category={categoryName as any}
+                            className="w-5 h-5"
+                        />
+                    </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
@@ -143,7 +146,7 @@ export default function TransactionsPage() {
                             {description}
                         </h3>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <span>{transaction.category?.name || 'Other'}</span>
+                            <span>{getCategoryLabel(categoryName as any)}</span>
                             <span>•</span>
                             <span>{formatDate(date)}</span>
                         </div>

@@ -78,4 +78,4 @@ import { CategorizationModule } from './categorization/categorization.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

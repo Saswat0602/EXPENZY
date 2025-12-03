@@ -22,6 +22,7 @@ import {
     Sparkles,
     LucideIcon
 } from 'lucide-react';
+import { CategoryIcon, getCategoryLabel } from '@/lib/categorization/category-icons';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ROUTES } from '@/lib/routes';
@@ -277,7 +278,7 @@ export default function DashboardPage() {
                     {dashboard?.recentTransactions && dashboard.recentTransactions.length > 0 ? (
                         <div className="space-y-2">
                             {dashboard.recentTransactions.slice(0, 5).map((transaction) => {
-                                const categoryColor = transaction.category?.color || '#6B7280';
+                                const categoryName = (transaction.category?.name.toLowerCase() || 'other') as CategoryType;
 
                                 return (
                                     <div
@@ -286,12 +287,11 @@ export default function DashboardPage() {
                                         onClick={() => router.push(ROUTES.TRANSACTIONS)}
                                     >
                                         <div
-                                            className="w-8 lg:w-12 h-8 lg:h-12 rounded-lg lg:rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover/trans:scale-110"
-                                            style={{ backgroundColor: `${categoryColor}20` }}
+                                            className="w-8 lg:w-12 h-8 lg:h-12 rounded-lg lg:rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover/trans:scale-110 bg-secondary/30"
                                         >
-                                            <div
-                                                className="w-2 lg:w-3 h-2 lg:h-3 rounded-full"
-                                                style={{ backgroundColor: categoryColor }}
+                                            <CategoryIcon
+                                                category={categoryName}
+                                                className="w-4 lg:w-6 h-4 lg:h-6"
                                             />
                                         </div>
 
@@ -300,7 +300,7 @@ export default function DashboardPage() {
                                                 {transaction.description}
                                             </p>
                                             <div className="flex items-center gap-1.5 text-xs lg:text-sm text-muted-foreground mt-0.5 lg:mt-1">
-                                                <span className="truncate">{transaction.category?.name || 'Other'}</span>
+                                                <span className="truncate">{getCategoryLabel(categoryName)}</span>
                                                 <span>•</span>
                                                 <span>{formatDate(transaction.date)}</span>
                                             </div>

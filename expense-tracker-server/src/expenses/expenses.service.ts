@@ -13,7 +13,7 @@ import { QueryBuilder } from '../common/utils/query-builder.util';
 
 @Injectable()
 export class ExpensesService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(createExpenseDto: CreateExpenseDto, userId: string) {
     return this.prisma.expense.create({
@@ -89,8 +89,8 @@ export class ExpensesService {
     // Build sorting
     const sortBy =
       query.sortBy === 'amount' ||
-        query.sortBy === 'createdAt' ||
-        query.sortBy === 'updatedAt'
+      query.sortBy === 'createdAt' ||
+      query.sortBy === 'updatedAt'
         ? query.sortBy
         : 'expenseDate';
     const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';

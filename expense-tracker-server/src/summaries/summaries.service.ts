@@ -4,7 +4,7 @@ import { Currency } from '@prisma/client';
 
 @Injectable()
 export class SummariesService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async getMonthlySummary(
     userId: string,

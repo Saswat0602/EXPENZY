@@ -94,21 +94,44 @@ async function main() {
     console.log('📁 Creating system categories...');
     const systemCategories = [
         // Expense Categories
-        { name: 'Food', icon: '🍔', color: '#ef4444', type: 'expense' },
-        { name: 'Fuel', icon: '⛽', color: '#f59e0b', type: 'expense' },
-        { name: 'Transport', icon: '🚗', color: '#3b82f6', type: 'expense' },
-        { name: 'Shopping', icon: '🛍️', color: '#ec4899', type: 'expense' },
-        { name: 'Entertainment', icon: '🎬', color: '#8b5cf6', type: 'expense' },
-        { name: 'Health', icon: '❤️', color: '#10b981', type: 'expense' },
-        { name: 'Bills', icon: '📄', color: '#06b6d4', type: 'expense' },
-        { name: 'Education', icon: '📚', color: '#A8D8EA', type: 'expense' },
-        { name: 'Travel', icon: '✈️', color: '#FFD93D', type: 'expense' },
-        { name: 'Other', icon: '📌', color: '#6b7280', type: 'expense' },
+        { name: 'food', icon: 'Utensils', color: 'text-orange-500', type: 'expense' },
+        { name: 'groceries', icon: 'ShoppingBasket', color: 'text-green-500', type: 'expense' },
+        { name: 'travel', icon: 'Plane', color: 'text-blue-500', type: 'expense' },
+        { name: 'bills', icon: 'Receipt', color: 'text-yellow-500', type: 'expense' },
+        { name: 'entertainment', icon: 'Film', color: 'text-pink-500', type: 'expense' },
+        { name: 'shopping', icon: 'ShoppingBag', color: 'text-purple-500', type: 'expense' },
+        { name: 'health', icon: 'HeartPulse', color: 'text-red-500', type: 'expense' },
+        { name: 'education', icon: 'GraduationCap', color: 'text-cyan-500', type: 'expense' },
+        { name: 'investments', icon: 'TrendingUp', color: 'text-teal-500', type: 'expense' },
+        { name: 'fees', icon: 'HandCoins', color: 'text-amber-600', type: 'expense' },
+        { name: 'home', icon: 'Home', color: 'text-indigo-500', type: 'expense' },
+        { name: 'fuel', icon: 'Fuel', color: 'text-slate-600', type: 'expense' },
+        { name: 'personal_care', icon: 'Sparkles', color: 'text-pink-400', type: 'expense' },
+        { name: 'pets', icon: 'PawPrint', color: 'text-amber-500', type: 'expense' },
+        { name: 'kids_family', icon: 'Baby', color: 'text-rose-400', type: 'expense' },
+        { name: 'insurance', icon: 'ShieldCheck', color: 'text-blue-600', type: 'expense' },
+        { name: 'taxes', icon: 'Landmark', color: 'text-slate-700', type: 'expense' },
+        { name: 'subscriptions', icon: 'PlaySquare', color: 'text-purple-600', type: 'expense' },
+        { name: 'electronics', icon: 'Laptop', color: 'text-gray-600', type: 'expense' },
+        { name: 'repairs_maintenance', icon: 'Wrench', color: 'text-orange-600', type: 'expense' },
+        { name: 'fitness_sports', icon: 'Dumbbell', color: 'text-emerald-500', type: 'expense' },
+        { name: 'charity', icon: 'HeartHandshake', color: 'text-red-400', type: 'expense' },
+        { name: 'business_work', icon: 'Briefcase', color: 'text-slate-500', type: 'expense' },
+        { name: 'gifts', icon: 'Gift', color: 'text-pink-500', type: 'expense' },
+        { name: 'events', icon: 'PartyPopper', color: 'text-yellow-400', type: 'expense' },
+        { name: 'transport', icon: 'Bus', color: 'text-blue-400', type: 'expense' },
+        { name: 'rent', icon: 'KeyRound', color: 'text-indigo-600', type: 'expense' },
+        { name: 'utilities', icon: 'Droplets', color: 'text-cyan-600', type: 'expense' },
+        { name: 'dining_out', icon: 'ChefHat', color: 'text-orange-400', type: 'expense' },
+        { name: 'online_services', icon: 'Cloud', color: 'text-sky-500', type: 'expense' },
+        { name: 'loans_credit', icon: 'CreditCard', color: 'text-red-600', type: 'expense' },
+        { name: 'other', icon: 'MoreHorizontal', color: 'text-gray-500', type: 'expense' },
+
         // Income Categories
-        { name: 'Salary', icon: '💰', color: '#6BCF7F', type: 'income' },
-        { name: 'Freelance', icon: '💼', color: '#4D96FF', type: 'income' },
-        { name: 'Business', icon: '🏢', color: '#22c55e', type: 'income' },
-        { name: 'Investment', icon: '📈', color: '#14b8a6', type: 'income' },
+        { name: 'salary', icon: 'Banknote', color: 'text-green-600', type: 'income' },
+        { name: 'freelance', icon: 'Briefcase', color: 'text-blue-600', type: 'income' },
+        { name: 'business', icon: 'Building', color: 'text-slate-600', type: 'income' },
+        { name: 'investment', icon: 'TrendingUp', color: 'text-teal-600', type: 'income' },
     ];
 
     const createdSystemCategories = await Promise.all(
@@ -122,42 +145,8 @@ async function main() {
         ),
     );
 
-    // Create User-specific Categories
-    const userCategories = await Promise.all([
-        prisma.category.create({
-            data: {
-                userId: user1.id,
-                name: 'Gym Membership',
-                icon: '💪',
-                color: '#FF5722',
-                type: 'expense',
-                isSystem: false,
-            },
-        }),
-        prisma.category.create({
-            data: {
-                userId: user1.id,
-                name: 'Pet Care',
-                icon: '🐕',
-                color: '#8BC34A',
-                type: 'expense',
-                isSystem: false,
-            },
-        }),
-        prisma.category.create({
-            data: {
-                userId: user2.id,
-                name: 'Online Courses',
-                icon: '💻',
-                color: '#2196F3',
-                type: 'expense',
-                isSystem: false,
-            },
-        }),
-    ]);
-
     console.log(
-        `✅ Created ${createdSystemCategories.length + userCategories.length} categories`,
+        `✅ Created ${createdSystemCategories.length} system categories`,
     );
 
     // Create Recurring Patterns
@@ -231,7 +220,7 @@ async function main() {
         prisma.expense.create({
             data: {
                 userId: user1.id,
-                categoryId: userCategories[0].id, // Gym Membership
+                categoryId: createdSystemCategories[20].id, // fitness_sports
                 amount: 50.0,
                 currency: 'USD',
                 description: 'Monthly gym membership',
@@ -1376,7 +1365,7 @@ async function main() {
     console.log('\n✨ Database seeding completed successfully!');
     console.log('\n📊 Summary:');
     console.log(`   - Users: 3`);
-    console.log(`   - Categories: ${createdSystemCategories.length + userCategories.length}`);
+    console.log(`   - Categories: ${createdSystemCategories.length}`);
     console.log(`   - Expenses: ${expenses.length}`);
     console.log(`   - Split Expenses: 2`);
     console.log(`   - Split Participants: 4`);

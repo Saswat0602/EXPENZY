@@ -11,7 +11,7 @@
 
 import { useState, useEffect } from 'react';
 import { useKeywordMatcher } from '@/lib/categorization/keyword-matcher';
-import { CategoryIcon, getCategoryLabel, getCategoryColor } from '@/lib/categorization/category-icons';
+import { CategoryIcon, getCategoryLabel } from '@/lib/categorization/category-icons';
 import { getCategoryOptions } from '@/lib/categorization/category-utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -70,10 +70,10 @@ export function ExpenseModalExample() {
                             onClick={() => setCategory(suggestedCategory)}
                         >
                             <CategoryIcon
-                                category={suggestedCategory as any}
+                                category={suggestedCategory}
                                 className="h-3 w-3 mr-1"
                             />
-                            {getCategoryLabel(suggestedCategory as any)}
+                            {getCategoryLabel(suggestedCategory)}
                         </Badge>
                     </div>
                 )}
@@ -87,8 +87,8 @@ export function ExpenseModalExample() {
                         <SelectValue placeholder="Select category">
                             {category && (
                                 <div className="flex items-center gap-2">
-                                    <CategoryIcon category={category as any} className="h-4 w-4" />
-                                    <span>{getCategoryLabel(category as any)}</span>
+                                    <CategoryIcon category={category} className="h-4 w-4" />
+                                    <span>{getCategoryLabel(category)}</span>
                                 </div>
                             )}
                         </SelectValue>

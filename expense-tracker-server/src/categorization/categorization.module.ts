@@ -9,15 +9,15 @@ import { CacheService } from './cache.service';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-    imports: [ConfigModule, PrismaModule],
-    controllers: [CategorizationController],
-    providers: [
-        CategorizationService,
-        KeywordService,
-        KeywordDbService,
-        MLService,
-        CacheService,
-    ],
-    exports: [CategorizationService, KeywordDbService],
+  imports: [ConfigModule, PrismaModule],
+  controllers: [CategorizationController],
+  providers: [
+    CategorizationService,
+    KeywordService,
+    KeywordDbService,
+    MLService,
+    CacheService,
+  ],
+  exports: [CategorizationService, KeywordDbService],
 })
-export class CategorizationModule { }
+export class CategorizationModule {}

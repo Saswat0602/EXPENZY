@@ -1,12 +1,12 @@
-'use client';
-
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useCategories } from '@/lib/hooks/use-categories';
 import { useCreateExpense } from '@/lib/hooks/use-expenses';
 import { useCreateIncome } from '@/lib/hooks/use-income';
+import { useKeywordMatcher } from '@/lib/categorization/keyword-matcher';
+import { CategoryIcon, getCategoryLabel } from '@/lib/categorization/category-icons';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, TrendingUp, TrendingDown } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { CalendarIcon, TrendingUp, TrendingDown, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils/cn';
 
@@ -61,6 +62,33 @@ export function AddTransactionModal({ open, onClose }: AddTransactionModalProps)
 
     const selectedDate = useWatch({ control, name: 'date' });
     const selectedCategory = useWatch({ control, name: 'categoryId' });
+    const description = useWatch({ control, name: 'description' });
+
+    // Keyword Matcher Integration
+    const { match, isReady } = useKeywordMatcher();
+    const [suggestedCategoryKey, setSuggestedCategoryKey] = useState<string | null>(null);
+
+    // Auto-detect category based on description
+    useEffect(() => {
+        if (isReady && description && transactionType === 'expense') {
+            const matchedKey = match(description);
+            setSuggestedCategoryKey(matchedKey);
+
+            if (matchedKey) {
+                // Find matching category ID from backend categories
+                const matchingCategory = categories.find(c =>
+                    c.name.toLowerCase() === matchedKey.toLowerCase() ||
+                    c.name.toLowerCase().includes(matchedKey.toLowerCase())
+                );
+
+                if (matchingCategory) {
+                    setValue('categoryId', matchingCategory.id);
+                }
+            }
+        } else {
+            setSuggestedCategoryKey(null);
+        }
+    }, [description, isReady, match, transactionType, categories, setValue]);
 
     const handleTypeChange = (type: 'income' | 'expense') => {
         setTransactionType(type);
@@ -178,6 +206,26 @@ export function AddTransactionModal({ open, onClose }: AddTransactionModalProps)
                         {errors.description && (
                             <p className="text-sm text-destructive">{errors.description.message}</p>
                         )}
+
+                        {/* Instant Suggestion Badge */}
+                        {suggestedCategoryKey && transactionType === 'expense' && (
+                            <div className="flex items-center gap-2 mt-2 p-2 rounded-lg bg-secondary/30 border border-secondary/50 animate-in fade-in slide-in-from-top-1">
+                                <Sparkles className="h-4 w-4 text-yellow-500" />
+                                <span className="text-sm text-muted-foreground">
+                                    Suggested:
+                                </span>
+                                <Badge
+                                    variant="secondary"
+                                    className="flex items-center gap-1"
+                                >
+                                    <CategoryIcon
+                                        category={suggestedCategoryKey}
+                                        className="h-3 w-3"
+                                    />
+                                    {getCategoryLabel(suggestedCategoryKey)}
+                                </Badge>
+                            </div>
+                        )}
                     </div>
 
                     {/* Category */}
@@ -189,7 +237,19 @@ export function AddTransactionModal({ open, onClose }: AddTransactionModalProps)
                             onValueChange={(value) => setValue('categoryId', value)}
                         >
                             <SelectTrigger className={errors.categoryId ? 'border-destructive' : ''}>
-                                <SelectValue placeholder="Select category" />
+                                <SelectValue placeholder="Select category">
+                                    {selectedCategory && categories.find(c => c.id === selectedCategory) && (
+                                        <div className="flex items-center gap-2">
+                                            <CategoryIcon
+                                                category={categories.find(c => c.id === selectedCategory)?.name.toLowerCase() || ''}
+                                                className="h-4 w-4"
+                                            />
+                                            <span>
+                                                {getCategoryLabel(categories.find(c => c.id === selectedCategory)?.name.toLowerCase() || '')}
+                                            </span>
+                                        </div>
+                                    )}
+                                </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
                                 {categoriesLoading ? (
@@ -204,8 +264,11 @@ export function AddTransactionModal({ open, onClose }: AddTransactionModalProps)
                                     categories.map((category) => (
                                         <SelectItem key={category.id} value={category.id}>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-lg">{category.icon}</span>
-                                                <span>{category.name}</span>
+                                                <CategoryIcon
+                                                    category={category.name.toLowerCase()}
+                                                    className="h-4 w-4"
+                                                />
+                                                <span>{getCategoryLabel(category.name.toLowerCase())}</span>
                                             </div>
                                         </SelectItem>
                                     ))
