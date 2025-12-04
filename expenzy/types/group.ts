@@ -4,6 +4,7 @@ export interface Group {
     id: string;
     name: string;
     description?: string;
+    groupType?: string;
     currency: string;
     createdByUserId: string;
     createdAt: string;
@@ -11,8 +12,8 @@ export interface Group {
     members?: GroupMember[];
     groupExpenses?: GroupExpense[];
     _count?: {
-        members: number;
-        splitExpenses: number;
+        members?: number;
+        splitExpenses?: number;
     };
 }
 

@@ -8,6 +8,7 @@ export interface CreateGroupData {
     name: string;
     description?: string;
     memberEmails?: string[];
+    groupType?: string;
 }
 
 export interface UpdateGroupData {

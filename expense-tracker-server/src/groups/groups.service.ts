@@ -60,6 +60,7 @@ export class GroupsService {
         _count: {
           select: {
             splitExpenses: true,
+            members: true,
           },
         },
       },

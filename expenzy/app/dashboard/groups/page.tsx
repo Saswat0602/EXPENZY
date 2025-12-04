@@ -128,6 +128,8 @@ export default function GroupsPage() {
                                 id={group.id}
                                 name={group.name}
                                 icon="friends"
+                                groupType={group.groupType}
+                                description={group.description}
                                 memberCount={group._count?.members || 0}
                                 balance={group.userBalance}
                                 currency="INR"

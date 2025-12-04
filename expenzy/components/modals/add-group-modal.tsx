@@ -9,11 +9,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Home, Briefcase, Plane, Users, Folder } from 'lucide-react';
 
 interface AddGroupModalProps {
     open: boolean;
     onClose: () => void;
 }
+
+const GROUP_CATEGORIES = [
+    { value: 'home', label: 'Home', icon: Home, color: 'text-blue-500' },
+    { value: 'office', label: 'Office', icon: Briefcase, color: 'text-purple-500' },
+    { value: 'trip', label: 'Trip', icon: Plane, color: 'text-green-500' },
+    { value: 'friends', label: 'Friends', icon: Users, color: 'text-orange-500' },
+    { value: 'other', label: 'Other', icon: Folder, color: 'text-gray-500' },
+];
 
 export function AddGroupModal({ open, onClose }: AddGroupModalProps) {
     const createGroup = useCreateGroup();
@@ -23,9 +32,16 @@ export function AddGroupModal({ open, onClose }: AddGroupModalProps) {
         handleSubmit,
         formState: { errors },
         reset,
-    } = useForm<CreateGroupInput>({
+        watch,
+        setValue,
+    } = useForm({
         resolver: zodResolver(createGroupSchema),
+        defaultValues: {
+            groupType: 'other' as const,
+        },
     });
+
+    const selectedCategory = watch('groupType');
 
     const onSubmit = async (data: CreateGroupInput) => {
         try {
@@ -57,6 +73,31 @@ export function AddGroupModal({ open, onClose }: AddGroupModalProps) {
                         {errors.name && (
                             <p className="text-sm text-destructive">{errors.name.message}</p>
                         )}
+                    </div>
+
+                    {/* Category Selection */}
+                    <div className="space-y-2">
+                        <Label>Category</Label>
+                        <div className="flex gap-2 overflow-x-auto pb-2">
+                            {GROUP_CATEGORIES.map((category) => {
+                                const Icon = category.icon;
+                                const isSelected = selectedCategory === category.value;
+                                return (
+                                    <button
+                                        key={category.value}
+                                        type="button"
+                                        onClick={() => setValue('groupType', category.value as 'home' | 'office' | 'trip' | 'friends' | 'other')}
+                                        className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all min-w-[80px] ${isSelected
+                                            ? 'border-primary bg-primary/10'
+                                            : 'border-border hover:border-primary/50 hover:bg-accent'
+                                            }`}
+                                    >
+                                        <Icon className={`w-6 h-6 ${category.color}`} />
+                                        <span className="text-xs font-medium">{category.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
 
                     {/* Description */}
