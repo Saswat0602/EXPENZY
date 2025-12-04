@@ -18,7 +18,7 @@ interface IncomeModalProps {
 }
 
 export function IncomeModal({ open, onClose, income }: IncomeModalProps) {
-    const { data: categories = [] } = useCategories('income');
+    const { data: categories = [] } = useCategories('INCOME');
     const createIncome = useCreateIncome();
     const updateIncome = useUpdateIncome();
 

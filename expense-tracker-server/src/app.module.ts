@@ -72,4 +72,4 @@ import { SchedulerModule } from './scheduler/scheduler.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

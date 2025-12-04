@@ -33,8 +33,9 @@ export const API_ENDPOINTS = {
     CATEGORIES: {
         BASE: '/categories',
         BY_ID: (id: string) => `/categories/${id}`,
-        EXPENSE: '/categories?type=expense',
-        INCOME: '/categories?type=income',
+        EXPENSE: '/categories?type=EXPENSE',
+        INCOME: '/categories?type=INCOME',
+        GROUP: '/categories?type=GROUP',
     },
 
     // Budgets

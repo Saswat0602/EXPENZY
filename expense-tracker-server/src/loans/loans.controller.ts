@@ -23,7 +23,7 @@ import type { JwtPayload } from '../auth/jwt-payload.interface';
 @Controller('loans')
 @UseGuards(JwtAuthGuard)
 export class LoansController {
-  constructor(private readonly loansService: LoansService) { }
+  constructor(private readonly loansService: LoansService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new loan' })

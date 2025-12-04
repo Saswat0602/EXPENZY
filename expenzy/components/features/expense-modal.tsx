@@ -18,7 +18,7 @@ interface ExpenseModalProps {
 }
 
 export function ExpenseModal({ open, onClose, expense }: ExpenseModalProps) {
-    const { data: categories = [] } = useCategories('expense');
+    const { data: categories = [] } = useCategories('EXPENSE');
     const createExpense = useCreateExpense();
     const updateExpense = useUpdateExpense();
 

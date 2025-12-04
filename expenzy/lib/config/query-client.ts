@@ -48,7 +48,7 @@ export const QUERY_KEYS = {
     },
     CATEGORIES: {
         ALL: ['categories'] as const,
-        LIST: (type?: 'expense' | 'income') => ['categories', 'list', type] as const,
+        LIST: (type?: 'EXPENSE' | 'INCOME' | 'GROUP') => ['categories', 'list', type] as const,
         DETAIL: (id: string) => ['categories', 'detail', id] as const,
     },
     BUDGETS: {

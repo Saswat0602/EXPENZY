@@ -5,7 +5,7 @@ import { QUERY_KEYS } from '@/lib/config/query-client';
 import type { Category, CreateCategoryDto, UpdateCategoryDto } from '@/types';
 import { toast } from 'sonner';
 
-export function useCategories(type?: 'expense' | 'income') {
+export function useCategories(type?: 'EXPENSE' | 'INCOME' | 'GROUP') {
     return useQuery({
         queryKey: QUERY_KEYS.CATEGORIES.LIST(type),
         queryFn: () => {
