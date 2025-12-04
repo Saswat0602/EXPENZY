@@ -15,32 +15,100 @@ export const KEYWORD_DICTIONARY: Record<string, string[]> = {
     // FOOD & DINING
     // =================================================================
     food: [
-        // Raw Ingredients & Groceries
-        'potato', 'tomato', 'onion', 'garlic', 'ginger', 'chilli', 'pepper',
-        'vegetable', 'fruit', 'apple', 'banana', 'orange', 'grape', 'mango', 'berry', 'pineapple',
-        'rice', 'wheat', 'flour', 'atta', 'maida', 'suji', 'dal', 'pulse', 'lentil', 'quinoa', 'oats', 'cereal',
-        'milk', 'curd', 'yogurt', 'paneer', 'tofu', 'tempeh', 'cheese', 'butter', 'ghee', 'cream',
-        'oil', 'mustard oil', 'olive oil', 'sunflower oil', 'coconut oil', 'sesame oil',
-        'salt', 'sugar', 'spice', 'masala', 'turmeric', 'cumin', 'coriander', 'oregano', 'basil',
-        'chicken', 'mutton', 'lamb', 'beef', 'pork', 'fish', 'seafood', 'prawn', 'egg', 'salami', 'sausage',
-        'bread', 'bun', 'toast', 'bakery', 'cake', 'pastry', 'muffin', 'cookie', 'biscuit', 'brownie', 'donut',
-        'snack', 'chips', 'nachos', 'popcorn', 'chocolate', 'candy', 'sweet', 'dessert', 'energy bar',
-        'ice cream', 'gelato', 'sorbet', 'kulfi', 'falooda',
-        'bituya', 'bituya meals', // Specific user request
+        // Contextual Keywords (eating/dining context)
+        'eat', 'ate', 'eating', 'eaten', 'meal', 'lunch', 'dinner', 'breakfast', 'brunch', 'supper', 'tiffin',
 
-        // Dishes & Meals
-        'lunch', 'dinner', 'breakfast', 'brunch', 'supper', 'meal', 'tiffin',
+        // Raw Ingredients & Groceries (CROSS-CATEGORY with groceries)
+        // Vegetables
+        'potato', 'aloo', 'tomato', 'tamatar', 'onion', 'pyaz', 'garlic', 'lehsun', 'ginger', 'adrak',
+        'chilli', 'mirchi', 'pepper', 'capsicum', 'shimla mirch', 'brinjal', 'baingan', 'eggplant',
+        'okra', 'bhindi', 'ladyfinger', 'cauliflower', 'gobi', 'cabbage', 'patta gobi',
+        'carrot', 'gajar', 'beetroot', 'chukandar', 'radish', 'mooli', 'turnip', 'shalgam',
+        'pumpkin', 'kaddu', 'bottle gourd', 'lauki', 'bitter gourd', 'karela',
+        'cucumber', 'kheera', 'zucchini', 'squash', 'ridge gourd', 'tori',
+        'spinach', 'palak', 'fenugreek', 'methi', 'coriander', 'dhaniya', 'mint', 'pudina',
+        'beans', 'french beans', 'green beans', 'peas', 'matar', 'corn', 'makai', 'sweet corn',
+        'mushroom', 'khumbi', 'asparagus', 'broccoli', 'lettuce', 'celery',
+        'vegetable', 'vegetables', 'veggie', 'veggies', 'sabzi', 'bhaji',
+
+        // Fruits
+        'fruit', 'fruits', 'phal', 'apple', 'seb', 'banana', 'kela', 'orange', 'santra', 'grape', 'angoor', 'mango', 'aam',
+        'papaya', 'papita', 'watermelon', 'tarbooz', 'muskmelon', 'kharbooza',
+        'pineapple', 'ananas', 'pomegranate', 'anar', 'guava', 'amrud',
+        'strawberry', 'blueberry', 'raspberry', 'blackberry', 'cranberry', 'berry',
+        'kiwi', 'dragon fruit', 'avocado', 'passion fruit',
+        'pear', 'nashpati', 'peach', 'aadu', 'plum', 'ber', 'apricot', 'khubani',
+        'lemon', 'nimbu', 'lime', 'sweet lime', 'mosambi', 'coconut', 'nariyal',
+        'dates', 'khajoor', 'fig', 'anjeer', 'raisin', 'kishmish', 'dry fruit',
+
+        // Staples & Grains
+        'rice', 'chawal', 'basmati', 'brown rice', 'wheat', 'gehun', 'atta', 'flour',
+        'maida', 'all purpose flour', 'suji', 'rava', 'semolina', 'besan', 'gram flour',
+        'dal', 'daal', 'lentil', 'pulse', 'moong', 'masoor', 'toor', 'arhar', 'chana', 'urad',
+        'rajma', 'kidney beans', 'chickpea', 'kabuli chana', 'black gram', 'soybean',
+        'quinoa', 'oats', 'oatmeal', 'cornflakes', 'cereal', 'muesli', 'granola',
+        'poha', 'flattened rice', 'sabudana', 'tapioca', 'vermicelli', 'seviyan',
+
+        // Dairy & Eggs
+        'milk', 'doodh', 'full cream', 'toned milk', 'double toned', 'skimmed milk',
+        'curd', 'dahi', 'yogurt', 'buttermilk', 'chaas', 'lassi',
+        'paneer', 'cottage cheese', 'cheese', 'cheddar', 'mozzarella', 'processed cheese',
+        'butter', 'makhan', 'white butter', 'ghee', 'clarified butter', 'cream', 'malai',
+        'egg', 'anda', 'eggs', 'brown eggs', 'white eggs',
+
+        // Cooking Essentials
+        'oil', 'tel', 'cooking oil', 'mustard oil', 'sarson ka tel', 'olive oil',
+        'sunflower oil', 'coconut oil', 'nariyal tel', 'sesame oil', 'til ka tel',
+        'groundnut oil', 'moongfali ka tel', 'refined oil', 'vegetable oil',
+        'salt', 'namak', 'sugar', 'chini', 'jaggery', 'gur', 'brown sugar',
+        'spice', 'masala', 'turmeric', 'haldi', 'cumin', 'jeera', 'coriander', 'dhaniya powder',
+        'chilli powder', 'lal mirch', 'garam masala', 'curry powder', 'black pepper', 'kali mirch',
+        'cardamom', 'elaichi', 'cinnamon', 'dalchini', 'clove', 'laung', 'bay leaf', 'tej patta',
+        'mustard seeds', 'rai', 'fenugreek seeds', 'methi dana', 'fennel', 'saunf',
+        'vinegar', 'sirka', 'soy sauce', 'tomato sauce', 'ketchup', 'chilli sauce',
+        'pickle', 'achar', 'chutney', 'papad', 'jam', 'honey', 'peanut butter',
+
+        // Meat, Poultry & Seafood
+        'chicken', 'mutton', 'lamb', 'beef', 'pork', 'meat',
+        'fish', 'seafood', 'prawn', 'shrimp', 'crab', 'lobster',
+        'salmon', 'tuna', 'pomfret', 'rohu', 'katla', 'hilsa',
+        'salami', 'sausage', 'bacon', 'ham',
+
+        // Packaged & Processed Foods
+        'bread', 'pav', 'bun', 'toast', 'bakery', 'brown bread', 'multigrain bread',
+        'cake', 'pastry', 'muffin', 'cookie', 'biscuit', 'brownie', 'donut',
+        'rusk', 'cracker', 'wafer', 'namkeen', 'bhujia',
+        'snack', 'snacks', 'chips', 'kurkure', 'lays', 'nachos', 'popcorn',
+        'chocolate', 'candy', 'sweet', 'dessert', 'energy bar',
+        'ice cream', 'gelato', 'sorbet', 'kulfi', 'falooda',
+        'noodle', 'noodles', 'maggi', 'pasta', 'macaroni', 'spaghetti',
+        'sauce', 'mayonnaise', 'mayo', 'mustard', 'spread',
+        'soup', 'instant soup', 'ready to eat', 'frozen food',
+
+        // Beverages (packaged)
+        'tea', 'chai patti', 'tea leaves', 'green tea', 'coffee powder',
+        'horlicks', 'bournvita', 'complan', 'boost', 'health drink',
+        'juice', 'fruit juice', 'soft drink', 'cold drink', 'soda',
+        'water', 'mineral water', 'packaged water',
+
+        // Tofu & Meat Alternatives
+        'tofu', 'tempeh', 'soya', 'soy',
+
+        // Brand-specific items
+        'bituya', 'bituya meals', // Specific user request
+        'amul', 'mother dairy', 'nestle', 'britannia',
+
+        // Dishes & Meals (prepared food - NOT in groceries)
         'thali', 'platter', 'combo', 'buffet',
         'pizza', 'burger', 'sandwich', 'sub', 'wrap', 'taco', 'burrito', 'quesadilla',
-        'pasta', 'spaghetti', 'macaroni', 'lasagna', 'noodle', 'chowmein', 'ramen', 'udon', 'pho', 'sushi',
-        'salad', 'soup', 'stew', 'curry', 'gravy', 'broth',
+        'salad', 'stew', 'curry', 'gravy', 'broth',
         'steak', 'ribs', 'bbq', 'grill', 'roast', 'fried',
         'biryani', 'pulao', 'khichdi', 'roti', 'naan', 'paratha', 'chapati', 'kulcha', 'thepla', 'bhakri',
-        'dosa', 'idli', 'vada', 'sambar', 'uttapam', 'upma', 'poha', 'appam', 'puttu',
+        'dosa', 'idli', 'vada', 'sambar', 'uttapam', 'upma', 'appam', 'puttu',
         'samosa', 'kachori', 'pakora', 'bhajiya', 'momos', 'dumpling', 'spring roll', 'dimsum',
         'manchurian', 'fried rice', 'chilli chicken', 'schezwan', 'kung pao',
         'kebab', 'tikka', 'shawarma', 'falafel', 'hummus', 'pita', 'mezze',
-        'pancake', 'waffle', 'crepe'
+        'pancake', 'waffle', 'crepe', 'chowmein', 'ramen', 'udon', 'pho', 'sushi'
     ],
 
     // =================================================================
@@ -53,14 +121,14 @@ export const KEYWORD_DICTIONARY: Record<string, string[]> = {
         'green tea', 'black tea', 'herbal tea', 'masala chai', 'ginger tea', 'adrak chai', 'elaichi chai', 'tulsi tea',
         'hot chocolate', 'cocoa', 'horlicks', 'bournvita', 'complan', 'boost',
 
-        // Cold Beverages & Juices
+        // Cold Beverages & Juices (CROSS-CATEGORY with food/groceries)
         'juice', 'fresh juice', 'fruit juice', 'orange juice', 'apple juice', 'mango juice', 'pineapple juice',
         'smoothie', 'shake', 'milkshake', 'lassi', 'sweet lassi', 'mango lassi', 'buttermilk', 'chaas', 'mattha',
         'nimbu pani', 'lemonade', 'lime soda', 'shikanji', 'jaljeera', 'aam panna', 'kokum sharbat', 'rooh afza',
         'sugarcane juice', 'ganne ka ras', 'coconut water', 'nariyal pani', 'tender coconut',
         'iced tea', 'cold coffee', 'frappe', 'frappuccino',
 
-        // Soft Drinks & Sodas
+        // Soft Drinks & Sodas (CROSS-CATEGORY with food/groceries/shopping)
         'soda', 'soft drink', 'cold drink', 'coke', 'coca cola', 'pepsi', 'sprite', 'fanta', '7up', 'mountain dew',
         'thums up', 'limca', 'mirinda', 'maaza', 'frooti', 'slice', 'appy fizz', 'red bull', 'monster', 'energy drink',
         'gatorade', 'powerade', 'electral', 'glucon d',
@@ -80,10 +148,14 @@ export const KEYWORD_DICTIONARY: Record<string, string[]> = {
         'starbucks', 'costa coffee', 'cafe coffee day', 'ccd', 'barista', 'blue tokai', 'third wave coffee',
         'dunkin', 'tim hortons', 'pret', 'caribou coffee',
 
-        // Beverage Delivery & Brands
+        // Beverage Delivery & Brands (CROSS-CATEGORY with groceries)
         'bisleri', 'aquafina', 'kinley', 'evian', 'fiji', 'voss', 'smartwater',
         'tropicana', 'real', 'minute maid', 'paper boat', 'raw pressery',
         'amul', 'mother dairy', // For lassi, buttermilk etc
+
+        // Packaged Beverages (CROSS-CATEGORY with groceries)
+        'tea leaves', 'chai patti', 'green tea', 'coffee powder',
+        'milk', 'packaged milk', 'flavored milk',
     ],
     dining_out: [
         // Places
@@ -140,13 +212,18 @@ export const KEYWORD_DICTIONARY: Record<string, string[]> = {
         'quinoa', 'oats', 'oatmeal', 'cornflakes', 'cereal', 'muesli', 'granola',
         'poha', 'flattened rice', 'sabudana', 'tapioca', 'vermicelli', 'seviyan',
 
-        // Dairy & Eggs
+        // Dairy & Eggs (CROSS-CATEGORY with food)
         'milk', 'doodh', 'full cream', 'toned milk', 'double toned', 'skimmed milk',
         'curd', 'dahi', 'yogurt', 'buttermilk', 'chaas', 'lassi',
         'paneer', 'cottage cheese', 'cheese', 'cheddar', 'mozzarella', 'processed cheese',
         'butter', 'makhan', 'white butter', 'ghee', 'clarified butter', 'cream', 'malai',
         'egg', 'anda', 'eggs', 'brown eggs', 'white eggs',
         'amul', 'mother dairy', 'nestle', 'britannia', 'nandini', 'aavin',
+
+        // Meat, Poultry & Seafood (CROSS-CATEGORY with food)
+        'chicken', 'mutton', 'lamb', 'beef', 'pork', 'meat',
+        'fish', 'seafood', 'prawn', 'shrimp', 'crab', 'lobster',
+        'salmon', 'tuna', 'pomfret', 'rohu', 'katla', 'hilsa',
 
         // Cooking Essentials
         'oil', 'tel', 'cooking oil', 'mustard oil', 'sarson ka tel', 'olive oil',
@@ -160,15 +237,18 @@ export const KEYWORD_DICTIONARY: Record<string, string[]> = {
         'vinegar', 'sirka', 'soy sauce', 'tomato sauce', 'ketchup', 'chilli sauce',
         'pickle', 'achar', 'chutney', 'papad', 'jam', 'honey', 'peanut butter',
 
-        // Packaged & Processed Foods
+        // Packaged & Processed Foods (CROSS-CATEGORY with food)
         'bread', 'pav', 'bun', 'toast', 'brown bread', 'multigrain bread',
         'biscuit', 'cookie', 'rusk', 'cracker', 'wafer', 'namkeen', 'bhujia',
         'chips', 'kurkure', 'lays', 'nachos', 'popcorn', 'snacks',
         'noodles', 'maggi', 'pasta', 'macaroni', 'spaghetti',
         'sauce', 'mayonnaise', 'mayo', 'mustard', 'spread',
         'soup', 'instant soup', 'ready to eat', 'frozen food',
+        'cake', 'pastry', 'muffin', 'brownie', 'donut',
+        'chocolate', 'candy', 'sweet', 'dessert',
+        'ice cream', 'gelato', 'sorbet', 'kulfi',
 
-        // Beverages (Packaged)
+        // Beverages (Packaged) (CROSS-CATEGORY with beverages)
         'tea', 'chai patti', 'tea leaves', 'green tea', 'coffee powder',
         'horlicks', 'bournvita', 'complan', 'boost', 'health drink',
 
@@ -294,10 +374,19 @@ export const KEYWORD_DICTIONARY: Record<string, string[]> = {
         'amazon', 'flipkart', 'myntra', 'ajio', 'meesho', 'nykaa', 'tatacliq', 'snapdeal',
         'ebay', 'etsy', 'aliexpress', 'temu', 'shein', 'wish', 'jiomart',
 
-        // General Shopping
-        'shopping', 'purchase', 'buy', 'bought', 'order', 'online order', 'cod',
-        'mall', 'outlet', 'store', 'shop', 'boutique', 'showroom', 'retail',
+        // General Shopping & Contextual Keywords
+        'shopping', 'purchase', 'buy', 'bought', 'buying', 'purchased', 'purchasing',
+        'order', 'ordered', 'ordering', 'online order', 'cod', 'shop',
+        'mall', 'outlet', 'store', 'boutique', 'showroom', 'retail',
         'sale', 'discount', 'offer', 'deal', 'clearance', 'black friday', 'big billion',
+
+        // Food Items (CROSS-CATEGORY with food/groceries)
+        'snack', 'snacks', 'chips', 'chocolate', 'candy', 'biscuit', 'cookie',
+        'bread', 'cake', 'pastry',
+
+        // Beverages (CROSS-CATEGORY with beverages/groceries)
+        'water', 'juice', 'soft drink', 'soda', 'cold drink',
+        'tea', 'coffee',
 
         // Clothing & Fashion
         'clothes', 'apparel', 'fashion', 'garment', 'outfit', 'wear',
@@ -756,6 +845,15 @@ export const KEYWORD_DICTIONARY: Record<string, string[]> = {
         'software', 'tool', 'hosting', 'domain',
         'stationery', 'printing', 'xerox', 'courier', 'postage',
         'salary', 'wages', 'bonus', 'incentive'
+    ],
+
+    // =================================================================
+    // OTHER / MISCELLANEOUS
+    // =================================================================
+    other: [
+        // This category serves as a catch-all for items that don't fit other categories
+        // It has the lowest priority and will be used as fallback
+        'other', 'others', 'miscellaneous', 'misc', 'random', 'various'
     ]
 };
 
@@ -763,6 +861,25 @@ export const KEYWORD_DICTIONARY: Record<string, string[]> = {
 // ULTRA-OPTIMIZED MATCHING LOGIC
 // Using Trie + Priority System + Early Exit
 // =================================================================
+
+/**
+ * Category match result with confidence score
+ */
+export interface CategoryMatch {
+    category: string;
+    confidence: number; // 0-100
+    matchedKeywords: string[];
+    priority: number;
+}
+
+/**
+ * Contextual keywords that influence category selection
+ */
+const CONTEXTUAL_KEYWORDS: Record<string, string[]> = {
+    shopping: ['buy', 'bought', 'buying', 'purchase', 'purchased', 'purchasing', 'order', 'ordered', 'ordering'],
+    food: ['eat', 'ate', 'eating', 'eaten', 'lunch', 'dinner', 'breakfast', 'brunch', 'supper', 'meal'],
+    groceries: ['grocery', 'groceries', 'market', 'supermarket', 'store', 'fresh', 'raw'],
+};
 
 /**
  * Priority order for categories (higher priority = checked first)
@@ -806,7 +923,7 @@ const WORD_TO_CATEGORIES = new Map<string, Array<{ category: string, priority: n
 const PHRASE_INDEX: Array<{ phrase: string, category: string, priority: number, length: number }> = [];
 
 // 3. Cache for recently matched descriptions (LRU cache)
-const MATCH_CACHE = new Map<string, string | null>();
+const MATCH_CACHE = new Map<string, CategoryMatch[]>();
 const MAX_CACHE_SIZE = 1000;
 
 /**
@@ -849,14 +966,136 @@ const MAX_CACHE_SIZE = 1000;
         return b.length - a.length;
     });
 
-    // Sort word categories by priority
-    for (const categories of WORD_TO_CATEGORIES.values()) {
-        categories.sort((a, b) => b.priority - a.priority);
-    }
+    // Sort word categories by priority (no need to sort, we'll collect all)
+    // We want ALL matches, not just the highest priority
 })();
 
 /**
+ * Detect contextual category from description
+ * Returns category with high confidence if contextual keywords found
+ */
+function detectContextualCategory(description: string): CategoryMatch | null {
+    const lower = description.toLowerCase();
+
+    for (const [category, keywords] of Object.entries(CONTEXTUAL_KEYWORDS)) {
+        const matchedKeywords = keywords.filter(kw => {
+            // Use word boundary to avoid false matches (e.g., "bought" shouldn't match "thought")
+            const regex = new RegExp(`\\b${kw}\\b`, 'i');
+            return regex.test(lower);
+        });
+
+        if (matchedKeywords.length > 0) {
+            return {
+                category,
+                confidence: 95, // High confidence for contextual matches
+                matchedKeywords,
+                priority: CATEGORY_PRIORITY[category] || 0,
+            };
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Match description to ALL possible categories with confidence scores
+ * 
+ * @param description - Transaction description
+ * @returns Array of category matches sorted by confidence
+ */
+export function matchAllCategories(description: string): CategoryMatch[] {
+    if (!description || description.length < 2) return [];
+
+    const normalized = description.toLowerCase().trim();
+
+    // Check cache first (O(1))
+    if (MATCH_CACHE.has(normalized)) {
+        return MATCH_CACHE.get(normalized)!;
+    }
+
+    const matchMap = new Map<string, CategoryMatch>();
+
+    // Helper to add or update match
+    const addOrUpdateMatch = (category: string, confidence: number, keyword: string) => {
+        if (matchMap.has(category)) {
+            const existing = matchMap.get(category)!;
+            existing.confidence = Math.max(existing.confidence, confidence);
+            if (!existing.matchedKeywords.includes(keyword)) {
+                existing.matchedKeywords.push(keyword);
+            }
+        } else {
+            matchMap.set(category, {
+                category,
+                confidence,
+                matchedKeywords: [keyword],
+                priority: CATEGORY_PRIORITY[category] || 0,
+            });
+        }
+    };
+
+    // Strategy 1: Check for contextual keywords (highest priority)
+    const contextualMatch = detectContextualCategory(description);
+    if (contextualMatch) {
+        matchMap.set(contextualMatch.category, contextualMatch);
+    }
+
+    // Strategy 2: Check multi-word phrases
+    for (const { phrase, category, priority } of PHRASE_INDEX) {
+        if (normalized.includes(phrase)) {
+            // Phrase matches get higher confidence
+            const confidence = contextualMatch?.category === category ? 90 : 80;
+            addOrUpdateMatch(category, confidence, phrase);
+        }
+    }
+
+    // Strategy 3: Tokenize and check words
+    const words = normalized.split(/[\s,.\-_@#]+/).filter(w => w.length > 1);
+
+    for (const word of words) {
+        const matches = WORD_TO_CATEGORIES.get(word);
+        if (matches && matches.length > 0) {
+            // Add ALL matching categories for this word
+            for (const match of matches) {
+                // Word matches get medium confidence
+                const confidence = contextualMatch?.category === match.category ? 75 : 60;
+                addOrUpdateMatch(match.category, confidence, word);
+            }
+        }
+    }
+
+    // Convert map to array and sort by confidence, then priority
+    const results = Array.from(matchMap.values()).sort((a, b) => {
+        if (a.confidence !== b.confidence) {
+            return b.confidence - a.confidence;
+        }
+        return b.priority - a.priority;
+    });
+
+    // If no matches found, return 'other' category as fallback
+    if (results.length === 0) {
+        results.push({
+            category: 'other',
+            confidence: 30, // Low confidence since it's a fallback
+            matchedKeywords: [],
+            priority: CATEGORY_PRIORITY['other'] || 1
+        });
+    }
+
+    // Update cache (LRU eviction)
+    if (MATCH_CACHE.size >= MAX_CACHE_SIZE) {
+        const firstKey = MATCH_CACHE.keys().next().value;
+        if (firstKey !== undefined) {
+            MATCH_CACHE.delete(firstKey);
+        }
+    }
+    MATCH_CACHE.set(normalized, results);
+
+    return results;
+}
+
+/**
  * Match a description to a category using ultra-optimized logic
+ * Returns the BEST matching category (backward compatible)
  * 
  * Performance Optimizations:
  * 1. LRU Cache - O(1) for repeated queries
@@ -868,69 +1107,8 @@ const MAX_CACHE_SIZE = 1000;
  * Cached Performance: < 0.01ms
  */
 export function matchCategory(description: string): string | null {
-    if (!description || description.length < 2) return null;
-
-    const normalized = description.toLowerCase().trim();
-
-    // Check cache first (O(1))
-    if (MATCH_CACHE.has(normalized)) {
-        return MATCH_CACHE.get(normalized)!;
-    }
-
-    let result: string | null = null;
-
-    // Strategy 1: Check multi-word phrases (sorted by priority)
-    // Early exit on first match from high-priority category
-    for (const { phrase, category, priority } of PHRASE_INDEX) {
-        if (normalized.includes(phrase)) {
-            result = category;
-            // Early exit if high-priority match (>= 70)
-            if (priority >= 70) {
-                break;
-            }
-        }
-    }
-
-    // Strategy 2: If no phrase match, tokenize and check words
-    if (!result) {
-        // Tokenize by common delimiters
-        const words = normalized.split(/[\s,.\-_@#]+/).filter(w => w.length > 1);
-
-        let bestMatch: { category: string, priority: number } | null = null;
-
-        for (const word of words) {
-            const matches = WORD_TO_CATEGORIES.get(word);
-            if (matches && matches.length > 0) {
-                // Get highest priority match for this word
-                const topMatch = matches[0];
-                if (!bestMatch || topMatch.priority > bestMatch.priority) {
-                    bestMatch = topMatch;
-                }
-
-                // Early exit for very high priority matches
-                if (topMatch.priority >= 90) {
-                    result = topMatch.category;
-                    break;
-                }
-            }
-        }
-
-        if (!result && bestMatch) {
-            result = bestMatch.category;
-        }
-    }
-
-    // Update cache (LRU eviction)
-    if (MATCH_CACHE.size >= MAX_CACHE_SIZE) {
-        // Remove oldest entry (first key)
-        const firstKey = MATCH_CACHE.keys().next().value;
-        if (firstKey !== undefined) {
-            MATCH_CACHE.delete(firstKey);
-        }
-    }
-    MATCH_CACHE.set(normalized, result);
-
-    return result;
+    const matches = matchAllCategories(description);
+    return matches.length > 0 ? matches[0].category : null;
 }
 
 /**

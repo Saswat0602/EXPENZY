@@ -64,7 +64,6 @@ interface SectionHeaderProps {
     actionLabel?: string;
     onAction?: () => void;
 }
-
 const SectionHeader = ({ icon: Icon, title, actionLabel, onAction }: SectionHeaderProps) => (
     <div className="flex items-center justify-between mb-4 lg:mb-6">
         <div className="flex items-center gap-2 lg:gap-3">

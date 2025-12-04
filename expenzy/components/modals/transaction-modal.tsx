@@ -5,8 +5,9 @@ import { z } from 'zod';
 import { useCategories } from '@/lib/hooks/use-categories';
 import { useCreateExpense, useUpdateExpense } from '@/lib/hooks/use-expenses';
 import { useCreateIncome, useUpdateIncome } from '@/lib/hooks/use-income';
-import { useKeywordMatcher } from '@/lib/categorization/keyword-matcher';
+import { useKeywordMatcher, CategoryMatch } from '@/lib/categorization/keyword-matcher';
 import { CategoryIcon, getCategoryLabel } from '@/lib/categorization/category-icons';
+import { CategorySelector } from '@/components/shared/category-selector';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -64,32 +65,47 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
     const updateExpense = useUpdateExpense();
     const updateIncome = useUpdateIncome();
 
-    // Keyword Matcher Integration
-    const { match, isReady } = useKeywordMatcher();
-    const [detectedCategory, setDetectedCategory] = useState<string | null>(null);
+    // Keyword Matcher Integration with Multi-Category Support
+    const { matchAll, isReady } = useKeywordMatcher();
+    const [categoryMatches, setCategoryMatches] = useState<CategoryMatch[]>([]);
+    const [selectedMatchCategory, setSelectedMatchCategory] = useState<string | null>(null);
 
-    // Auto-detect category based on description (min 3 chars)
+    // Auto-detect categories based on description (min 3 chars) with debouncing
     useEffect(() => {
-        if (mode === 'add' && isReady && description && description.length >= 3 && selectedType === 'expense') {
-            const matchedKey = match(description);
-            setDetectedCategory(matchedKey);
+        // Debounce timer - wait 300ms after user stops typing
+        const debounceTimer = setTimeout(() => {
+            if (mode === 'add' && isReady && description && description.length >= 3 && selectedType === 'expense') {
+                const matches = matchAll(description);
+                setCategoryMatches(matches);
 
-            if (matchedKey) {
-                // Find matching category ID from backend categories
-                const matchingCategory = categories.find(c =>
-                    c.name.toLowerCase() === matchedKey.toLowerCase() ||
-                    c.name.toLowerCase().includes(matchedKey.toLowerCase())
-                );
+                if (matches.length === 1) {
+                    // Single match - auto-select (includes 'other' fallback)
+                    const matchingCategory = categories.find(c =>
+                        c.name.toLowerCase() === matches[0].category.toLowerCase() ||
+                        c.name.toLowerCase().includes(matches[0].category.toLowerCase())
+                    );
 
-                if (matchingCategory) {
-                    setValue('categoryId', matchingCategory.id);
+                    if (matchingCategory) {
+                        setValue('categoryId', matchingCategory.id);
+                        setSelectedMatchCategory(matches[0].category);
+                    }
+                } else if (matches.length > 1) {
+                    // Multiple matches - user needs to choose
+                    // Don't reset if user has already selected one
+                    if (!selectedMatchCategory || !matches.find(m => m.category === selectedMatchCategory)) {
+                        setSelectedMatchCategory(null);
+                    }
                 }
+            } else if (mode === 'add') {
+                setCategoryMatches([]);
+                // Don't reset selectedMatchCategory if user manually selected something
             }
-        } else if (mode === 'add') {
-            setDetectedCategory(null);
-        }
+        }, 300); // 300ms debounce delay
+
+        // Cleanup function to cancel timer if description changes before delay completes
+        return () => clearTimeout(debounceTimer);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [description, isReady, match, mode, selectedType, categories]);
+    }, [description, isReady, matchAll, mode, selectedType, categories]);
 
     // Pre-populate form in edit mode
     useEffect(() => {
@@ -112,7 +128,7 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
             // For edit mode, we can show the existing category icon if we want, 
             // but for now let's just rely on the stored categoryId
             if (transaction.type === 'expense' && transaction.category) {
-                setDetectedCategory(transaction.category.name.toLowerCase());
+                setSelectedMatchCategory(transaction.category.name.toLowerCase());
             }
         }
     }, [mode, transaction, open, setValue]);
@@ -252,20 +268,20 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
                                 id="description"
                                 placeholder={
                                     selectedType === 'expense'
-                                        ? 'e.g., Lunch at restaurant'
+                                        ? 'e.g., Lunch at restaurant, Uber ride, Buy chicken'
                                         : 'e.g., Salary, Freelance work'
                                 }
                                 {...register('description')}
                                 className={cn(
                                     errors.description ? 'border-destructive' : '',
-                                    detectedCategory && selectedType === 'expense' ? 'pr-12' : ''
+                                    selectedMatchCategory && categoryMatches.length === 1 && selectedType === 'expense' ? 'pr-12' : ''
                                 )}
                             />
-                            {/* Auto-detected Category Icon */}
-                            {detectedCategory && selectedType === 'expense' && (
+                            {/* Auto-detected Category Icon (single match only) */}
+                            {selectedMatchCategory && categoryMatches.length === 1 && selectedType === 'expense' && (
                                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                                     <CategoryIcon
-                                        category={detectedCategory}
+                                        category={selectedMatchCategory}
                                         className="w-5 h-5"
                                     />
                                 </div>
@@ -274,11 +290,32 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
                         {errors.description && (
                             <p className="text-sm text-destructive">{errors.description.message}</p>
                         )}
-                        {detectedCategory && selectedType === 'expense' && description && description.length >= 3 && (
+
+                        {/* Single Category Match - Show label */}
+                        {selectedMatchCategory && categoryMatches.length === 1 && selectedType === 'expense' && description && description.length >= 3 && (
                             <p className="text-xs text-muted-foreground flex items-center gap-1">
                                 <span>Category:</span>
-                                <span className="font-medium">{getCategoryLabel(detectedCategory)}</span>
+                                <span className="font-medium">{getCategoryLabel(selectedMatchCategory)}</span>
                             </p>
+                        )}
+
+                        {/* Multiple Category Matches - Show selector */}
+                        {categoryMatches.length > 1 && selectedType === 'expense' && description && description.length >= 3 && (
+                            <CategorySelector
+                                matches={categoryMatches}
+                                selectedCategory={selectedMatchCategory || undefined}
+                                onSelect={(categoryKey) => {
+                                    setSelectedMatchCategory(categoryKey);
+                                    // Find matching backend category and set it
+                                    const matchingCategory = categories.find(c =>
+                                        c.name.toLowerCase() === categoryKey.toLowerCase() ||
+                                        c.name.toLowerCase().includes(categoryKey.toLowerCase())
+                                    );
+                                    if (matchingCategory) {
+                                        setValue('categoryId', matchingCategory.id);
+                                    }
+                                }}
+                            />
                         )}
                     </div>
 

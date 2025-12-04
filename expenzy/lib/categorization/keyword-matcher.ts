@@ -6,15 +6,25 @@
  */
 
 import React from 'react';
-import { matchCategory, getCategories } from './keyword-dictionary';
+import { matchCategory, matchAllCategories, getCategories, CategoryMatch } from './keyword-dictionary';
+
+export type { CategoryMatch } from './keyword-dictionary';
 
 export class KeywordMatcher {
     /**
-     * Match description to category
+     * Match description to best category
      * Returns category name or null if no match
      */
     match(description: string): string | null {
         return matchCategory(description);
+    }
+
+    /**
+     * Match description to ALL possible categories with confidence scores
+     * Returns array of category matches sorted by confidence
+     */
+    matchAll(description: string): CategoryMatch[] {
+        return matchAllCategories(description);
     }
 
     /**
@@ -47,6 +57,7 @@ export function useKeywordMatcher() {
 
     return {
         match: (description: string) => matcher.match(description),
+        matchAll: (description: string) => matcher.matchAll(description),
         isReady,
         getCategories: () => getCategories(),
     };
