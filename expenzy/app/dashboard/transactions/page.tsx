@@ -1,10 +1,12 @@
 'use client';
 
+import { MobileActionMenu, createEditAction, createDeleteAction } from '@/components/shared/mobile-action-menu';
+
 import { useState } from 'react';
 import { useDeleteExpense } from '@/lib/hooks/use-expenses';
 import { useDeleteIncome } from '@/lib/hooks/use-income';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
-import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { CategoryIcon, formatCategoryName } from '@/lib/categorization/category-icons';
 import { TransactionModal } from '@/components/modals/transaction-modal';
 import { ConfirmationModal } from '@/components/modals/confirmation-modal';
@@ -152,23 +154,13 @@ export default function TransactionsPage() {
                             {formatCurrency(transaction.amount)}
                         </p>
 
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-1">
-                            <button
-                                onClick={() => handleEdit(transaction)}
-                                className="p-1.5 hover:bg-muted rounded-md transition-colors"
-                                aria-label="Edit transaction"
-                            >
-                                <Edit2 className="w-4 h-4 text-muted-foreground" />
-                            </button>
-                            <button
-                                onClick={() => handleDelete(transaction)}
-                                className="p-1.5 hover:bg-destructive/10 rounded-md transition-colors"
-                                aria-label="Delete transaction"
-                            >
-                                <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                            </button>
-                        </div>
+                        {/* Mobile Action Menu */}
+                        <MobileActionMenu
+                            actions={[
+                                createEditAction(() => handleEdit(transaction)),
+                                createDeleteAction(() => handleDelete(transaction)),
+                            ]}
+                        />
                     </div>
                 </div>
             </div>
