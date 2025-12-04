@@ -47,24 +47,38 @@ export function VirtualList<T>({
     const prevDepsRef = useRef<string>('');
     const isMountedRef = useRef(true);
 
-    const loadData = useCallback(async (page: number, mode: 'initial' | 'append') => {
+    const loadData = useCallback(async (page: number, mode: 'initial' | 'append' | 'desktop-page') => {
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
         }
 
         abortControllerRef.current = new AbortController();
-        setCurrentLoadingState(mode === 'initial' ? 'loading' : 'loading-more');
+        setCurrentLoadingState(mode === 'append' || mode === 'desktop-page' ? 'loading-more' : 'loading');
 
         try {
             const result = await fetchData(page);
 
             if (!isMountedRef.current) return;
 
-            setItems(prev => mode === 'append' ? [...prev, ...result.data] : result.data);
-            setPagination(prev => ({
-                ...prev,
-                mobile: mode === 'append' ? page : 1,
-            }));
+            // For desktop page changes, replace data. For mobile append, add to existing.
+            if (mode === 'desktop-page') {
+                setItems(result.data);
+                setPagination(prev => ({
+                    ...prev,
+                    desktop: page,
+                }));
+            } else if (mode === 'append') {
+                setItems(prev => [...prev, ...result.data]);
+                setPagination(prev => ({
+                    ...prev,
+                    mobile: page,
+                }));
+            } else {
+                // Initial load
+                setItems(result.data);
+                setPagination({ desktop: 1, mobile: 1 });
+            }
+
             setMetadata({
                 total: result.total ?? result.data.length,
                 hasMore: result.hasMore,
@@ -97,17 +111,17 @@ export function VirtualList<T>({
     }, [metadata.hasMore, currentLoadingState, pagination.mobile, loadData]);
 
     const handlePageChange = useCallback((page: number) => {
-        setPagination(prev => ({ ...prev, desktop: page }));
+        // Fetch new data for the selected page (desktop only)
+        loadData(page, 'desktop-page');
         window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, []);
+    }, [loadData]);
 
     const desktopData = useMemo(() => {
-        const start = (pagination.desktop - 1) * itemsPerPage;
-        const end = start + itemsPerPage;
+        // Since we now fetch data per page, just use all items
         return {
-            items: items.slice(start, end),
-            start,
-            end,
+            items: items,
+            start: (pagination.desktop - 1) * itemsPerPage,
+            end: pagination.desktop * itemsPerPage,
             totalPages: Math.ceil(metadata.total / itemsPerPage),
         };
     }, [items, pagination.desktop, itemsPerPage, metadata.total]);
