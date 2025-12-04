@@ -2,34 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { toast } from 'sonner';
-
-export interface Group {
-    id: string;
-    name: string;
-    description?: string;
-    createdById: string;
-    createdAt: string;
-    updatedAt: string;
-    members?: GroupMember[];
-    _count?: {
-        members: number;
-        expenses: number;
-    };
-}
-
-export interface GroupMember {
-    id: string;
-    groupId: string;
-    userId: string;
-    role: 'ADMIN' | 'MEMBER';
-    joinedAt: string;
-    user?: {
-        id: string;
-        name: string;
-        email: string;
-        avatar?: string;
-    };
-}
+import type { Group, GroupMember } from '@/types/group';
 
 export interface CreateGroupData {
     name: string;

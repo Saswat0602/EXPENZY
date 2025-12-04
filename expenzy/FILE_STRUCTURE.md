@@ -54,6 +54,15 @@ Complex components tied to specific features:
   - `account-section.tsx` - Account management
   - `preferences-section.tsx` - User preferences
   - `data-export.tsx` - Export user data
+- `/groups/*` - Group expense management components:
+  - `group-avatar.tsx` - Group avatar with color generation and icons
+  - `group-card.tsx` - Group card for list view with balance
+  - `group-header.tsx` - Group detail page header
+  - `group-member-list.tsx` - Member list with roles and balances
+  - `member-list-item.tsx` - Individual member display with actions
+  - `balance-summary.tsx` - Balance summary component
+  - `add-member-modal.tsx` - Add member to group modal
+  - `index.ts` - Barrel export for all group components
 
 #### `/components/layout/` - Layout Components
 Shared layout elements used across pages:
@@ -159,6 +168,7 @@ Pure helper functions (REUSE these, don't duplicate):
 - `currency.ts` - Currency formatting utilities
 - `format.ts` - Date/number formatting functions
 - `transaction-helpers.ts` - Transaction-specific helper functions
+- `balance-utils.ts` - Group balance calculations and settlement suggestions
 
 #### `/lib/validations/` - Zod Schemas
 Form validation schemas (ALWAYS USE for forms):

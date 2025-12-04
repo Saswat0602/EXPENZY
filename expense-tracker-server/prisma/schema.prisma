@@ -13,6 +13,12 @@ enum Currency {
   EUR // Euro
 }
 
+enum CategoryType {
+  EXPENSE
+  INCOME
+  GROUP
+}
+
 model User {
   id                   String              @id @default(uuid())
   email                String              @unique
@@ -78,7 +84,7 @@ model Category {
   name             String
   icon             String?
   color            String?
-  type             String
+  type             CategoryType
   isSystem         Boolean        @default(false) @map("is_system")
   parentCategoryId String?        @map("parent_category_id")
   createdAt        DateTime       @default(now()) @map("created_at")
@@ -406,15 +412,39 @@ model Attachment {
 }
 
 model Group {
-  id              String   @id @default(uuid())
-  name            String
-  description     String?
-  imageUrl        String?  @map("image_url")
-  createdByUserId String   @map("created_by_user_id")
-  createdBy       User     @relation("GroupCreator", fields: [createdByUserId], references: [id])
-  isActive        Boolean  @default(true) @map("is_active")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  imageUrl    String? @map("image_url")
+
+  // Group type/category
+  groupType String @default("other") @map("group_type")
+
+  // Default currency for the group
+  currency Currency @default(INR)
+
+  // Simplify debts (minimize transactions)
+  simplifyDebts Boolean @default(true) @map("simplify_debts")
+
+  // Allow non-member expenses
+  allowNonMembers Boolean @default(false) @map("allow_non_members")
+
+  // Group icon/emoji
+  icon String? @default("friends")
+
+  // Group color theme
+  color String? @default("purple")
+
+  createdByUserId String  @map("created_by_user_id")
+  createdBy       User    @relation("GroupCreator", fields: [createdByUserId], references: [id])
+  isActive        Boolean @default(true) @map("is_active")
+
+  // Archive instead of delete
+  isArchived Boolean   @default(false) @map("is_archived")
+  archivedAt DateTime? @map("archived_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   members       GroupMember[]
   splitExpenses SplitExpense[] @relation("GroupSplits")
@@ -423,6 +453,9 @@ model Group {
 
   @@index([createdByUserId])
   @@index([isActive])
+  @@index([isArchived])
+  @@index([groupType])
+  @@index([currency])
   @@index([createdAt(sort: Desc)])
   @@index([createdByUserId, isActive])
   @@map("groups")

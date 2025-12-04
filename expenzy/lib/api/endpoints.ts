@@ -2,10 +2,10 @@ export const API_ENDPOINTS = {
     // Auth
     AUTH: {
         LOGIN: '/auth/login',
-        SIGNUP: '/auth/register',  // Backend uses 'register' not 'signup'
+        SIGNUP: '/auth/register',
         LOGOUT: '/auth/logout',
         REFRESH: '/auth/refresh',
-        ME: '/auth/profile',  // Backend uses 'profile' not 'me'
+        ME: '/auth/profile',
     },
 
     // Users

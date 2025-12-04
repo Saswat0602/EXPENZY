@@ -10,13 +10,17 @@ export interface Group {
     updatedAt: string;
     members?: GroupMember[];
     expenses?: GroupExpense[];
+    _count?: {
+        members: number;
+        expenses: number;
+    };
 }
 
 export interface GroupMember {
     id: string;
     groupId: string;
     userId: string;
-    role: 'admin' | 'member';
+    role: 'ADMIN' | 'MEMBER';
     joinedAt: string;
     user?: {
         id: string;
@@ -52,5 +56,5 @@ export type UpdateGroupDto = Partial<CreateGroupDto>;
 
 export interface AddMemberDto {
     email: string;
-    role?: 'admin' | 'member';
+    role?: 'ADMIN' | 'MEMBER';
 }

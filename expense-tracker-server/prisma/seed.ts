@@ -88,47 +88,66 @@ async function main() {
 
     // Create System Categories (Available to all users)
     console.log('📁 Creating system categories...');
-    const systemCategories = [
-        // Expense Categories
-        { name: 'food', icon: 'Utensils', color: 'text-orange-500', type: 'expense' },
-        { name: 'beverages', icon: 'Coffee', color: 'text-amber-600', type: 'expense' },
-        { name: 'groceries', icon: 'ShoppingBasket', color: 'text-green-500', type: 'expense' },
-        { name: 'travel', icon: 'Plane', color: 'text-blue-500', type: 'expense' },
-        { name: 'bills', icon: 'Receipt', color: 'text-yellow-500', type: 'expense' },
-        { name: 'entertainment', icon: 'Film', color: 'text-pink-500', type: 'expense' },
-        { name: 'shopping', icon: 'ShoppingBag', color: 'text-purple-500', type: 'expense' },
-        { name: 'health', icon: 'HeartPulse', color: 'text-red-500', type: 'expense' },
-        { name: 'education', icon: 'GraduationCap', color: 'text-cyan-500', type: 'expense' },
-        { name: 'investments', icon: 'TrendingUp', color: 'text-teal-500', type: 'expense' },
-        { name: 'fees', icon: 'HandCoins', color: 'text-amber-600', type: 'expense' },
-        { name: 'home', icon: 'Home', color: 'text-indigo-500', type: 'expense' },
-        { name: 'fuel', icon: 'Fuel', color: 'text-slate-600', type: 'expense' },
-        { name: 'personal_care', icon: 'Sparkles', color: 'text-pink-400', type: 'expense' },
-        { name: 'kids_family', icon: 'Baby', color: 'text-rose-400', type: 'expense' },
-        { name: 'insurance', icon: 'ShieldCheck', color: 'text-blue-600', type: 'expense' },
-        { name: 'taxes', icon: 'Landmark', color: 'text-slate-700', type: 'expense' },
-        { name: 'subscriptions', icon: 'PlaySquare', color: 'text-purple-600', type: 'expense' },
-        { name: 'electronics', icon: 'Laptop', color: 'text-gray-600', type: 'expense' },
-        { name: 'repairs_maintenance', icon: 'Wrench', color: 'text-orange-600', type: 'expense' },
-        { name: 'fitness_sports', icon: 'Dumbbell', color: 'text-emerald-500', type: 'expense' },
-        { name: 'charity', icon: 'HeartHandshake', color: 'text-red-400', type: 'expense' },
-        { name: 'business_work', icon: 'Briefcase', color: 'text-slate-500', type: 'expense' },
-        { name: 'gifts', icon: 'Gift', color: 'text-pink-500', type: 'expense' },
-        { name: 'events', icon: 'PartyPopper', color: 'text-yellow-400', type: 'expense' },
-        { name: 'transport', icon: 'Bus', color: 'text-blue-400', type: 'expense' },
-        { name: 'rent', icon: 'KeyRound', color: 'text-indigo-600', type: 'expense' },
-        { name: 'utilities', icon: 'Droplets', color: 'text-cyan-600', type: 'expense' },
-        { name: 'dining_out', icon: 'ChefHat', color: 'text-orange-400', type: 'expense' },
-        { name: 'online_services', icon: 'Cloud', color: 'text-sky-500', type: 'expense' },
-        { name: 'loans_credit', icon: 'CreditCard', color: 'text-red-600', type: 'expense' },
-        { name: 'other', icon: 'MoreHorizontal', color: 'text-gray-500', type: 'expense' },
+    const systemCategories: Array<{
+        name: string;
+        icon: string;
+        color: string;
+        type: 'EXPENSE' | 'INCOME' | 'GROUP';
+    }> = [
+            // Expense Categories
+            { name: 'food', icon: 'Utensils', color: 'text-orange-500', type: 'EXPENSE' },
+            { name: 'beverages', icon: 'Coffee', color: 'text-amber-600', type: 'EXPENSE' },
+            { name: 'groceries', icon: 'ShoppingBasket', color: 'text-green-500', type: 'EXPENSE' },
+            { name: 'travel', icon: 'Plane', color: 'text-blue-500', type: 'EXPENSE' },
+            { name: 'bills', icon: 'Receipt', color: 'text-yellow-500', type: 'EXPENSE' },
+            { name: 'entertainment', icon: 'Film', color: 'text-pink-500', type: 'EXPENSE' },
+            { name: 'shopping', icon: 'ShoppingBag', color: 'text-purple-500', type: 'EXPENSE' },
+            { name: 'health', icon: 'HeartPulse', color: 'text-red-500', type: 'EXPENSE' },
+            { name: 'education', icon: 'GraduationCap', color: 'text-cyan-500', type: 'EXPENSE' },
+            { name: 'investments', icon: 'TrendingUp', color: 'text-teal-500', type: 'EXPENSE' },
+            { name: 'fees', icon: 'HandCoins', color: 'text-amber-600', type: 'EXPENSE' },
+            { name: 'home', icon: 'Home', color: 'text-indigo-500', type: 'EXPENSE' },
+            { name: 'fuel', icon: 'Fuel', color: 'text-slate-600', type: 'EXPENSE' },
+            { name: 'personal_care', icon: 'Sparkles', color: 'text-pink-400', type: 'EXPENSE' },
+            { name: 'kids_family', icon: 'Baby', color: 'text-rose-400', type: 'EXPENSE' },
+            { name: 'insurance', icon: 'ShieldCheck', color: 'text-blue-600', type: 'EXPENSE' },
+            { name: 'taxes', icon: 'Landmark', color: 'text-slate-700', type: 'EXPENSE' },
+            { name: 'subscriptions', icon: 'PlaySquare', color: 'text-purple-600', type: 'EXPENSE' },
+            { name: 'electronics', icon: 'Laptop', color: 'text-gray-600', type: 'EXPENSE' },
+            { name: 'repairs_maintenance', icon: 'Wrench', color: 'text-orange-600', type: 'EXPENSE' },
+            { name: 'fitness_sports', icon: 'Dumbbell', color: 'text-emerald-500', type: 'EXPENSE' },
+            { name: 'charity', icon: 'HeartHandshake', color: 'text-red-400', type: 'EXPENSE' },
+            { name: 'business_work', icon: 'Briefcase', color: 'text-slate-500', type: 'EXPENSE' },
+            { name: 'gifts', icon: 'Gift', color: 'text-pink-500', type: 'EXPENSE' },
+            { name: 'events', icon: 'PartyPopper', color: 'text-yellow-400', type: 'EXPENSE' },
+            { name: 'transport', icon: 'Bus', color: 'text-blue-400', type: 'EXPENSE' },
+            { name: 'rent', icon: 'KeyRound', color: 'text-indigo-600', type: 'EXPENSE' },
+            { name: 'utilities', icon: 'Droplets', color: 'text-cyan-600', type: 'EXPENSE' },
+            { name: 'dining_out', icon: 'ChefHat', color: 'text-orange-400', type: 'EXPENSE' },
+            { name: 'online_services', icon: 'Cloud', color: 'text-sky-500', type: 'EXPENSE' },
+            { name: 'loans_credit', icon: 'CreditCard', color: 'text-red-600', type: 'EXPENSE' },
+            { name: 'other', icon: 'MoreHorizontal', color: 'text-gray-500', type: 'EXPENSE' },
 
-        // Income Categories
-        { name: 'salary', icon: 'Banknote', color: 'text-green-600', type: 'income' },
-        { name: 'freelance', icon: 'Briefcase', color: 'text-blue-600', type: 'income' },
-        { name: 'business', icon: 'Building', color: 'text-slate-600', type: 'income' },
-        { name: 'investment', icon: 'TrendingUp', color: 'text-teal-600', type: 'income' },
-    ];
+            // Income Categories
+            { name: 'salary', icon: 'Banknote', color: 'text-green-600', type: 'INCOME' },
+            { name: 'freelance', icon: 'Briefcase', color: 'text-blue-600', type: 'INCOME' },
+            { name: 'business', icon: 'Building', color: 'text-slate-600', type: 'INCOME' },
+            { name: 'investment', icon: 'TrendingUp', color: 'text-teal-600', type: 'INCOME' },
+
+            // Group Categories
+            { name: 'rent', icon: 'KeyRound', color: 'text-indigo-600', type: 'GROUP' },
+            { name: 'utilities', icon: 'Droplets', color: 'text-cyan-600', type: 'GROUP' },
+            { name: 'groceries', icon: 'ShoppingBasket', color: 'text-green-500', type: 'GROUP' },
+            { name: 'household', icon: 'Home', color: 'text-blue-500', type: 'GROUP' },
+            { name: 'internet_cable', icon: 'Wifi', color: 'text-purple-500', type: 'GROUP' },
+            { name: 'cleaning', icon: 'Sparkles', color: 'text-pink-400', type: 'GROUP' },
+            { name: 'furniture', icon: 'Sofa', color: 'text-amber-600', type: 'GROUP' },
+            { name: 'repairs', icon: 'Wrench', color: 'text-orange-600', type: 'GROUP' },
+            { name: 'entertainment', icon: 'Film', color: 'text-pink-500', type: 'GROUP' },
+            { name: 'dining', icon: 'ChefHat', color: 'text-orange-400', type: 'GROUP' },
+            { name: 'transportation', icon: 'Bus', color: 'text-blue-400', type: 'GROUP' },
+            { name: 'other', icon: 'MoreHorizontal', color: 'text-gray-500', type: 'GROUP' },
+        ];
 
     const createdSystemCategories = await Promise.all(
         systemCategories.map((cat) =>
@@ -672,6 +691,123 @@ async function main() {
     ]);
 
     console.log(`✅ Created ${2} loan payments`);
+
+    // Create Groups
+    console.log('👥 Creating groups...');
+    const group1 = await prisma.group.create({
+        data: {
+            name: 'Roommates',
+            description: 'Shared apartment expenses',
+            groupType: 'home',
+            currency: 'INR',
+            icon: 'home',
+            color: 'blue',
+            simplifyDebts: true,
+            allowNonMembers: false,
+            createdByUserId: user1.id,
+        },
+    });
+
+    console.log(`✅ Created ${1} group`);
+
+    // Create Group Members
+    console.log('👤 Creating group members...');
+    await Promise.all([
+        prisma.groupMember.create({
+            data: {
+                groupId: group1.id,
+                userId: user1.id,
+                role: 'ADMIN',
+            },
+        }),
+        prisma.groupMember.create({
+            data: {
+                groupId: group1.id,
+                userId: user2.id,
+                role: 'MEMBER',
+            },
+        }),
+        prisma.groupMember.create({
+            data: {
+                groupId: group1.id,
+                userId: user3.id,
+                role: 'MEMBER',
+            },
+        }),
+    ]);
+
+    console.log(`✅ Created ${3} group members`);
+
+    // Create Group Expenses (50 expenses)
+    console.log('💰 Creating group expenses...');
+    const groupExpenseDescriptions = [
+        'Electricity bill', 'Water bill', 'Internet bill', 'Groceries - vegetables',
+        'Groceries - fruits', 'Milk and bread', 'Cleaning supplies', 'Gas cylinder',
+        'Netflix subscription', 'Spotify premium', 'House cleaning service', 'Plumber service',
+        'Electrician service', 'Furniture repair', 'Kitchen utensils', 'Bathroom supplies',
+        'Laundry detergent', 'Dish soap', 'Toilet paper', 'Paper towels',
+        'Trash bags', 'Light bulbs', 'Air freshener', 'Pest control',
+        'Groceries - rice', 'Groceries - dal', 'Groceries - oil', 'Groceries - spices',
+        'Groceries - snacks', 'Groceries - beverages', 'House party supplies', 'Dinner party',
+        'Pizza night', 'Movie night snacks', 'Weekend breakfast', 'Coffee and tea',
+        'Sugar and salt', 'Flour and grains', 'Cooking gas refill', 'Water purifier service',
+        'AC maintenance', 'Refrigerator repair', 'Microwave purchase', 'Utensils set',
+        'Bedsheets', 'Towels', 'Curtains', 'Doormat', 'Shoe rack', 'Storage boxes'
+    ];
+
+    const groupExpenseAmounts = [
+        1200, 450, 800, 650, 420, 180, 350, 950,
+        199, 119, 500, 800, 600, 450, 1200, 380,
+        250, 120, 180, 150, 90, 120, 80, 600,
+        850, 420, 380, 220, 340, 280, 1500, 2200,
+        890, 450, 620, 180, 140, 520, 950, 350,
+        1200, 2500, 3500, 850, 1200, 680, 950, 280, 450, 520
+    ];
+
+    const groupExpenses = await Promise.all(
+        groupExpenseDescriptions.map((desc, index) => {
+            const paidBy = index % 3 === 0 ? user1.id : index % 3 === 1 ? user2.id : user3.id;
+            const daysAgo = Math.floor(index / 2);
+            const expenseDate = new Date();
+            expenseDate.setDate(expenseDate.getDate() - daysAgo);
+
+            // Determine category based on description - use GROUP type categories
+            let categoryId;
+            const groupCategories = createdSystemCategories.filter(c => c.type === 'GROUP');
+
+            if (desc.includes('Electricity') || desc.includes('Water') || desc.includes('Internet')) {
+                categoryId = groupCategories.find(c => c.name === 'utilities')?.id || groupCategories[0].id;
+            } else if (desc.includes('Groceries') || desc.includes('Milk') || desc.includes('vegetables') || desc.includes('fruits')) {
+                categoryId = groupCategories.find(c => c.name === 'groceries')?.id || groupCategories[0].id;
+            } else if (desc.includes('cleaning') || desc.includes('Cleaning') || desc.includes('supplies')) {
+                categoryId = groupCategories.find(c => c.name === 'cleaning')?.id || groupCategories[0].id;
+            } else if (desc.includes('Furniture') || desc.includes('repair') || desc.includes('Plumber') || desc.includes('Electrician')) {
+                categoryId = groupCategories.find(c => c.name === 'repairs')?.id || groupCategories[0].id;
+            } else if (desc.includes('Netflix') || desc.includes('Spotify') || desc.includes('party') || desc.includes('Movie')) {
+                categoryId = groupCategories.find(c => c.name === 'entertainment')?.id || groupCategories[0].id;
+            } else if (desc.includes('Pizza') || desc.includes('Dinner') || desc.includes('breakfast') || desc.includes('Coffee')) {
+                categoryId = groupCategories.find(c => c.name === 'dining')?.id || groupCategories[0].id;
+            } else if (desc.includes('utensils') || desc.includes('Bedsheets') || desc.includes('Towels') || desc.includes('Curtains')) {
+                categoryId = groupCategories.find(c => c.name === 'household')?.id || groupCategories[0].id;
+            } else {
+                categoryId = groupCategories.find(c => c.name === 'other')?.id || groupCategories[0].id;
+            }
+
+            return prisma.groupExpense.create({
+                data: {
+                    groupId: group1.id,
+                    paidByUserId: paidBy,
+                    amount: groupExpenseAmounts[index],
+                    currency: 'INR',
+                    description: desc,
+                    expenseDate: expenseDate,
+                    categoryId: categoryId,
+                },
+            });
+        })
+    );
+
+    console.log(`✅ Created ${groupExpenses.length} group expenses`);
 
     // Create Budgets
     console.log('📊 Creating budgets...');
@@ -1251,6 +1387,9 @@ async function main() {
     console.log(`   - Expenses: ${expenses.length}`);
     console.log(`   - Split Expenses: 2`);
     console.log(`   - Split Participants: 4`);
+    console.log(`   - Groups: 1`);
+    console.log(`   - Group Members: 3`);
+    console.log(`   - Group Expenses: 50`);
     console.log(`   - Loans: 2`);
     console.log(`   - Loan Payments: 2`);
     console.log(`   - Budgets: 3`);

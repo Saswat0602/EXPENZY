@@ -1,29 +1,44 @@
 'use client';
 
-import { useState } from 'react';
-import { useGroups, useDeleteGroup } from '@/lib/hooks/use-groups';
+import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { useGroups } from '@/lib/hooks/use-groups';
 import { Button } from '@/components/ui/button';
-import { Users, Plus, Edit2, Trash2 } from 'lucide-react';
-import { formatDate } from '@/lib/utils/format';
+import { UserPlus, Plus } from 'lucide-react';
 import { AddGroupModal } from '@/components/modals/add-group-modal';
-import { ConfirmationModal } from '@/components/modals/confirmation-modal';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageWrapper } from '@/components/layout/page-wrapper';
+import { GroupCard } from '@/components/features/groups/group-card';
+import { EmptyState } from '@/components/shared/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
+import { calculateMemberBalances, getUserBalance } from '@/lib/utils/balance-utils';
 
 export default function GroupsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null);
     const { data: groups = [], isLoading } = useGroups();
-    const deleteGroup = useDeleteGroup();
+    const router = useRouter();
 
-    const handleDelete = (group: { id: string; name: string }) => {
-        setDeleteItem(group);
-    };
+    // Get current user ID from localStorage (set during login)
+    const currentUserId = typeof window !== 'undefined'
+        ? localStorage.getItem('userId') || ''
+        : '';
 
-    const confirmDelete = async () => {
-        if (!deleteItem) return;
-        await deleteGroup.mutateAsync(deleteItem.id);
-        setDeleteItem(null);
+    // Calculate balances for each group
+    const groupsWithBalances = useMemo(() => {
+        return groups.map((group) => {
+            const expenses = group.expenses || [];
+            const balances = calculateMemberBalances(expenses, currentUserId);
+            const userBalance = getUserBalance(balances, currentUserId);
+
+            return {
+                ...group,
+                userBalance,
+            };
+        });
+    }, [groups, currentUserId]);
+
+    const handleGroupClick = (groupId: string) => {
+        router.push(`/dashboard/groups/${groupId}`);
     };
 
     return (
@@ -32,7 +47,7 @@ export default function GroupsPage() {
                 {/* Header */}
                 <PageHeader
                     title="Groups"
-                    description="Manage shared expenses with groups"
+                    description="Split expenses with friends and family"
                     action={
                         <Button onClick={() => setIsModalOpen(true)}>
                             <Plus className="w-4 h-4 mr-2" />
@@ -43,84 +58,81 @@ export default function GroupsPage() {
 
                 <AddGroupModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
-                <ConfirmationModal
-                    open={!!deleteItem}
-                    onClose={() => setDeleteItem(null)}
-                    onConfirm={confirmDelete}
-                    title="Delete Group"
-                    description="Are you sure you want to delete this group? This action cannot be undone."
-                    confirmText="Delete"
-                    isLoading={deleteGroup.isPending}
-                >
-                    {deleteItem && (
-                        <div className="bg-muted p-4 rounded-lg">
-                            <p className="font-medium">{deleteItem.name}</p>
+                {/* Overall Balance Summary */}
+                {!isLoading && groups.length > 0 && (
+                    <div className="bg-gradient-to-br from-primary/5 via-background to-primary/5 rounded-xl p-6 border border-border">
+                        <div className="text-center">
+                            <p className="text-sm text-muted-foreground mb-2">
+                                Total across all groups
+                            </p>
+                            <p className="text-3xl font-bold">
+                                {(() => {
+                                    const totalBalance = groupsWithBalances.reduce(
+                                        (sum, group) => sum + group.userBalance,
+                                        0
+                                    );
+                                    const absAmount = Math.abs(totalBalance);
+
+                                    if (totalBalance === 0) {
+                                        return <span className="text-muted-foreground">All settled up</span>;
+                                    }
+
+                                    return (
+                                        <span className={totalBalance > 0 ? 'text-success' : 'text-destructive'}>
+                                            {totalBalance > 0 ? 'You get back ' : 'You owe '}
+                                            ₹{absAmount.toFixed(2)}
+                                        </span>
+                                    );
+                                })()}
+                            </p>
                         </div>
-                    )}
-                </ConfirmationModal>
+                    </div>
+                )}
 
                 {/* Groups List */}
-                <div className="space-y-2">
+                <div className="space-y-4">
                     {isLoading ? (
-                        <div className="p-12 text-center">
-                            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto" />
-                        </div>
-                    ) : groups.length === 0 ? (
-                        <div className="p-12 text-center text-muted-foreground">
-                            <div className="w-16 h-16 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
-                                <Users className="w-8 h-8 text-muted-foreground" />
-                            </div>
-                            <p className="text-lg font-medium mb-1">No groups yet</p>
-                            <p className="text-sm">Create a group to split expenses with friends and family</p>
-                        </div>
-                    ) : (
-                        groups.map((group) => (
-                            <div
-                                key={group.id}
-                                className="bg-card border border-border rounded-lg p-4 hover:bg-accent/5 transition-colors"
-                            >
-                                <div className="flex items-start gap-3">
-                                    {/* Group Icon */}
-                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                        <Users className="w-5 h-5 text-primary" />
-                                    </div>
-
-                                    {/* Content */}
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-medium text-base mb-1 truncate">
-                                            {group.name}
-                                        </h3>
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                                            <span>{group._count?.members || 0} members</span>
-                                            <span>•</span>
-                                            <span>Created {formatDate(group.createdAt)}</span>
+                        // Loading skeleton
+                        <div className="space-y-4">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="p-6 border border-border rounded-xl">
+                                    <div className="flex items-start gap-4">
+                                        <Skeleton className="h-16 w-16 rounded-full" />
+                                        <div className="flex-1 space-y-3">
+                                            <Skeleton className="h-6 w-48" />
+                                            <Skeleton className="h-4 w-32" />
+                                            <Skeleton className="h-4 w-40" />
                                         </div>
-                                        {group.description && (
-                                            <p className="text-sm text-muted-foreground line-clamp-2">
-                                                {group.description}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {/* Action Buttons */}
-                                    <div className="flex items-center gap-1 flex-shrink-0">
-                                        <button
-                                            onClick={() => {/* TODO: Add edit functionality */ }}
-                                            className="p-1.5 hover:bg-muted rounded-md transition-colors"
-                                            aria-label="Edit group"
-                                        >
-                                            <Edit2 className="w-4 h-4 text-muted-foreground" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete({ id: group.id, name: group.name })}
-                                            className="p-1.5 hover:bg-destructive/10 rounded-md transition-colors"
-                                            aria-label="Delete group"
-                                        >
-                                            <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                                        </button>
                                     </div>
                                 </div>
-                            </div>
+                            ))}
+                        </div>
+                    ) : groups.length === 0 ? (
+                        // Empty state
+                        <EmptyState
+                            icon={UserPlus}
+                            title="No groups yet"
+                            description="Create a group to split expenses with friends, roommates, or travel companions"
+                            action={
+                                <Button onClick={() => setIsModalOpen(true)} size="lg">
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Create Your First Group
+                                </Button>
+                            }
+                        />
+                    ) : (
+                        // Group cards
+                        groupsWithBalances.map((group) => (
+                            <GroupCard
+                                key={group.id}
+                                id={group.id}
+                                name={group.name}
+                                icon="friends"
+                                memberCount={group._count?.members || 0}
+                                balance={group.userBalance}
+                                currency="INR"
+                                onClick={() => handleGroupClick(group.id)}
+                            />
                         ))
                     )}
                 </div>
