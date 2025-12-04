@@ -59,7 +59,7 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
     const selectedType = useWatch({ control, name: 'type' }) || 'expense';
     const description = useWatch({ control, name: 'description' });
 
-    const { data: categories = [] } = useCategories(selectedType);
+    const { data: categories = [] } = useCategories(selectedType === 'expense' ? 'EXPENSE' : 'INCOME');
     const createExpense = useCreateExpense();
     const createIncome = useCreateIncome();
     const updateExpense = useUpdateExpense();

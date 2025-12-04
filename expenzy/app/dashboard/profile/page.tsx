@@ -43,6 +43,10 @@ export default function ProfilePage() {
         updateProfile.mutate({ defaultCurrency: currency as 'USD' | 'EUR' | 'INR' });
     };
 
+    const handleTextSizeChange = (textSize: 'small' | 'medium' | 'large') => {
+        updateSettings.mutate({ textSize });
+    };
+
     const handlePasswordChange = async (data: ChangePasswordFormData) => {
         await changePassword.mutateAsync({
             currentPassword: data.currentPassword,
@@ -73,7 +77,12 @@ export default function ProfilePage() {
                 {/* Settings Grid */}
                 <div className="grid lg:grid-cols-2 gap-6">
                     <AppearanceSettings settings={settings} onSettingChange={handleSettingChange} />
-                    <PreferencesSettings user={user} onCurrencyChange={handleCurrencyChange} />
+                    <PreferencesSettings
+                        user={user}
+                        userSettings={settings}
+                        onCurrencyChange={handleCurrencyChange}
+                        onTextSizeChange={handleTextSizeChange}
+                    />
                     <NotificationSettings settings={settings} onToggle={handleToggle} />
                     <DataPrivacySettings
                         settings={settings}

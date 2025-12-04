@@ -5,6 +5,7 @@ import { Toaster } from 'sonner';
 import { AuthProvider } from '@/contexts/auth-context';
 import { CurrencyProvider } from '@/contexts/currency-context';
 import { ThemeProvider } from '@/contexts/theme-context';
+import { TextSizeProvider } from '@/components/providers/text-size-provider';
 import { useState } from 'react';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -25,6 +26,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <ThemeProvider>
                 <AuthProvider>
                     <CurrencyProvider>
+                        <TextSizeProvider />
                         {children}
                         <Toaster position="top-right" richColors />
                     </CurrencyProvider>

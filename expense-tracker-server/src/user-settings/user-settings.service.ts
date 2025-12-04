@@ -5,7 +5,7 @@ import { UserSettings } from '@prisma/client';
 
 @Injectable()
 export class UserSettingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async getOrCreate(userId: string): Promise<UserSettings> {
     let settings = await this.prisma.userSettings.findUnique({
@@ -47,6 +47,9 @@ export class UserSettingsService {
         }),
         ...(updateUserSettingsDto.defaultView && {
           defaultView: updateUserSettingsDto.defaultView,
+        }),
+        ...(updateUserSettingsDto.textSize && {
+          textSize: updateUserSettingsDto.textSize,
         }),
         ...(updateUserSettingsDto.notificationEnabled !== undefined && {
           notificationEnabled: updateUserSettingsDto.notificationEnabled,

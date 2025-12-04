@@ -26,7 +26,7 @@ export default function GroupsPage() {
     // Calculate balances for each group
     const groupsWithBalances = useMemo(() => {
         return groups.map((group) => {
-            const expenses = group.expenses || [];
+            const expenses = group.groupExpenses || [];
             const balances = calculateMemberBalances(expenses, currentUserId);
             const userBalance = getUserBalance(balances, currentUserId);
 

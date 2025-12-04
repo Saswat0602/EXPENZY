@@ -258,6 +258,24 @@
     @apply bg-background text-foreground;
   }
 
+  /* Text Size Scaling */
+  [data-text-size="small"] {
+    --text-scale: 0.875;
+  }
+
+  [data-text-size="medium"] {
+    --text-scale: 1;
+  }
+
+  [data-text-size="large"] {
+    --text-scale: 1.125;
+  }
+
+  /* Apply text scaling to body */
+  body {
+    font-size: calc(1rem * var(--text-scale, 1));
+  }
+
   /* Hide scrollbar for all browsers */
   * {
     scrollbar-width: none;

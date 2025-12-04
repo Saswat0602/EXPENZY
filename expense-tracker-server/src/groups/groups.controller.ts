@@ -80,9 +80,9 @@ export class GroupsController {
   @Get(':id/expenses')
   getGroupExpenses(
     @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
-    @CurrentUser() user: JwtPayload,
   ) {
     const pageNum = page ? parseInt(page, 10) : 1;
     const limitNum = limit ? parseInt(limit, 10) : 50;

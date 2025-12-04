@@ -698,6 +698,7 @@ model UserSettings {
   timeFormat            String   @default("24h") @map("time_format")
   weekStartDay          String   @default("monday") @map("week_start_day")
   defaultView           String   @default("dashboard") @map("default_view")
+  textSize              String   @default("medium") @map("text_size")
   notificationEnabled   Boolean  @default(true) @map("notification_enabled")
   emailNotifications    Boolean  @default(true) @map("email_notifications")
   pushNotifications     Boolean  @default(true) @map("push_notifications")

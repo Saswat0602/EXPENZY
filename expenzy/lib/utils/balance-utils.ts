@@ -33,12 +33,12 @@ export function calculateMemberBalances(
     const balances = new Map<string, MemberBalance>();
 
     expenses.forEach((expense) => {
-        const { paidById, amount, currency, splits = [] } = expense;
+        const { paidByUserId, amount, currency, splits = [] } = expense;
 
         // Initialize payer if not exists
-        if (!balances.has(paidById)) {
-            balances.set(paidById, {
-                userId: paidById,
+        if (!balances.has(paidByUserId)) {
+            balances.set(paidByUserId, {
+                userId: paidByUserId,
                 userName: 'Unknown',
                 userEmail: '',
                 balance: 0,
@@ -47,7 +47,7 @@ export function calculateMemberBalances(
         }
 
         // Payer gets credited the full amount
-        const payerBalance = balances.get(paidById)!;
+        const payerBalance = balances.get(paidByUserId)!;
         payerBalance.balance += amount;
 
         // Each split participant owes their share
