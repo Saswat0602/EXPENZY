@@ -35,10 +35,10 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
 
                 <Button
                     variant="ghost"
-                    size="icon"
+                    size="sm"
                     onClick={() => router.push(`/dashboard/groups/${groupId}/settings`)}
                 >
-                    <Settings className="h-5 w-5" />
+                    <Settings className="h-6 w-6" />
                 </Button>
             </div>
 

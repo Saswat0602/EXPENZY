@@ -88,8 +88,8 @@ export default function GroupDetailPage() {
     const renderExpenseItem = (monthGroup: { monthName: string; expenses: NonNullable<typeof group>['groupExpenses'] }) => (
         <div key={monthGroup.monthName} className="space-y-2">
             {/* Month Header */}
-            <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10 py-2">
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10 py-3">
+                <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wide">
                     {monthGroup.monthName}
                 </h3>
             </div>
@@ -106,47 +106,52 @@ export default function GroupDetailPage() {
                         day: '2-digit'
                     });
 
+                    const paidByName = expense.paidBy
+                        ? `${expense.paidBy.firstName} ${expense.paidBy.lastName}`.trim()
+                        : 'Unknown';
+                    const isPaidByMe = expense.paidByUserId === currentUserId;
+
                     return (
                         <div
                             key={expense.id}
                             className="flex items-center gap-3 py-3 px-0 hover:bg-muted/30 -mx-4 px-4 transition-colors cursor-pointer"
                         >
                             {/* Date */}
-                            <div className="flex flex-col items-center w-12 flex-shrink-0">
-                                <span className="text-xs text-muted-foreground">
+                            <div className="flex flex-col items-center w-14 flex-shrink-0">
+                                <span className="text-sm text-muted-foreground">
                                     {dayMonth.split(' ')[0]}
                                 </span>
-                                <span className="text-lg font-semibold">
+                                <span className="text-xl font-semibold">
                                     {dayMonth.split(' ')[1]}
                                 </span>
                             </div>
 
                             {/* Category Icon */}
                             <div className="flex-shrink-0">
-                                <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-                                    <CategoryIcon className="h-5 w-5 text-muted-foreground" />
+                                <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center">
+                                    <CategoryIcon className="h-6 w-6 text-muted-foreground" />
                                 </div>
                             </div>
 
                             {/* Description */}
                             <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate text-sm">
+                                <p className="font-medium truncate text-base">
                                     {expense.description}
                                 </p>
-                                <p className="text-xs">
-                                    {expense.paidByUserId === currentUserId ? (
-                                        <span className="text-red-600 dark:text-red-400">you lent</span>
+                                <p className="text-sm">
+                                    {isPaidByMe ? (
+                                        <span className="text-red-600 dark:text-red-400">you paid</span>
                                     ) : (
-                                        <span className="text-green-600 dark:text-green-400">you borrowed</span>
+                                        <span className="text-green-600 dark:text-green-400">{paidByName} paid</span>
                                     )}
                                 </p>
                             </div>
 
                             {/* Amount */}
                             <div className="text-right flex-shrink-0">
-                                <p className={`font-semibold text-sm ${expense.paidByUserId === currentUserId
-                                    ? 'text-red-600 dark:text-red-400'
-                                    : 'text-green-600 dark:text-green-400'
+                                <p className={`font-semibold text-base ${isPaidByMe
+                                        ? 'text-red-600 dark:text-red-400'
+                                        : 'text-green-600 dark:text-green-400'
                                     }`}>
                                     {formatCurrency(Number(expense.amount), expense.currency as 'INR' | 'USD' | 'EUR')}
                                 </p>
@@ -178,7 +183,7 @@ export default function GroupDetailPage() {
                 {/* Expenses List - Splitwise Style */}
                 <div className="space-y-4">
                     <div className="px-1">
-                        <h3 className="text-lg font-semibold">Expenses</h3>
+                        <h3 className="text-xl font-semibold">Expenses</h3>
                     </div>
 
                     {!group.groupExpenses || group.groupExpenses.length === 0 ? (
