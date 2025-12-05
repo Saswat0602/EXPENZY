@@ -11,46 +11,50 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class ParticipantSplitDto {
+export class ParticipantSplitUpdateDto {
     @IsString()
     userId: string;
 
     @IsOptional()
     @IsNumber()
     @Min(0)
-    amount?: number; // For exact splits
+    amount?: number;
 
     @IsOptional()
     @IsNumber()
     @Min(0)
     @Max(100)
-    percentage?: number; // For percentage splits
+    percentage?: number;
 
     @IsOptional()
     @IsNumber()
     @Min(0)
-    shares?: number; // For shares-based splits (can be fractional like 1.5)
+    shares?: number;
 }
 
-export class CreateGroupExpenseDto {
+export class UpdateGroupExpenseDto {
+    @IsOptional()
     @IsString()
-    description: string;
+    description?: string;
 
+    @IsOptional()
     @IsNumber()
     @Min(0.01)
-    amount: number;
+    amount?: number;
 
-    @IsString()
     @IsOptional()
-    currency?: string = 'INR';
+    @IsString()
+    currency?: string;
 
+    @IsOptional()
     @IsEnum(['equal', 'exact', 'percentage', 'shares'])
-    splitType: 'equal' | 'exact' | 'percentage' | 'shares';
+    splitType?: 'equal' | 'exact' | 'percentage' | 'shares';
 
+    @IsOptional()
     @IsArray()
     @ValidateNested({ each: true })
-    @Type(() => ParticipantSplitDto)
-    participants: ParticipantSplitDto[];
+    @Type(() => ParticipantSplitUpdateDto)
+    participants?: ParticipantSplitUpdateDto[];
 
     @IsOptional()
     @IsString()
@@ -62,7 +66,7 @@ export class CreateGroupExpenseDto {
 
     @IsOptional()
     @IsDateString()
-    expenseDate?: string; // ISO date string
+    expenseDate?: string;
 
     @IsOptional()
     @IsString()
