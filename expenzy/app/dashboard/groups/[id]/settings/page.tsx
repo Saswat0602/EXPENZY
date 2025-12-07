@@ -40,7 +40,7 @@ export default function GroupSettingsPage() {
     };
 
     const currentUserId = getCurrentUserId();
-    const isAdmin = group?.members?.some(m => m.userId === currentUserId && m.role === 'ADMIN') || false;
+    const isAdmin = group?.members?.some(m => m.userId === currentUserId && m.role?.toUpperCase() === 'ADMIN') || false;
 
     // Debug logging
     useEffect(() => {

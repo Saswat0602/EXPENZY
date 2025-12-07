@@ -185,11 +185,11 @@ export default function GroupDetailPage() {
     return (
         <PageWrapper>
             <div className="space-y-6 pb-24 lg:pb-6">
-                {/* Back Button */}
+                {/* Back Button - Hidden on mobile, GroupHeader has its own back button */}
                 <Button
                     variant="ghost"
                     onClick={() => router.push('/dashboard/groups')}
-                    className="mb-2"
+                    className="mb-2 hidden lg:flex"
                 >
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Groups

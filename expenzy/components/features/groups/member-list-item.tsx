@@ -71,7 +71,7 @@ export const MemberListItem: React.FC<MemberListItemProps> = ({
                                 <span className="text-muted-foreground ml-1">(you)</span>
                             )}
                         </p>
-                        {role === 'ADMIN' && (
+                        {role?.toUpperCase() === 'ADMIN' && (
                             <Crown className="h-3.5 w-3.5 text-amber-500 shrink-0" />
                         )}
                     </div>
@@ -112,10 +112,10 @@ export const MemberListItem: React.FC<MemberListItemProps> = ({
                                     {onChangeRole && (
                                         <DropdownMenuItem
                                             onClick={() =>
-                                                onChangeRole(role === 'ADMIN' ? 'MEMBER' : 'ADMIN')
+                                                onChangeRole(role?.toUpperCase() === 'ADMIN' ? 'MEMBER' : 'ADMIN')
                                             }
                                         >
-                                            {role === 'ADMIN' ? 'Remove admin' : 'Make admin'}
+                                            {role?.toUpperCase() === 'ADMIN' ? 'Remove admin' : 'Make admin'}
                                         </DropdownMenuItem>
                                     )}
                                     {onRemove && (

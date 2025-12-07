@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Home, Briefcase, Plane, Users, Folder } from 'lucide-react';
+import { Home, Briefcase, Plane, Users, Folder, Shuffle } from 'lucide-react';
 import { GroupIcon } from '@/components/ui/group-icon';
 import { generateRandomSeed } from '@/lib/utils/avatar-utils';
 import { useState, useEffect } from 'react';
@@ -92,9 +92,24 @@ export function AddGroupModal({ open, onClose }: AddGroupModalProps) {
 
                     {/* Icon Preview */}
                     <div className="space-y-2">
-                        <Label>Group Icon Preview</Label>
-                        <div className="flex items-center gap-3 p-4 border rounded-lg bg-muted/30">
-                            <GroupIcon seed={iconSeed} size={48} />
+                        <Label>Group Icon</Label>
+                        <div className="flex items-center justify-between gap-3 p-4 border rounded-lg bg-muted/30">
+                            <div className="flex items-center gap-3">
+                                <GroupIcon seed={iconSeed} size={48} />
+                                <span className="text-sm text-muted-foreground">
+                                    Your group&apos;s unique icon
+                                </span>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setIconSeed(generateRandomSeed())}
+                                className="flex items-center gap-2"
+                            >
+                                <Shuffle className="w-4 h-4" />
+                                Change
+                            </Button>
                         </div>
                     </div>
 
