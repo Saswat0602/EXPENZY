@@ -18,12 +18,10 @@ export function MobileHeader({ visible = true }: MobileHeaderProps) {
     if (!visible) return null;
 
     return (
-        <header className="md:hidden sticky top-0 z-40 w-full bg-card border-b border-border safe-top">\n
+        <header className="md:hidden sticky top-0 z-40 w-full bg-card border-b border-border safe-top">
             <div className="flex items-center justify-between h-14 px-4">
                 <div className="flex items-center gap-2">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-                        E
-                    </div>
+
                     <h1 className="text-lg font-bold">Expenzy</h1>
                 </div>
 

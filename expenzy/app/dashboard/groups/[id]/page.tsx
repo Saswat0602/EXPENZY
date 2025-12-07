@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useGroup, useGroupMembers } from '@/lib/hooks/use-groups';
 import { useGroupBalances } from '@/lib/hooks/use-group-balances';
+import { useLayout } from '@/contexts/layout-context';
 import { Plus, Receipt, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageWrapper } from '@/components/layout/page-wrapper';
@@ -20,10 +21,19 @@ export default function GroupDetailPage() {
     const params = useParams();
     const router = useRouter();
     const groupId = params.id as string;
+    const { setLayoutVisibility } = useLayout();
 
     const { data: group, isLoading: groupLoading } = useGroup(groupId);
     const { data: members = [] } = useGroupMembers(groupId);
     const { data: balances = [] } = useGroupBalances(groupId);
+
+    // Hide mobile header on mount, restore on unmount (keep bottom nav)
+    useEffect(() => {
+        setLayoutVisibility({ showMobileHeader: false, showBottomNav: true });
+        return () => {
+            setLayoutVisibility({ showMobileHeader: true, showBottomNav: true });
+        };
+    }, [setLayoutVisibility]);
 
     // Get current user ID from localStorage
     const currentUserId = typeof window !== 'undefined'

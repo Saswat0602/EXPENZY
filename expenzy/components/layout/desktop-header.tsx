@@ -10,9 +10,6 @@ export function DesktopHeader() {
         <header className="hidden md:block fixed top-0 left-0 right-0 z-50 h-16 bg-card border-b border-border">
             <div className="flex items-center justify-between h-full px-6">
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold shadow-lg">
-                        E
-                    </div>
                     <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
                         Expenzy
                     </span>
