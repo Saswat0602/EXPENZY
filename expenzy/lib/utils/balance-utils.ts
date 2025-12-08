@@ -283,3 +283,45 @@ export function calculateSettlements(
 
     return settlements;
 }
+
+/**
+ * Calculate member-wise balances from current user's perspective
+ * @param balances - Array of balance objects from API
+ * @param currentUserId - Current user's ID
+ * @param members - Array of group members
+ * @returns Array of member balances from current user's perspective
+ */
+export function calculateMemberWiseBalances(
+    balances: Array<{ userId: string; balance: number }>,
+    currentUserId: string,
+    members: Array<{
+        userId: string | null;
+        user?: {
+            firstName?: string | null;
+            lastName?: string | null;
+            avatarUrl?: string | null;
+        } | null
+    }>
+): Array<{ userId: string; name: string; avatarUrl?: string; balance: number }> {
+    return balances
+        .filter(b => b.userId !== currentUserId)
+        .map(b => {
+            const member = members.find(m => m.userId === b.userId);
+            const firstName = member?.user?.firstName || '';
+            const lastName = member?.user?.lastName || '';
+            const name = `${firstName} ${lastName}`.trim() || 'Unknown';
+            const avatarUrl = member?.user?.avatarUrl || undefined;
+
+            // From current user's perspective:
+            // If balance > 0, that member gets back money (so they lent to you, you owe them)
+            // If balance < 0, that member owes money (so you lent to them, they owe you)
+            // We need to flip the sign for display from current user's perspective
+            return {
+                userId: b.userId,
+                name,
+                avatarUrl,
+                balance: -b.balance, // Flip sign for current user's perspective
+            };
+        })
+        .filter(b => Math.abs(b.balance) > 0.01);
+}

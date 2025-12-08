@@ -2,8 +2,8 @@ import React from 'react';
 import { Users, Home, Briefcase, Plane, Folder } from 'lucide-react';
 import { GlassCard } from '@/components/shared/glass-card';
 import { GroupAvatar } from './group-avatar';
-import { BalanceSummary } from './balance-summary';
 import { cn } from '@/lib/utils/cn';
+import { formatCurrency } from '@/lib/utils/currency';
 
 interface GroupCardProps {
     id: string;
@@ -83,7 +83,20 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                         </span>
                     </div>
 
-                    <BalanceSummary balance={balance} currency={currency} />
+                    {/* Simple balance display */}
+                    <div className="text-sm">
+                        {Math.abs(balance) < 0.01 ? (
+                            <span className="text-muted-foreground">Settled up</span>
+                        ) : balance > 0 ? (
+                            <span className="text-green-600 dark:text-green-400 font-medium">
+                                You get back {formatCurrency(balance, currency as 'INR' | 'USD' | 'EUR')}
+                            </span>
+                        ) : (
+                            <span className="text-red-400 dark:text-red-300 font-medium">
+                                You owe {formatCurrency(Math.abs(balance), currency as 'INR' | 'USD' | 'EUR')}
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
         </GlassCard>

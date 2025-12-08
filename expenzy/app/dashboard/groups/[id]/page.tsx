@@ -3,13 +3,14 @@
 import { useMemo, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useGroup, useGroupMembers } from '@/lib/hooks/use-groups';
-import { useGroupBalances } from '@/lib/hooks/use-group-balances';
+import { useSimplifiedDebts } from '@/lib/hooks/use-group-balances';
+import { useProfile } from '@/lib/hooks/use-profile';
 import { useLayout } from '@/contexts/layout-context';
 import { Plus, Receipt, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { GroupHeader } from '@/components/features/groups/group-header';
-import { BalanceSummary } from '@/components/features/groups/balance-summary';
+import { SimplifiedBalanceView } from '@/components/features/groups/simplified-balance-view';
 import { GlassCard } from '@/components/shared/glass-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VirtualList } from '@/components/shared/virtual-list';
@@ -25,7 +26,8 @@ export default function GroupDetailPage() {
 
     const { data: group, isLoading: groupLoading } = useGroup(groupId);
     const { data: members = [] } = useGroupMembers(groupId);
-    const { data: balances = [] } = useGroupBalances(groupId);
+    const { data: simplifiedDebts = [] } = useSimplifiedDebts(groupId);
+    const { data: profile } = useProfile();
 
     // Hide mobile header on mount, restore on unmount (keep bottom nav)
     useEffect(() => {
@@ -35,13 +37,9 @@ export default function GroupDetailPage() {
         };
     }, [setLayoutVisibility]);
 
-    // Get current user ID from localStorage
-    const currentUserId = typeof window !== 'undefined'
-        ? localStorage.getItem('userId') || ''
-        : '';
+    // Get current user ID from profile
+    const currentUserId = profile?.id || '';
 
-    // Get user's balance
-    const userBalance = balances.find((b) => b.userId === currentUserId);
     const acceptedMembers = members.filter((m) => m.inviteStatus === 'accepted');
 
     // Group expenses by month
@@ -125,17 +123,10 @@ export default function GroupDetailPage() {
                     const paidByName = expense.paidBy
                         ? `${expense.paidBy.firstName} ${expense.paidBy.lastName}`.trim()
                         : 'Unknown';
-                    const isPaidByMe = expense.paidByUserId === currentUserId;
+                    const isPaidByYou = expense.paidByUserId === currentUserId;
 
-                    // Calculate balance for this expense
+                    // Calculate lent/borrowed
                     const balance = calculateUserExpenseBalance(expense, currentUserId);
-
-                    // Determine color based on lent/borrowed
-                    const amountColorClass = balance.displayColor === 'green'
-                        ? 'text-green-600 dark:text-green-400'
-                        : balance.displayColor === 'red'
-                            ? 'text-red-400 dark:text-red-300'
-                            : 'text-foreground';
 
                     return (
                         <div
@@ -159,32 +150,36 @@ export default function GroupDetailPage() {
                                 </div>
                             </div>
 
-                            {/* Description */}
+                            {/* Description and Payment Info */}
                             <div className="flex-1 min-w-0">
                                 <p className="font-medium truncate text-base">
                                     {expense.description}
                                 </p>
-                                <p className="text-sm">
-                                    <span className="text-foreground">
-                                        {isPaidByMe ? 'You paid' : `${paidByName} paid`}
-                                    </span>
-                                    {balance.displayText !== 'not involved' && (
-                                        <>
-                                            {' · '}
-                                            <span className={amountColorClass}>
-                                                {balance.displayText}
-                                            </span>
-                                        </>
-                                    )}
+                                <p className="text-sm text-muted-foreground">
+                                    {isPaidByYou ? 'You' : paidByName} paid {formatCurrency(Number(expense.amount), expense.currency as 'INR' | 'USD' | 'EUR')}
                                 </p>
                             </div>
 
-                            {/* Amount */}
-                            <div className="text-right flex-shrink-0">
-                                <p className={`font-semibold text-base ${amountColorClass}`}>
-                                    {formatCurrency(Number(expense.amount), expense.currency as 'INR' | 'USD' | 'EUR')}
-                                </p>
-                            </div>
+                            {/* Lent/Borrowed Amount */}
+                            {balance.displayText !== 'not involved' && balance.displayText !== 'settled' && (
+                                <div className="text-right flex-shrink-0">
+                                    <p className={`text-sm font-medium ${balance.youLent > 0
+                                        ? 'text-green-600 dark:text-green-400'
+                                        : 'text-red-400 dark:text-red-300'
+                                        }`}>
+                                        {balance.youLent > 0 ? 'you lent' : 'you borrowed'}
+                                    </p>
+                                    <p className={`text-base font-semibold ${balance.youLent > 0
+                                        ? 'text-green-600 dark:text-green-400'
+                                        : 'text-red-400 dark:text-red-300'
+                                        }`}>
+                                        {formatCurrency(
+                                            balance.youLent > 0 ? balance.youLent : balance.youBorrowed,
+                                            expense.currency as 'INR' | 'USD' | 'EUR'
+                                        )}
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     );
                 })}
@@ -217,12 +212,12 @@ export default function GroupDetailPage() {
                 />
 
                 {/* Balance Summary */}
-                {userBalance && (
-                    <GlassCard className="text-center">
-                        <BalanceSummary
-                            balance={userBalance.balance}
-                            currency={group.currency}
-                            showLabel
+                {simplifiedDebts.length > 0 && (
+                    <GlassCard>
+                        <SimplifiedBalanceView
+                            simplifiedDebts={simplifiedDebts as any}
+                            currentUserId={currentUserId}
+                            currency={group.currency as 'INR' | 'USD' | 'EUR'}
                         />
                     </GlassCard>
                 )}

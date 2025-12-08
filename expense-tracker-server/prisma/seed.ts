@@ -817,7 +817,7 @@ async function main() {
     ];
 
     const groupExpenses = await Promise.all(
-        groupExpenseDescriptions.map((desc, index) => {
+        groupExpenseDescriptions.map(async (desc, index) => {
             const paidBy = index % 3 === 0 ? user1.id : index % 3 === 1 ? user2.id : user3.id;
             const daysAgo = Math.floor(index / 2);
             const expenseDate = new Date();
@@ -845,21 +845,60 @@ async function main() {
                 categoryId = groupCategories.find(c => c.name === 'other')?.id || groupCategories[0].id;
             }
 
-            return prisma.groupExpense.create({
+            const amount = groupExpenseAmounts[index];
+            const splitAmount = amount / 3; // Equal split among 3 members
+
+            // Create expense with splits
+            const expense = await prisma.groupExpense.create({
                 data: {
                     groupId: group1.id,
                     paidByUserId: paidBy,
-                    amount: groupExpenseAmounts[index],
+                    amount: amount,
                     currency: 'INR',
                     description: desc,
                     expenseDate: expenseDate,
                     categoryId: categoryId,
+                    splitType: 'equal',
+                    // Create splits for all 3 members
+                    splits: {
+                        create: [
+                            {
+                                userId: user1.id,
+                                amountOwed: splitAmount,
+                                amountPaid: paidBy === user1.id ? amount : 0,
+                                isRoundingAdjustment: false,
+                                calculatedAmount: splitAmount,
+                                adjustmentAmount: 0,
+                                isPaid: false,
+                            },
+                            {
+                                userId: user2.id,
+                                amountOwed: splitAmount,
+                                amountPaid: paidBy === user2.id ? amount : 0,
+                                isRoundingAdjustment: false,
+                                calculatedAmount: splitAmount,
+                                adjustmentAmount: 0,
+                                isPaid: false,
+                            },
+                            {
+                                userId: user3.id,
+                                amountOwed: splitAmount,
+                                amountPaid: paidBy === user3.id ? amount : 0,
+                                isRoundingAdjustment: false,
+                                calculatedAmount: splitAmount,
+                                adjustmentAmount: 0,
+                                isPaid: false,
+                            },
+                        ],
+                    },
                 },
             });
+
+            return expense;
         })
     );
 
-    console.log(`✅ Created ${groupExpenses.length} group expenses`);
+    console.log(`✅ Created ${groupExpenses.length} group expenses with splits`);
 
     // Create Budgets
     console.log('📊 Creating budgets...');
