@@ -41,6 +41,9 @@ export class CreateGroupExpenseDto {
     amount: number;
 
     @IsString()
+    paidByUserId: string;
+
+    @IsString()
     @IsOptional()
     currency?: string = 'INR';
 

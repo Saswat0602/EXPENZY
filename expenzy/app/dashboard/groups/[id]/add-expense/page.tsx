@@ -5,12 +5,14 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useGroup, useGroupMembers } from '@/lib/hooks/use-groups';
 import { useCreateGroupExpense, useUpdateGroupExpense, useGroupExpense } from '@/lib/hooks/use-group-expenses';
 import { useCategories } from '@/lib/hooks/use-categories';
+import { useProfile } from '@/lib/hooks/use-profile';
 import { useLayout } from '@/contexts/layout-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Check, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { getIconByName } from '@/lib/categorization/category-icons';
+import { useKeywordMatcher } from '@/lib/categorization/keyword-matcher';
 import type { SplitType, ParticipantInput } from '@/types/split';
 import {
     Dialog,
@@ -18,6 +20,12 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
 import { MemberAvatar } from '@/components/features/groups/member-avatar';
 import { SplitInput } from '@/components/features/groups/split-input';
 
@@ -41,12 +49,23 @@ export default function AddExpensePage() {
     const { data: members = [] } = useGroupMembers(groupId);
     const { data: existingExpense } = useGroupExpense(groupId, expenseId || '');
     const { data: categories = [] } = useCategories();
+    const { data: profile } = useProfile();
     const createExpense = useCreateGroupExpense();
     const updateExpense = useUpdateGroupExpense();
+    const { match: matchCategory } = useKeywordMatcher();
 
-    const currentUserId = typeof window !== 'undefined' ? localStorage.getItem('userId') || '' : '';
+    const currentUserId = profile?.id || '';
     const acceptedMembers = members.filter((m) => m.inviteStatus === 'accepted');
     const expenseCategories = categories.filter(c => c.type.toLowerCase() === 'expense');
+
+    // Detect mobile
+    const [isMobile, setIsMobile] = useState(false);
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // Hide mobile navigation on mount, restore on unmount
     useEffect(() => {
@@ -59,7 +78,8 @@ export default function AddExpensePage() {
     const [description, setDescription] = useState('');
     const [amount, setAmount] = useState('');
     const [categoryId, setCategoryId] = useState<string>('');
-    const [paidBy, setPaidBy] = useState(currentUserId);
+    const [isAutoDetected, setIsAutoDetected] = useState(false);
+    const [paidBy, setPaidBy] = useState('');
     const [splitType, setSplitType] = useState<SplitType>('equal');
     const [selectedParticipants, setSelectedParticipants] = useState<string[]>(
         acceptedMembers.map((m) => m.userId)
@@ -74,6 +94,13 @@ export default function AddExpensePage() {
     const [percentages, setPercentages] = useState<Record<string, string>>({});
     // For shares
     const [shares, setShares] = useState<Record<string, string>>({});
+
+    // Set paidBy when currentUserId is available
+    useEffect(() => {
+        if (currentUserId && !paidBy) {
+            setPaidBy(currentUserId);
+        }
+    }, [currentUserId, paidBy]);
 
     // Pre-fill form when editing
     useEffect(() => {
@@ -115,6 +142,22 @@ export default function AddExpensePage() {
         }
     }, [isEditMode, existingExpense]);
 
+    // Auto-detect category from description
+    useEffect(() => {
+        if (!description.trim() || isEditMode) return;
+
+        const detectedCategory = matchCategory(description);
+        if (detectedCategory) {
+            const category = expenseCategories.find(
+                c => c.name.toLowerCase() === detectedCategory.toLowerCase()
+            );
+            if (category && !categoryId) {
+                setCategoryId(category.id);
+                setIsAutoDetected(true);
+            }
+        }
+    }, [description, expenseCategories, matchCategory, isEditMode, categoryId]);
+
     const handleSubmit = async () => {
         if (!description.trim()) {
             toast.error('Please enter a description');
@@ -123,6 +166,11 @@ export default function AddExpensePage() {
 
         if (!amount || parseFloat(amount) <= 0) {
             toast.error('Please enter a valid amount');
+            return;
+        }
+
+        if (!paidBy) {
+            toast.error('Please select who paid for this expense');
             return;
         }
 
@@ -202,7 +250,7 @@ export default function AddExpensePage() {
                     data: {
                         description: description.trim(),
                         amount: parseFloat(amount),
-                        paidBy: paidBy,
+                        paidByUserId: paidBy,
                         splitType,
                         participants,
                         expenseDate: new Date().toISOString(),
@@ -280,13 +328,23 @@ export default function AddExpensePage() {
                 {/* Description */}
                 <div className="flex items-center gap-3">
                     <div
-                        onClick={() => setShowCategoryModal(true)}
-                        className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 cursor-pointer hover:bg-muted/80 transition-colors"
+                        onClick={() => {
+                            setShowCategoryModal(true);
+                            setIsAutoDetected(false);
+                        }}
+                        className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 cursor-pointer hover:bg-muted/80 transition-colors relative"
                     >
                         {categoryId ? (() => {
                             const category = expenseCategories.find(c => c.id === categoryId);
                             const CategoryIcon = category?.icon ? getIconByName(category.icon) : getIconByName('Receipt');
-                            return <CategoryIcon className="h-6 w-6 text-muted-foreground" />;
+                            return (
+                                <>
+                                    <CategoryIcon className="h-6 w-6 text-muted-foreground" />
+                                    {isAutoDetected && (
+                                        <Sparkles className="h-3 w-3 text-primary absolute -top-1 -right-1" />
+                                    )}
+                                </>
+                            );
                         })() : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
                     </div>
                     <Input
@@ -585,33 +643,90 @@ export default function AddExpensePage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Category Modal */}
-            <Dialog open={showCategoryModal} onOpenChange={setShowCategoryModal}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Choose category</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid grid-cols-3 gap-3">
-                        {expenseCategories.map((category) => {
-                            const CategoryIcon = category.icon ? getIconByName(category.icon) : getIconByName('Receipt');
-                            return (
-                                <div
-                                    key={category.id}
-                                    onClick={() => {
-                                        setCategoryId(category.id);
-                                        setShowCategoryModal(false);
-                                    }}
-                                    className={`p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors flex flex-col items-center gap-2 ${categoryId === category.id ? 'bg-primary/10 border-2 border-primary' : 'border border-border'
-                                        }`}
-                                >
-                                    <CategoryIcon className="h-6 w-6" />
-                                    <span className="text-xs text-center font-medium">{category.name}</span>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </DialogContent>
-            </Dialog>
+            {/* Category Modal - Mobile (Sheet) */}
+            {isMobile ? (
+                <Sheet open={showCategoryModal} onOpenChange={setShowCategoryModal}>
+                    <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl px-6 pt-6">
+                        <SheetHeader className="text-left mb-6">
+                            <div className="w-12 h-1.5 bg-muted-foreground/30 rounded-full mx-auto mb-4" />
+                            <SheetTitle className="text-2xl font-bold">Choose category</SheetTitle>
+                        </SheetHeader>
+                        <div className="overflow-y-auto h-[calc(85vh-120px)] pb-6 -mx-6 px-6">
+                            <div className="space-y-2">
+                                {expenseCategories.map((category) => {
+                                    const CategoryIcon = category.icon ? getIconByName(category.icon) : getIconByName('Receipt');
+                                    const isSelected = categoryId === category.id;
+                                    return (
+                                        <div
+                                            key={category.id}
+                                            onClick={() => {
+                                                setCategoryId(category.id);
+                                                setIsAutoDetected(false);
+                                                setShowCategoryModal(false);
+                                            }}
+                                            className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all active:scale-[0.98] ${isSelected
+                                                ? 'bg-primary/10 border-2 border-primary shadow-sm'
+                                                : 'bg-muted/30 border-2 border-transparent hover:bg-muted/50'
+                                                }`}
+                                        >
+                                            <div className={`h-14 w-14 rounded-xl flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-primary/20' : 'bg-background'
+                                                }`}>
+                                                <CategoryIcon className={`h-7 w-7 ${isSelected ? 'text-primary' : 'text-muted-foreground'
+                                                    }`} />
+                                            </div>
+                                            <span className={`text-lg font-semibold flex-1 ${isSelected ? 'text-primary' : 'text-foreground'
+                                                }`}>
+                                                {category.name}
+                                            </span>
+                                            {isSelected && (
+                                                <Check className="h-6 w-6 text-primary flex-shrink-0" />
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </SheetContent>
+                </Sheet>
+            ) : (
+                <Dialog open={showCategoryModal} onOpenChange={setShowCategoryModal}>
+                    <DialogContent className="sm:max-w-[600px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-bold">Choose category</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto py-4">
+                            {expenseCategories.map((category) => {
+                                const CategoryIcon = category.icon ? getIconByName(category.icon) : getIconByName('Receipt');
+                                const isSelected = categoryId === category.id;
+                                return (
+                                    <div
+                                        key={category.id}
+                                        onClick={() => {
+                                            setCategoryId(category.id);
+                                            setIsAutoDetected(false);
+                                            setShowCategoryModal(false);
+                                        }}
+                                        className={`p-4 rounded-xl hover:bg-muted cursor-pointer transition-all flex flex-col items-center gap-3 ${isSelected
+                                            ? 'bg-primary/10 border-2 border-primary shadow-sm'
+                                            : 'border-2 border-border hover:border-primary/30'
+                                            }`}
+                                    >
+                                        <div className={`h-12 w-12 rounded-lg flex items-center justify-center ${isSelected ? 'bg-primary/20' : 'bg-muted'
+                                            }`}>
+                                            <CategoryIcon className={`h-6 w-6 ${isSelected ? 'text-primary' : 'text-muted-foreground'
+                                                }`} />
+                                        </div>
+                                        <span className={`text-sm text-center font-medium ${isSelected ? 'text-primary' : 'text-foreground'
+                                            }`}>
+                                            {category.name}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            )}
         </div>
     );
 }

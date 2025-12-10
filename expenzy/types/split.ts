@@ -58,7 +58,7 @@ export interface GroupExpense {
 export interface CreateExpenseData {
     description: string;
     amount: number;
-    paidBy: string;
+    paidByUserId: string;
     splitType: SplitType;
     expenseDate?: string;
     notes?: string;
