@@ -1,5 +1,4 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { Decimal } from '@prisma/client/runtime/library';
 
 export interface SplitParticipant {
   userId: string;
@@ -84,10 +83,7 @@ export class SplitCalculationService {
     const splits: CalculatedSplit[] = [];
     let remainderAssigned = false;
 
-    // Edge case: Payer is also a participant - assign remainder to them
-    const payerIndex = participants.findIndex((p) => p.userId === payerId);
-
-    participants.forEach((participant, index) => {
+    participants.forEach((participant) => {
       const isPayerAndShouldGetRemainder =
         participant.userId === payerId && !remainderAssigned && remainder > 0;
 
@@ -409,8 +405,12 @@ export class SplitCalculationService {
         );
       case 'shares':
         return this.calculateSharesSplit(totalAmount, participants, payerId);
-      default:
-        throw new BadRequestException(`Invalid split type: ${splitType}`);
+      default: {
+        const exhaustiveCheck: never = splitType;
+        throw new BadRequestException(
+          `Invalid split type: ${String(exhaustiveCheck)}`,
+        );
+      }
     }
   }
 

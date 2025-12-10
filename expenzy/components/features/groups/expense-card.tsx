@@ -23,7 +23,7 @@ export function ExpenseCard({ expense, groupId, currentUserId }: ExpenseCardProp
 
         try {
             await deleteExpense.mutateAsync({ groupId, expenseId: expense.id });
-        } catch (_error) {
+        } catch {
             // Error handled by mutation
         }
     };

@@ -18,7 +18,6 @@ const sizeMap = {
 };
 
 export const GroupAvatar: React.FC<GroupAvatarProps> = ({
-    name,
     iconSeed,
     iconProvider,
     imageUrl,

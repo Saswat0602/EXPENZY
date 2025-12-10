@@ -31,7 +31,6 @@ const GROUP_TYPE_CONFIG = {
 
 export const GroupCard: React.FC<GroupCardProps> = ({
     name,
-    icon,
     groupType = 'other',
     description,
     memberCount,

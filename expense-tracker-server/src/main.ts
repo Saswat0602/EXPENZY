@@ -60,14 +60,18 @@ async function bootstrap() {
       ];
 
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (origin: any, callback: any) => {
       // Allow requests with no origin (like mobile apps, Postman, etc.)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       if (!origin) return callback(null, true);
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       if (allowedOrigins.indexOf(origin) !== -1) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         callback(null, true);
       } else {
-        console.warn(`[CORS] Blocked request from origin: ${origin}`);
+        console.warn(`[CORS] Blocked request from origin: ${String(origin)}`);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         callback(new Error('Not allowed by CORS'));
       }
     },

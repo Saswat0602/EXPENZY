@@ -3,12 +3,18 @@ import { CategoryType } from '@prisma/client';
 
 @Injectable()
 export class CategoryTypePipe implements PipeTransform {
-  transform(value: any): CategoryType | undefined {
+  transform(value: unknown): CategoryType | undefined {
     if (!value) {
       return undefined;
     }
 
     // Convert lowercase to uppercase enum value
+    if (typeof value !== 'string') {
+      throw new BadRequestException(
+        `Invalid category type. Expected string, got ${typeof value}`,
+      );
+    }
+
     const upperValue = value.toUpperCase();
 
     // Validate against enum values

@@ -114,7 +114,6 @@ export default function TransactionsPage() {
             : (deleteItem as Expense).description)
         : '';
 
-    // Render transaction card
     const renderTransactionCard = (transaction: Transaction) => {
         const date = transaction.type === 'expense'
             ? (transaction as Expense).expenseDate
@@ -122,7 +121,6 @@ export default function TransactionsPage() {
         const description = transaction.type === 'income'
             ? (transaction as Income).source
             : (transaction as Expense).description;
-        const categoryName = transaction.category?.name.toLowerCase() || 'other';
 
         return (
             <div className="bg-card border border-border rounded-lg p-4 hover:bg-accent/5 transition-colors">

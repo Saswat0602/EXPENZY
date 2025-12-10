@@ -28,7 +28,6 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { MemberAvatar } from '@/components/features/groups/member-avatar';
-import { SplitInput } from '@/components/features/groups/split-input';
 
 const SPLIT_TYPES: { value: SplitType; label: string; description: string }[] = [
     { value: 'equal', label: 'Equally', description: 'Split the total amount equally' },
@@ -98,14 +97,15 @@ export default function AddExpensePage() {
     // For shares
     const [shares, setShares] = useState<Record<string, string>>({});
 
-    // Set paidBy when currentUserId is available
+    // Set paidBy when currentUserId is available (only once)
     useEffect(() => {
         if (currentUserId && !paidBy) {
             setPaidBy(currentUserId);
         }
-    }, [currentUserId, paidBy]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentUserId]);
 
-    // Pre-fill form when editing
+    // Pre-fill form when editing (only once when expense loads)
     useEffect(() => {
         if (isEditMode && existingExpense) {
             setDescription(existingExpense.description);
@@ -143,7 +143,8 @@ export default function AddExpensePage() {
                 setShares(shrs);
             }
         }
-    }, [isEditMode, existingExpense]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [existingExpense?.id]);
 
     // Auto-detect category from description with multi-match support
     useEffect(() => {
@@ -287,7 +288,7 @@ export default function AddExpensePage() {
             }
 
             router.push(`/dashboard/groups/${groupId}`);
-        } catch (_error) {
+        } catch {
             // Error handled by mutation
         }
     };

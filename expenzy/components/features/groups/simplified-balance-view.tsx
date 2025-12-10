@@ -1,7 +1,6 @@
 import React from 'react';
 import { formatCurrency } from '@/lib/utils/currency';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils/cn';
 
 interface SimplifiedDebt {
     from: string;

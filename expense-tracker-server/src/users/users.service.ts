@@ -48,7 +48,7 @@ export class UsersService {
         lastName: createUserDto.lastName,
         phone: createUserDto.phone,
         avatarSeed,
-        avatarStyle: avatarStyle as any,
+        avatarStyle: avatarStyle as 'adventurer',
         avatarUrl,
       },
     });
@@ -96,6 +96,7 @@ export class UsersService {
         phone: updateUserDto.phone,
         avatar: updateUserDto.avatar,
         avatarSeed: updateUserDto.avatarSeed,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         avatarStyle: updateUserDto.avatarStyle as any,
         avatarUrl,
         timezone: updateUserDto.timezone,
@@ -171,7 +172,7 @@ export class UsersService {
         googleId: profile.id,
         avatar,
         avatarSeed,
-        avatarStyle: avatarStyle as any,
+        avatarStyle: avatarStyle as 'adventurer',
         avatarUrl,
         firstName,
         lastName,

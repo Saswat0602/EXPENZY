@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { UserPlus, Link as LinkIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { MemberListItem } from './member-list-item';
 import { AddMemberModal } from './add-member-modal';
 import { ConfirmationModal } from '@/components/modals/confirmation-modal';

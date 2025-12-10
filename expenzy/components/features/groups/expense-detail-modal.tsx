@@ -64,7 +64,7 @@ export function ExpenseDetailModal({
             await deleteExpense.mutateAsync({ groupId, expenseId: expense.id });
             toast.success('Expense deleted successfully');
             onClose();
-        } catch (error) {
+        } catch {
             // Error handled by mutation
         }
     };
