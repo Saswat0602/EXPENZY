@@ -12,6 +12,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { AddGroupMemberDto } from './dto/add-group-member.dto';
+import { CreateGroupExpenseDto } from './dto/create-group-expense.dto';
+import { UpdateGroupExpenseDto } from './dto/update-group-expense.dto';
+import { SettleExpenseDto } from './dto/settle-expense.dto';
+import { RecordSettlementDto } from './dto/record-settlement.dto';
 import { SplitCalculationService } from './services/split-calculation.service';
 import {
   BalanceCalculationService,
@@ -31,14 +35,14 @@ export class GroupsService {
     private splitCalculationService: SplitCalculationService,
     private balanceCalculationService: BalanceCalculationService,
     private debtSettlementService: DebtSettlementService,
-  ) {}
+  ) { }
 
   async create(createGroupDto: CreateGroupDto, userId: string) {
     // Generate icon data
     const iconSeed = createGroupDto.iconSeed || generateRandomSeed();
     const iconProvider =
       createGroupDto.iconProvider &&
-      validateGroupIconProvider(createGroupDto.iconProvider)
+        validateGroupIconProvider(createGroupDto.iconProvider)
         ? createGroupDto.iconProvider
         : 'jdenticon';
 
@@ -475,7 +479,7 @@ export class GroupsService {
     if (userBalance < -0.01) {
       throw new BadRequestException(
         `You cannot leave the group with outstanding debts. ` +
-          `You owe ₹${Math.abs(userBalance).toFixed(2)}. Please settle your debts first.`,
+        `You owe ₹${Math.abs(userBalance).toFixed(2)}. Please settle your debts first.`,
       );
     }
 
@@ -533,7 +537,7 @@ export class GroupsService {
    */
   async createGroupExpense(
     groupId: string,
-    createExpenseDto: any, // CreateGroupExpenseDto
+    createExpenseDto: CreateGroupExpenseDto,
     userId: string,
   ) {
     // Verify user is member
@@ -710,7 +714,7 @@ export class GroupsService {
   async updateGroupExpense(
     groupId: string,
     expenseId: string,
-    updateDto: any, // UpdateGroupExpenseDto
+    updateDto: UpdateGroupExpenseDto,
     userId: string,
   ) {
     const group = await this.prisma.group.findUnique({
@@ -761,13 +765,16 @@ export class GroupsService {
       const splitService = this.splitCalculationService;
 
       const newAmount = updateDto.amount || expense.amount;
-      const newSplitType = updateDto.splitType || expense.splitType;
+      const newSplitType = (updateDto.splitType ||
+        expense.splitType) as 'equal' | 'exact' | 'percentage' | 'shares';
       const newParticipants =
         updateDto.participants ||
-        expense.splits.map((s) => ({
-          userId: s.userId,
-          amount: s.amountOwed,
-        }));
+        expense.splits
+          .filter((s) => s.userId !== null)
+          .map((s) => ({
+            userId: s.userId as string,
+            amount: Number(s.amountOwed),
+          }));
 
       const newSplits = splitService.calculateSplits(
         Number(newAmount),
@@ -974,41 +981,36 @@ export class GroupsService {
     // Simplify debts using greedy algorithm
     const simplifiedDebts = this.debtSettlementService.simplifyDebts(balances);
 
-    // Fetch user data for each debt
-    const debtsWithUsers = await Promise.all(
-      simplifiedDebts.map(async (debt) => {
-        const [fromUser, toUser] = await Promise.all([
-          this.prisma.user.findUnique({
-            where: { id: debt.from },
-            select: {
-              id: true,
-              username: true,
-              email: true,
-              firstName: true,
-              lastName: true,
-            },
-          }),
-          this.prisma.user.findUnique({
-            where: { id: debt.to },
-            select: {
-              id: true,
-              username: true,
-              email: true,
-              firstName: true,
-              lastName: true,
-            },
-          }),
-        ]);
+    // Collect all unique user IDs to fetch in a single query (fixes N+1 problem)
+    const userIds = new Set<string>();
+    simplifiedDebts.forEach((debt) => {
+      userIds.add(debt.from);
+      userIds.add(debt.to);
+    });
 
-        return {
-          fromUserId: debt.from,
-          toUserId: debt.to,
-          amount: debt.amount,
-          fromUser: fromUser || undefined,
-          toUser: toUser || undefined,
-        };
-      }),
-    );
+    // Fetch all users in a single query
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: Array.from(userIds) } },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+      },
+    });
+
+    // Create a map for O(1) lookups
+    const userMap = new Map(users.map((u) => [u.id, u]));
+
+    // Map debts with users
+    const debtsWithUsers = simplifiedDebts.map((debt) => ({
+      fromUserId: debt.from,
+      toUserId: debt.to,
+      amount: debt.amount,
+      fromUser: userMap.get(debt.from),
+      toUser: userMap.get(debt.to),
+    }));
 
     return debtsWithUsers;
   }
@@ -1024,7 +1026,7 @@ export class GroupsService {
   async settleExpense(
     groupId: string,
     expenseId: string,
-    settleDto: any, // SettleExpenseDto
+    settleDto: SettleExpenseDto,
     userId: string,
   ) {
     await this.verifyGroupMembership(groupId, userId);
@@ -1049,7 +1051,7 @@ export class GroupsService {
     if (settleDto.amount > remainingOwed + 0.01) {
       throw new BadRequestException(
         `Overpayment detected. Remaining owed: ₹${remainingOwed.toFixed(2)}, ` +
-          `Payment: ₹${settleDto.amount.toFixed(2)}`,
+        `Payment: ₹${settleDto.amount.toFixed(2)}`,
       );
     }
 
@@ -1090,7 +1092,11 @@ export class GroupsService {
   /**
    * Record a settlement between two users
    */
-  async recordSettlement(groupId: string, settlementDto: any, userId: string) {
+  async recordSettlement(
+    groupId: string,
+    settlementDto: RecordSettlementDto,
+    userId: string,
+  ) {
     await this.verifyGroupMembership(groupId, userId);
 
     return this.prisma.settlement.create({
@@ -1285,10 +1291,10 @@ export class GroupsService {
         avgMonthlySpending:
           monthlyArray.length > 0
             ? Math.round(
-                (monthlyArray.reduce((sum, m) => sum + m.totalSpending, 0) /
-                  monthlyArray.length) *
-                  100,
-              ) / 100
+              (monthlyArray.reduce((sum, m) => sum + m.totalSpending, 0) /
+                monthlyArray.length) *
+              100,
+            ) / 100
             : 0,
       },
     };

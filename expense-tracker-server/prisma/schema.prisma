@@ -510,6 +510,8 @@ model GroupMember {
   @@index([groupId, role])
   @@index([inviteToken])
   @@index([memberEmail])
+  @@index([groupId, userId, inviteStatus]) // Composite index for membership checks
+  @@index([userId, inviteStatus]) // For user's group list
   @@map("group_members")
 }
 
@@ -791,6 +793,8 @@ model GroupExpense {
   @@index([isSettled])
   @@index([categoryId])
   @@index([splitValidationStatus])
+  @@index([groupId, expenseDate(sort: Desc)]) // Composite index for paginated expense list
+  @@index([groupId, isSettled]) // For filtering settled/unsettled expenses
   @@map("group_expenses")
 }
 
@@ -825,6 +829,8 @@ model GroupExpenseSplit {
   @@index([groupExpenseId])
   @@index([userId])
   @@index([isPaid])
+  @@index([groupExpenseId, userId]) // Composite index for split lookups
+  @@index([userId, isPaid]) // For user's unpaid splits
   @@map("group_expense_splits")
 }
 

@@ -16,6 +16,7 @@ import { AddGroupMemberDto } from './dto/add-group-member.dto';
 import { CreateGroupExpenseDto } from './dto/create-group-expense.dto';
 import { UpdateGroupExpenseDto } from './dto/update-group-expense.dto';
 import { SettleExpenseDto } from './dto/settle-expense.dto';
+import { RecordSettlementDto } from './dto/record-settlement.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtPayload } from '../auth/jwt-payload.interface';
@@ -23,7 +24,7 @@ import type { JwtPayload } from '../auth/jwt-payload.interface';
 @Controller('groups')
 @UseGuards(JwtAuthGuard)
 export class GroupsController {
-  constructor(private readonly groupsService: GroupsService) {}
+  constructor(private readonly groupsService: GroupsService) { }
 
   // ==================== GROUP CRUD ====================
 
@@ -193,7 +194,7 @@ export class GroupsController {
   @Post(':id/settlements')
   recordSettlement(
     @Param('id') id: string,
-    @Body() settlementDto: any, // TODO: Create DTO
+    @Body() settlementDto: RecordSettlementDto,
     @CurrentUser() user: JwtPayload,
   ) {
     return this.groupsService.recordSettlement(id, settlementDto, user.userId);
