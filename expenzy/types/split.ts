@@ -103,11 +103,15 @@ export interface SimplifiedDebt {
         id: string;
         username: string;
         email: string;
+        firstName?: string;
+        lastName?: string;
     };
     toUser?: {
         id: string;
         username: string;
         email: string;
+        firstName?: string;
+        lastName?: string;
     };
 }
 

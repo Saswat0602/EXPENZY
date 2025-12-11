@@ -1,16 +1,7 @@
 'use client';
 
 import { formatCurrency } from '@/lib/utils/currency';
-import { ArrowRight } from 'lucide-react';
-import { GlassCard } from '@/components/shared/glass-card';
-
-interface SimplifiedDebt {
-    from: string;
-    to: string;
-    amount: number;
-    fromUser?: { firstName: string; lastName: string };
-    toUser?: { firstName: string; lastName: string };
-}
+import type { SimplifiedDebt } from '@/types/split';
 
 interface SimplifiedDebtsCardProps {
     debts: SimplifiedDebt[];
@@ -25,56 +16,79 @@ export function SimplifiedDebtsCard({
 }: SimplifiedDebtsCardProps) {
     if (!debts || debts.length === 0) {
         return (
-            <GlassCard className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Settlements</h3>
+            <div className="py-4">
                 <p className="text-sm text-muted-foreground">
                     All settled up! No pending payments.
                 </p>
-            </GlassCard>
+            </div>
         );
     }
 
+    // Calculate total you owe and total you're owed
+    let totalOwed = 0;
+    let totalLent = 0;
+
+    debts.forEach((debt) => {
+        if (debt.fromUserId === currentUserId) {
+            totalOwed += debt.amount;
+        } else if (debt.toUserId === currentUserId) {
+            totalLent += debt.amount;
+        }
+    });
+
+    const netBalance = totalLent - totalOwed;
+
     return (
-        <GlassCard className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Settlements</h3>
-            <div className="space-y-3">
+        <div className="space-y-3">
+            {/* Summary */}
+            {netBalance !== 0 && (
+                <div className="py-3 border-b border-border">
+                    <p className={`text-base font-medium ${netBalance > 0
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-red-500 dark:text-red-400'
+                        }`}>
+                        {netBalance > 0
+                            ? `You are owed ${formatCurrency(netBalance, currency)} overall`
+                            : `You owe ${formatCurrency(Math.abs(netBalance), currency)} overall`
+                        }
+                    </p>
+                </div>
+            )}
+
+            {/* Individual settlements */}
+            <div className="space-y-1">
                 {debts.map((debt, index) => {
-                    const isYouPaying = debt.from === currentUserId;
-                    const isYouReceiving = debt.to === currentUserId;
+                    const isYouPaying = debt.fromUserId === currentUserId;
+                    const isYouReceiving = debt.toUserId === currentUserId;
 
-                    const fromName = isYouPaying
-                        ? 'You'
-                        : debt.fromUser
-                            ? `${debt.fromUser.firstName} ${debt.fromUser.lastName}`.trim()
-                            : 'Unknown';
-
-                    const toName = isYouReceiving
-                        ? 'you'
-                        : debt.toUser
+                    // Get the other person's name
+                    const otherPersonName = isYouPaying
+                        ? (debt.toUser
                             ? `${debt.toUser.firstName} ${debt.toUser.lastName}`.trim()
-                            : 'Unknown';
+                            : 'Unknown')
+                        : (debt.fromUser
+                            ? `${debt.fromUser.firstName} ${debt.fromUser.lastName}`.trim()
+                            : 'Unknown');
+
+                    // Create simple text
+                    const displayText = isYouPaying
+                        ? `You owe ${otherPersonName}`
+                        : isYouReceiving
+                            ? `${otherPersonName} owes you`
+                            : `${debt.fromUser?.firstName || 'Unknown'} owes ${debt.toUser?.firstName || 'Unknown'}`;
 
                     return (
                         <div
                             key={index}
-                            className={`flex items-center justify-between p-3 rounded-lg ${isYouPaying
-                                    ? 'bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50'
-                                    : isYouReceiving
-                                        ? 'bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900/50'
-                                        : 'bg-muted/30'
-                                }`}
+                            className="flex items-center justify-between py-2 hover:bg-muted/30 -mx-2 px-2 rounded transition-colors"
                         >
-                            <div className="flex items-center gap-2 flex-1">
-                                <span className="font-medium">{fromName}</span>
-                                <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                                <span className="font-medium">{toName}</span>
-                            </div>
+                            <span className="text-sm text-muted-foreground">{displayText}</span>
                             <span
-                                className={`font-bold ${isYouPaying
-                                        ? 'text-red-600 dark:text-red-400'
-                                        : isYouReceiving
-                                            ? 'text-green-600 dark:text-green-400'
-                                            : 'text-foreground'
+                                className={`text-sm font-medium ${isYouPaying
+                                    ? 'text-red-500 dark:text-red-400'
+                                    : isYouReceiving
+                                        ? 'text-green-600 dark:text-green-400'
+                                        : 'text-foreground'
                                     }`}
                             >
                                 {formatCurrency(debt.amount, currency)}
@@ -83,6 +97,6 @@ export function SimplifiedDebtsCard({
                     );
                 })}
             </div>
-        </GlassCard>
+        </div>
     );
 }

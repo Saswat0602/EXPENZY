@@ -248,34 +248,30 @@ export default function GroupDetailPage() {
                     memberCount={acceptedMembers.length}
                 />
 
+                {/* Action Bar - Both Mobile and Desktop at top */}
+                <SettleUpBar
+                    onSettleUp={() => {
+                        // TODO: Implement settle up flow
+                        console.log('Settle up clicked');
+                    }}
+                    onViewStatistics={() => setIsStatisticsModalOpen(true)}
+                    onExport={() => {
+                        // TODO: Implement export
+                        console.log('Export clicked');
+                    }}
+                    isMobile={isMobile}
+                />
+
                 {/* Simplified Debts Card */}
                 <SimplifiedDebtsCard
-                    debts={simplifiedDebts as unknown as Array<{ from: string; to: string; amount: number; fromUser?: { firstName: string; lastName: string }; toUser?: { firstName: string; lastName: string } }>}
+                    debts={simplifiedDebts}
                     currentUserId={currentUserId}
                     currency={group.currency as 'INR' | 'USD' | 'EUR'}
                 />
 
-                {/* Action Bar - Desktop */}
-                {!isMobile && (
-                    <SettleUpBar
-                        onSettleUp={() => {
-                            // TODO: Implement settle up flow
-                            console.log('Settle up clicked');
-                        }}
-                        onViewStatistics={() => setIsStatisticsModalOpen(true)}
-                        onExport={() => {
-                            // TODO: Implement export
-                            console.log('Export clicked');
-                        }}
-                        isMobile={false}
-                    />
-                )}
-
                 {/* Expenses List - Splitwise Style */}
                 <div className="space-y-4">
-                    <div className="px-1">
-                        <h3 className="text-xl font-semibold">Expenses</h3>
-                    </div>
+
 
                     {!group.groupExpenses || group.groupExpenses.length === 0 ? (
                         <div className="text-center py-16 text-muted-foreground">
@@ -351,21 +347,7 @@ export default function GroupDetailPage() {
                     currency={group.currency as 'INR' | 'USD' | 'EUR'}
                 />
 
-                {/* Mobile Action Bar - Sticky at bottom */}
-                {isMobile && (
-                    <SettleUpBar
-                        onSettleUp={() => {
-                            // TODO: Implement settle up flow
-                            console.log('Settle up clicked');
-                        }}
-                        onViewStatistics={() => setIsStatisticsModalOpen(true)}
-                        onExport={() => {
-                            // TODO: Implement export
-                            console.log('Export clicked');
-                        }}
-                        isMobile={true}
-                    />
-                )}
+
             </div>
         </PageWrapper>
     );

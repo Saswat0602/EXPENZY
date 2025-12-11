@@ -32,15 +32,15 @@ export function GroupStatisticsModal({
         <div className="space-y-6">
             {/* Overview Cards */}
             <div className="grid grid-cols-2 gap-3">
-                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                <div className="p-4 rounded-lg bg-muted/30 border border-border">
                     <div className="flex items-center gap-2 mb-2">
-                        <Receipt className="h-4 w-4 text-primary" />
+                        <Receipt className="h-4 w-4 text-muted-foreground" />
                         <p className="text-xs font-medium text-muted-foreground">Total Expenses</p>
                     </div>
-                    <p className="text-2xl font-bold text-primary">{statistics.expenseCount}</p>
+                    <p className="text-2xl font-bold">{statistics.expenseCount}</p>
                 </div>
 
-                <div className="p-4 rounded-lg bg-muted/50">
+                <div className="p-4 rounded-lg bg-muted/30 border border-border">
                     <p className="text-xs font-medium text-muted-foreground mb-2">Average</p>
                     <p className="text-2xl font-bold">
                         {formatCurrency(statistics.averageExpense, currency)}
@@ -50,26 +50,26 @@ export function GroupStatisticsModal({
 
             {/* Spending Breakdown */}
             <div className="space-y-3">
-                <div className="p-4 rounded-lg bg-gradient-to-br from-blue-50 to-blue-50/50 dark:from-blue-950/30 dark:to-blue-950/10 border border-blue-200 dark:border-blue-900/50">
+                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
                     <div className="flex items-center gap-2 mb-2">
-                        <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        <p className="text-sm font-medium text-blue-700 dark:text-blue-400">
+                        <TrendingUp className="h-4 w-4 text-primary" />
+                        <p className="text-sm font-medium text-primary">
                             Group Total
                         </p>
                     </div>
-                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                    <p className="text-3xl font-bold text-primary">
                         {formatCurrency(statistics.totalSpending, currency)}
                     </p>
                 </div>
 
-                <div className="p-4 rounded-lg bg-gradient-to-br from-purple-50 to-purple-50/50 dark:from-purple-950/30 dark:to-purple-950/10 border border-purple-200 dark:border-purple-900/50">
+                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
                     <div className="flex items-center gap-2 mb-2">
-                        <TrendingDown className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                        <p className="text-sm font-medium text-purple-700 dark:text-purple-400">
+                        <TrendingDown className="h-4 w-4 text-primary" />
+                        <p className="text-sm font-medium text-primary">
                             You Paid
                         </p>
                     </div>
-                    <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                    <p className="text-3xl font-bold text-primary">
                         {formatCurrency(statistics.yourTotalSpending, currency)}
                     </p>
                 </div>
@@ -79,11 +79,11 @@ export function GroupStatisticsModal({
             <div>
                 <h4 className="text-sm font-semibold mb-3">Settlements</h4>
                 {simplifiedDebts.length === 0 ? (
-                    <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900/50 text-center">
-                        <p className="text-base font-medium text-green-700 dark:text-green-400">
+                    <div className="p-4 rounded-lg bg-muted/30 border border-border text-center">
+                        <p className="text-base font-medium text-green-600 dark:text-green-400">
                             ✓ All settled up!
                         </p>
-                        <p className="text-xs text-green-600 dark:text-green-500 mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                             No pending payments
                         </p>
                     </div>
@@ -93,58 +93,34 @@ export function GroupStatisticsModal({
                             const isYouOwing = debt.fromUserId === currentUserId;
                             const isYouReceiving = debt.toUserId === currentUserId;
 
-                            const fromName = isYouOwing
-                                ? 'You'
-                                : debt.fromUser
-                                    ? `${debt.fromUser.firstName || ''} ${debt.fromUser.lastName || ''}`.trim() || debt.fromUser.username
-                                    : 'Unknown';
-
-                            const toName = isYouReceiving
-                                ? 'you'
-                                : debt.toUser
+                            // Get the other person's name
+                            const otherPersonName = isYouOwing
+                                ? (debt.toUser
                                     ? `${debt.toUser.firstName || ''} ${debt.toUser.lastName || ''}`.trim() || debt.toUser.username
-                                    : 'Unknown';
+                                    : 'Unknown')
+                                : (debt.fromUser
+                                    ? `${debt.fromUser.firstName || ''} ${debt.fromUser.lastName || ''}`.trim() || debt.fromUser.username
+                                    : 'Unknown');
+
+                            // Create simple text
+                            const displayText = isYouOwing
+                                ? `You owe ${otherPersonName}`
+                                : isYouReceiving
+                                    ? `You lent ${otherPersonName}`
+                                    : `${debt.fromUser?.firstName || 'Unknown'} owes ${debt.toUser?.firstName || 'Unknown'}`;
 
                             return (
                                 <div
                                     key={index}
-                                    className={`p-3 rounded-lg border ${isYouOwing
-                                            ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50'
-                                            : isYouReceiving
-                                                ? 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-900/50'
-                                                : 'bg-muted/30 border-muted'
-                                        }`}
+                                    className="p-3 rounded-lg bg-muted/20 border border-border hover:bg-muted/30 transition-colors"
                                 >
                                     <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2 flex-1">
-                                            <span className={`text-base font-medium ${isYouOwing
-                                                    ? 'text-red-700 dark:text-red-400'
-                                                    : isYouReceiving
-                                                        ? 'text-green-700 dark:text-green-400'
-                                                        : 'text-foreground'
-                                                }`}>
-                                                {fromName}
-                                            </span>
-                                            <ArrowRight className={`h-4 w-4 ${isYouOwing
-                                                    ? 'text-red-600 dark:text-red-500'
-                                                    : isYouReceiving
-                                                        ? 'text-green-600 dark:text-green-500'
-                                                        : 'text-muted-foreground'
-                                                }`} />
-                                            <span className={`text-base font-medium ${isYouOwing
-                                                    ? 'text-red-700 dark:text-red-400'
-                                                    : isYouReceiving
-                                                        ? 'text-green-700 dark:text-green-400'
-                                                        : 'text-foreground'
-                                                }`}>
-                                                {toName}
-                                            </span>
-                                        </div>
-                                        <span className={`text-lg font-bold ${isYouOwing
-                                                ? 'text-red-600 dark:text-red-400'
-                                                : isYouReceiving
-                                                    ? 'text-green-600 dark:text-green-400'
-                                                    : 'text-foreground'
+                                        <span className="font-medium text-sm">{displayText}</span>
+                                        <span className={`font-semibold ${isYouOwing
+                                            ? 'text-red-500 dark:text-red-400'
+                                            : isYouReceiving
+                                                ? 'text-green-600 dark:text-green-400'
+                                                : 'text-foreground'
                                             }`}>
                                             {formatCurrency(debt.amount, currency)}
                                         </span>
@@ -167,10 +143,10 @@ export function GroupStatisticsModal({
                             .map(([category, amount]) => (
                                 <div
                                     key={category}
-                                    className="flex items-center justify-between p-2 rounded-lg bg-muted/30"
+                                    className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border"
                                 >
-                                    <span className="text-sm font-medium">{category}</span>
-                                    <span className="text-sm font-bold">
+                                    <span className="font-medium">{category}</span>
+                                    <span className="font-semibold">
                                         {formatCurrency(amount, currency)}
                                     </span>
                                 </div>
