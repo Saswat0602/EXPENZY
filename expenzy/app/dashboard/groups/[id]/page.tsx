@@ -136,10 +136,10 @@ export default function GroupDetailPage() {
     }
 
     const renderExpenseItem = (monthGroup: { monthName: string; expenses: NonNullable<typeof group>['groupExpenses'] }) => (
-        <div key={monthGroup.monthName} className="space-y-2">
+        <div key={monthGroup.monthName} className="space-y-0">
             {/* Month Header */}
-            <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10 py-3">
-                <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wide">
+            <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10 py-2 -mx-4 px-4">
+                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     {monthGroup.monthName}
                 </h3>
             </div>
@@ -168,31 +168,31 @@ export default function GroupDetailPage() {
                         <div
                             key={expense.id}
                             onClick={() => handleExpenseClick(expense)}
-                            className="flex items-center gap-3 py-3 px-0 hover:bg-muted/30 -mx-4 px-4 transition-colors cursor-pointer active:bg-muted/50"
+                            className="flex items-center gap-3 py-2.5 hover:bg-muted/30 -mx-4 px-4 transition-colors cursor-pointer active:bg-muted/50 border-b border-border/50 last:border-0"
                         >
                             {/* Date */}
-                            <div className="flex flex-col items-center w-14 flex-shrink-0">
-                                <span className="text-sm text-muted-foreground">
+                            <div className="flex flex-col items-center w-10 flex-shrink-0">
+                                <span className="text-xs text-muted-foreground">
                                     {dayMonth.split(' ')[0]}
                                 </span>
-                                <span className="text-xl font-semibold">
+                                <span className="text-base font-semibold">
                                     {dayMonth.split(' ')[1]}
                                 </span>
                             </div>
 
                             {/* Category Icon */}
                             <div className="flex-shrink-0">
-                                <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center">
-                                    <CategoryIcon className="h-6 w-6 text-muted-foreground" />
+                                <div className="h-10 w-10 rounded-lg bg-muted/50 flex items-center justify-center">
+                                    <CategoryIcon className="h-5 w-5 text-muted-foreground" />
                                 </div>
                             </div>
 
                             {/* Description and Payment Info */}
                             <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate text-base">
+                                <p className="font-medium truncate text-sm">
                                     {expense.description}
                                 </p>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-xs text-muted-foreground">
                                     {isPaidByYou ? 'You' : paidByName} paid {formatCurrency(Number(expense.amount), expense.currency as 'INR' | 'USD' | 'EUR')}
                                 </p>
                             </div>
@@ -200,15 +200,12 @@ export default function GroupDetailPage() {
                             {/* Lent/Borrowed Amount */}
                             {balance.displayText !== 'not involved' && balance.displayText !== 'settled' && (
                                 <div className="text-right flex-shrink-0">
-                                    <p className={`text-sm font-medium ${balance.youLent > 0
-                                        ? 'text-green-600 dark:text-green-400'
-                                        : 'text-red-400 dark:text-red-300'
-                                        }`}>
+                                    <p className="text-xs text-muted-foreground mb-0.5">
                                         {balance.youLent > 0 ? 'you lent' : 'you borrowed'}
                                     </p>
-                                    <p className={`text-base font-semibold ${balance.youLent > 0
+                                    <p className={`text-sm font-semibold ${balance.youLent > 0
                                         ? 'text-green-600 dark:text-green-400'
-                                        : 'text-red-400 dark:text-red-300'
+                                        : 'text-red-500 dark:text-red-400'
                                         }`}>
                                         {formatCurrency(
                                             balance.youLent > 0 ? balance.youLent : balance.youBorrowed,
@@ -226,7 +223,7 @@ export default function GroupDetailPage() {
 
     return (
         <PageWrapper>
-            <div className="space-y-6 pb-24 lg:pb-6">
+            <div className="space-y-0 pb-24 lg:pb-6">
                 {/* Back Button - Hidden on mobile, GroupHeader has its own back button */}
                 <Button
                     variant="ghost"
@@ -270,37 +267,34 @@ export default function GroupDetailPage() {
                 />
 
                 {/* Expenses List - Splitwise Style */}
-                <div className="space-y-4">
+                <div className="pt-2">{!group.groupExpenses || group.groupExpenses.length === 0 ? (
+                    <div className="text-center py-16 text-muted-foreground">
+                        <Receipt className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p className="font-medium">No expenses yet</p>
+                        <p className="text-sm mt-1">Add an expense to get started</p>
+                    </div>
+                ) : (
+                    <VirtualList
+                        fetchData={async (page) => {
+                            // Since data is already loaded, just paginate locally
+                            const itemsPerPage = 20;
+                            const start = (page - 1) * itemsPerPage;
+                            const end = start + itemsPerPage;
+                            const paginatedData = groupedExpenses.slice(start, end);
 
-
-                    {!group.groupExpenses || group.groupExpenses.length === 0 ? (
-                        <div className="text-center py-16 text-muted-foreground">
-                            <Receipt className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                            <p className="font-medium">No expenses yet</p>
-                            <p className="text-sm mt-1">Add an expense to get started</p>
-                        </div>
-                    ) : (
-                        <VirtualList
-                            fetchData={async (page) => {
-                                // Since data is already loaded, just paginate locally
-                                const itemsPerPage = 20;
-                                const start = (page - 1) * itemsPerPage;
-                                const end = start + itemsPerPage;
-                                const paginatedData = groupedExpenses.slice(start, end);
-
-                                return {
-                                    data: paginatedData,
-                                    hasMore: end < groupedExpenses.length,
-                                    total: groupedExpenses.length,
-                                };
-                            }}
-                            renderItem={renderExpenseItem}
-                            getItemKey={(item) => item.monthName}
-                            itemsPerPage={20}
-                            enableDesktopPagination={false}
-                            dependencies={[groupedExpenses]}
-                        />
-                    )}
+                            return {
+                                data: paginatedData,
+                                hasMore: end < groupedExpenses.length,
+                                total: groupedExpenses.length,
+                            };
+                        }}
+                        renderItem={renderExpenseItem}
+                        getItemKey={(item) => item.monthName}
+                        itemsPerPage={20}
+                        enableDesktopPagination={false}
+                        dependencies={[groupedExpenses]}
+                    />
+                )}
                 </div>
 
                 {/* Floating Add Expense Button (Mobile) */}
