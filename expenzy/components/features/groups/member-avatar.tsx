@@ -1,41 +1,47 @@
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { UserAvatar } from '@/components/ui/user-avatar';
+import { LetterAvatar } from '@/components/ui/letter-avatar';
 
 interface MemberAvatarProps {
     name: string;
+    avatarSeed?: string;
+    avatarStyle?: string;
     isSelected?: boolean;
     onClick?: () => void;
     size?: 'sm' | 'md' | 'lg';
     showCheckmark?: boolean;
 }
 
-const sizeClasses = {
-    sm: 'h-8 w-8 text-sm',
-    md: 'h-10 w-10 text-base',
-    lg: 'h-12 w-12 text-lg',
+const sizeMap = {
+    sm: 32,
+    md: 40,
+    lg: 48,
 };
 
 export function MemberAvatar({
     name,
+    avatarSeed,
+    avatarStyle,
     isSelected = false,
     onClick,
     size = 'md',
     showCheckmark = true
 }: MemberAvatarProps) {
-    const initial = name.charAt(0).toUpperCase();
+    const pixelSize = sizeMap[size];
 
     return (
         <div
             onClick={onClick}
             className={cn(
-                'relative rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold flex-shrink-0 transition-all',
-                sizeClasses[size],
+                'relative rounded-full flex items-center justify-center flex-shrink-0 transition-all',
                 onClick && 'cursor-pointer hover:scale-105',
                 isSelected && showCheckmark && 'ring-2 ring-primary ring-offset-2'
             )}
+            style={{ width: pixelSize, height: pixelSize }}
         >
             {isSelected && showCheckmark ? (
-                <div className="absolute inset-0 bg-primary/90 rounded-full flex items-center justify-center">
+                <div className="absolute inset-0 bg-primary/90 rounded-full flex items-center justify-center z-10">
                     <Check className={cn(
                         'text-primary-foreground',
                         size === 'sm' && 'h-4 w-4',
@@ -43,8 +49,18 @@ export function MemberAvatar({
                         size === 'lg' && 'h-6 w-6'
                     )} />
                 </div>
+            ) : avatarSeed ? (
+                <UserAvatar
+                    seed={avatarSeed}
+                    style={avatarStyle}
+                    fallbackName={name}
+                    size={pixelSize}
+                />
             ) : (
-                initial
+                <LetterAvatar
+                    name={name}
+                    size={pixelSize}
+                />
             )}
         </div>
     );

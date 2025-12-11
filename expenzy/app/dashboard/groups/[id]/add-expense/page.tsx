@@ -471,6 +471,8 @@ export default function AddExpensePage() {
                                     <div className="flex items-center gap-3 flex-1">
                                         <MemberAvatar
                                             name={memberName}
+                                            avatarSeed={member.user?.avatarSeed}
+                                            avatarStyle={member.user?.avatarStyle}
                                             isSelected={isSelected}
                                             onClick={() => toggleParticipant(member.userId)}
                                             size="md"
@@ -683,6 +685,8 @@ export default function AddExpensePage() {
                             >
                                 <MemberAvatar
                                     name={getMemberName(member.userId)}
+                                    avatarSeed={member.user?.avatarSeed}
+                                    avatarStyle={member.user?.avatarStyle}
                                     size="md"
                                     showCheckmark={false}
                                 />

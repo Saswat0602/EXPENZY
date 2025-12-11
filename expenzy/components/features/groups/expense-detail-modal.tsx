@@ -23,6 +23,7 @@ import { useDeleteGroupExpense } from '@/lib/hooks/use-group-expenses';
 import { Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { UserAvatar } from '@/components/ui/user-avatar';
 
 interface ExpenseDetailModalProps {
     expense: GroupExpense | null;
@@ -127,25 +128,30 @@ export function ExpenseDetailModal({
             <div>
                 <p className="text-xs font-bold text-muted-foreground mb-2 uppercase">Split with</p>
                 <div className="space-y-1.5">
-                    {expense.splits?.map((split) => (
-                        <div key={split.id} className="flex items-center justify-between py-2 px-3 bg-muted/20 rounded-lg">
-                            <div className="flex items-center gap-2">
-                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                    <span className="text-xs font-bold text-primary">
-                                        {split.user?.firstName?.[0] || '?'}
+                    {expense.splits?.map((split) => {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const userData = split.user as any;
+                        return (
+                            <div key={split.id} className="flex items-center justify-between py-2 px-3 bg-muted/20 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                    <UserAvatar
+                                        seed={userData?.avatarSeed}
+                                        style={userData?.avatarStyle}
+                                        fallbackName={split.user?.firstName || 'Unknown'}
+                                        size={32}
+                                    />
+                                    <span className="text-sm font-medium">
+                                        {split.userId === currentUserId
+                                            ? 'You'
+                                            : `${split.user?.firstName || 'Unknown'} ${split.user?.lastName || ''}`.trim()}
                                     </span>
                                 </div>
-                                <span className="text-sm font-medium">
-                                    {split.userId === currentUserId
-                                        ? 'You'
-                                        : `${split.user?.firstName || 'Unknown'} ${split.user?.lastName || ''}`.trim()}
+                                <span className="text-sm font-bold">
+                                    {formatCurrency(Number(split.amountOwed), expense.currency as 'INR' | 'USD' | 'EUR')}
                                 </span>
                             </div>
-                            <span className="text-sm font-bold">
-                                {formatCurrency(Number(split.amountOwed), expense.currency as 'INR' | 'USD' | 'EUR')}
-                            </span>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
 

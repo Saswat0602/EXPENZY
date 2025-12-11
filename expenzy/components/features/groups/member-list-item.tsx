@@ -50,7 +50,7 @@ export const MemberListItem: React.FC<MemberListItemProps> = ({
     return (
         <div
             className={cn(
-                'flex items-center justify-between p-4 hover:bg-muted/50 transition-colors rounded-lg',
+                'flex items-center justify-between py-3 hover:bg-muted/50 transition-colors rounded-lg',
                 className
             )}
         >
