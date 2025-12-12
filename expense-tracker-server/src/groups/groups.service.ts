@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   Injectable,
   NotFoundException,
@@ -16,12 +12,14 @@ import { CreateGroupExpenseDto } from './dto/create-group-expense.dto';
 import { UpdateGroupExpenseDto } from './dto/update-group-expense.dto';
 import { SettleExpenseDto } from './dto/settle-expense.dto';
 import { RecordSettlementDto } from './dto/record-settlement.dto';
-import { SplitCalculationService } from './services/split-calculation.service';
 import {
   BalanceCalculationService,
   GroupExpenseWithSplits,
 } from './services/balance-calculation.service';
 import { DebtSettlementService } from './services/debt-settlement.service';
+import { GroupCacheService } from './services/group-cache.service';
+import { GroupExpenseService } from './services/group-expense.service';
+import { GroupStatisticsService } from './services/group-statistics.service';
 import * as crypto from 'crypto';
 import {
   generateRandomSeed,
@@ -32,9 +30,11 @@ import {
 export class GroupsService {
   constructor(
     private prisma: PrismaService,
-    private splitCalculationService: SplitCalculationService,
     private balanceCalculationService: BalanceCalculationService,
     private debtSettlementService: DebtSettlementService,
+    private cacheService: GroupCacheService,
+    private expenseService: GroupExpenseService,
+    private statisticsService: GroupStatisticsService,
   ) { }
 
   async create(createGroupDto: CreateGroupDto, userId: string) {
@@ -43,7 +43,7 @@ export class GroupsService {
     const iconProvider =
       createGroupDto.iconProvider &&
         validateGroupIconProvider(createGroupDto.iconProvider)
-        ? createGroupDto.iconProvider
+        ? (createGroupDto.iconProvider as 'jdenticon')
         : 'jdenticon';
 
     return this.prisma.group.create({
@@ -52,7 +52,7 @@ export class GroupsService {
         description: createGroupDto.description,
         imageUrl: createGroupDto.imageUrl,
         iconSeed,
-        iconProvider: iconProvider as any,
+        iconProvider,
         createdByUserId: userId,
         members: {
           create: {
@@ -114,6 +114,7 @@ export class GroupsService {
           },
         },
         groupExpenses: {
+          take: 20, // Only fetch recent 20 expenses
           include: {
             paidBy: true,
             category: true,
@@ -125,6 +126,11 @@ export class GroupsService {
           },
           orderBy: {
             expenseDate: 'desc',
+          },
+        },
+        _count: {
+          select: {
+            groupExpenses: true, // Add total count
           },
         },
       },
@@ -166,7 +172,7 @@ export class GroupsService {
         description: updateGroupDto.description,
         imageUrl: updateGroupDto.imageUrl,
         iconSeed: updateGroupDto.iconSeed,
-        iconProvider: updateGroupDto.iconProvider as any,
+        iconProvider: updateGroupDto.iconProvider ? (updateGroupDto.iconProvider as 'jdenticon') : undefined,
       },
       include: {
         members: {
@@ -393,32 +399,38 @@ export class GroupsService {
 
     const skip = (page - 1) * limit;
 
-    const [expenses, total] = await Promise.all([
-      this.prisma.groupExpense.findMany({
-        where: {
-          groupId,
-        },
-        include: {
-          paidBy: true,
-          category: true,
-          splits: {
-            include: {
-              user: true,
-            },
+    // Check expense count cache
+    let total: number;
+    const cached = this.cacheService.getCachedExpenseCount(groupId);
+
+    if (cached !== null) {
+      total = cached;
+    } else {
+      total = await this.prisma.groupExpense.count({
+        where: { groupId },
+      });
+      this.cacheService.setCachedExpenseCount(groupId, total);
+    }
+
+    const expenses = await this.prisma.groupExpense.findMany({
+      where: {
+        groupId,
+      },
+      include: {
+        paidBy: true,
+        category: true,
+        splits: {
+          include: {
+            user: true,
           },
         },
-        orderBy: {
-          expenseDate: 'desc',
-        },
-        skip,
-        take: limit,
-      }),
-      this.prisma.groupExpense.count({
-        where: {
-          groupId,
-        },
-      }),
-    ]);
+      },
+      orderBy: {
+        expenseDate: 'desc',
+      },
+      skip,
+      take: limit,
+    });
 
     return {
       data: expenses,
@@ -527,149 +539,14 @@ export class GroupsService {
   // ==================== EXPENSE CRUD METHODS ====================
 
   /**
-   * Create a group expense with split calculation
-   * Edge cases handled:
-   * - Validates user is group member
-   * - Calculates splits based on type
-   * - Validates split sums
-   * - Handles rounding
-   * - Tracks calculation metadata
+   * Create a group expense - delegated to GroupExpenseService
    */
   async createGroupExpense(
     groupId: string,
     createExpenseDto: CreateGroupExpenseDto,
     userId: string,
   ) {
-    // Verify user is member
-    const group = await this.prisma.group.findUnique({
-      where: { id: groupId },
-      include: { members: true },
-    });
-
-    if (!group) {
-      throw new NotFoundException('Group not found');
-    }
-
-    const isMember = group.members.some(
-      (m) => m.userId === userId && m.inviteStatus === 'accepted',
-    );
-
-    if (!isMember) {
-      throw new ForbiddenException('You are not a member of this group');
-    }
-
-    // Use split calculation service
-    const splitService = this.splitCalculationService;
-
-    const splits = splitService.calculateSplits(
-      createExpenseDto.amount,
-      createExpenseDto.splitType,
-      createExpenseDto.participants,
-      userId, // payer
-    );
-
-    // Validate splits
-    const validation = splitService.validateSplits(
-      createExpenseDto.amount,
-      splits,
-    );
-    if (!validation.isValid) {
-      throw new BadRequestException(validation.message);
-    }
-
-    // Validate participants are group members
-    const memberIds = group.members
-      .map((m) => m.userId)
-      .filter((id): id is string => id !== null);
-    const participantValidation =
-      this.splitCalculationService.validateParticipants(
-        createExpenseDto.participants,
-        memberIds,
-      );
-
-    if (!participantValidation.isValid) {
-      throw new BadRequestException(
-        `Invalid participants: ${participantValidation.invalidUserIds.join(', ')}`,
-      );
-    }
-
-    // Create expense with splits in transaction
-    return this.prisma.$transaction(async (tx) => {
-      const expense = await tx.groupExpense.create({
-        data: {
-          groupId,
-          paidByUserId: createExpenseDto.paidByUserId || userId,
-          amount: createExpenseDto.amount,
-          currency: createExpenseDto.currency || 'INR',
-          description: createExpenseDto.description,
-          expenseDate: createExpenseDto.expenseDate || new Date(),
-          notes: createExpenseDto.notes,
-          categoryId: createExpenseDto.categoryId,
-          splitType: createExpenseDto.splitType,
-          splitValidationStatus: 'valid',
-          hasAdjustments: splits.some((s) => s.isRoundingAdjustment),
-        },
-        include: {
-          splits: true,
-          paidBy: true,
-          category: true,
-        },
-      });
-
-      // Create splits
-      await tx.groupExpenseSplit.createMany({
-        data: splits.map((split) => ({
-          groupExpenseId: expense.id,
-          userId: split.userId,
-          amountOwed: split.amountOwed,
-          percentage: split.percentage,
-          calculatedAmount: split.calculatedAmount,
-          adjustmentAmount: split.adjustmentAmount,
-          isRoundingAdjustment: split.isRoundingAdjustment,
-        })),
-      });
-
-      // Create calculation metadata
-      const roundingDiff = splitService.calculateRoundingDifference(
-        createExpenseDto.amount,
-        splits,
-      );
-
-      await tx.splitCalculation.create({
-        data: {
-          groupExpenseId: expense.id,
-          splitType: createExpenseDto.splitType,
-          totalAmount: createExpenseDto.amount,
-          participantsCount: splits.length,
-          roundingDifference: roundingDiff,
-        },
-      });
-
-      // Fetch the expense again with splits to return in response
-      const expenseWithSplits = await tx.groupExpense.findUnique({
-        where: { id: expense.id },
-        include: {
-          splits: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  email: true,
-                  username: true,
-                  firstName: true,
-                  lastName: true,
-                },
-              },
-            },
-          },
-          paidBy: true,
-          category: true,
-          splitCalculations: true,
-        },
-      });
-
-      return expenseWithSplits;
-    });
+    return this.expenseService.createExpense(groupId, createExpenseDto, userId);
   }
 
   /**
@@ -703,13 +580,7 @@ export class GroupsService {
   }
 
   /**
-   * Update a group expense
-   * Edge cases handled:
-   * - Only payer or admin can edit
-   * - Cannot edit if fully settled
-   * - Cannot edit if partial payments made
-   * - Recalculates splits if amount/type changes
-   * - Tracks edit history
+   * Update a group expense - delegated to GroupExpenseService
    */
   async updateGroupExpense(
     groupId: string,
@@ -726,128 +597,17 @@ export class GroupsService {
       throw new NotFoundException('Group not found');
     }
 
-    const expense = await this.prisma.groupExpense.findFirst({
-      where: { id: expenseId, groupId },
-      include: { splits: true },
-    });
-
-    if (!expense) {
-      throw new NotFoundException('Expense not found');
-    }
-
-    // Permission check: only payer or admin can edit
     const isAdmin = this.isGroupAdmin(group, userId);
-    const isPayer = expense.paidByUserId === userId;
-
-    if (!isPayer && !isAdmin) {
-      throw new ForbiddenException(
-        'Only the payer or admin can edit this expense',
-      );
-    }
-
-    // Cannot edit if fully settled
-    if (expense.isSettled) {
-      throw new BadRequestException('Cannot edit a fully settled expense');
-    }
-
-    // Cannot edit if partial payments made
-    const hasPartialPayments = expense.splits.some(
-      (s) => Number(s.amountPaid) > 0,
+    return this.expenseService.updateExpense(
+      groupId,
+      expenseId,
+      updateDto,
+      userId,
+      isAdmin,
     );
-    if (hasPartialPayments) {
-      throw new BadRequestException(
-        'Cannot edit expense with partial payments. Please settle or cancel payments first.',
-      );
-    }
-
-    // If amount or split type changed, recalculate splits
-    if (updateDto.amount || updateDto.splitType || updateDto.participants) {
-      const splitService = this.splitCalculationService;
-
-      const newAmount = updateDto.amount || expense.amount;
-      const newSplitType = (updateDto.splitType ||
-        expense.splitType) as 'equal' | 'exact' | 'percentage' | 'shares';
-      const newParticipants =
-        updateDto.participants ||
-        expense.splits
-          .filter((s) => s.userId !== null)
-          .map((s) => ({
-            userId: s.userId as string,
-            amount: Number(s.amountOwed),
-          }));
-
-      const newSplits = splitService.calculateSplits(
-        Number(newAmount),
-        newSplitType,
-        newParticipants,
-        expense.paidByUserId!,
-      );
-
-      // Update in transaction
-      return this.prisma.$transaction(async (tx) => {
-        // Delete old splits
-        await tx.groupExpenseSplit.deleteMany({
-          where: { groupExpenseId: expenseId },
-        });
-
-        // Update expense
-        const updated = await tx.groupExpense.update({
-          where: { id: expenseId },
-          data: {
-            amount: newAmount,
-            splitType: newSplitType,
-            description: updateDto.description,
-            notes: updateDto.notes,
-            categoryId: updateDto.categoryId,
-            expenseDate: updateDto.expenseDate,
-          },
-          include: {
-            splits: true,
-            paidBy: true,
-            category: true,
-          },
-        });
-
-        // Create new splits
-        await tx.groupExpenseSplit.createMany({
-          data: newSplits.map((split) => ({
-            groupExpenseId: expenseId,
-            userId: split.userId,
-            amountOwed: split.amountOwed,
-            percentage: split.percentage,
-            calculatedAmount: split.calculatedAmount,
-            adjustmentAmount: split.adjustmentAmount,
-            isRoundingAdjustment: split.isRoundingAdjustment,
-          })),
-        });
-
-        return updated;
-      });
-    }
-
-    // Simple update without split recalculation
-    return this.prisma.groupExpense.update({
-      where: { id: expenseId },
-      data: {
-        description: updateDto.description,
-        notes: updateDto.notes,
-        categoryId: updateDto.categoryId,
-        expenseDate: updateDto.expenseDate,
-      },
-      include: {
-        splits: true,
-        paidBy: true,
-        category: true,
-      },
-    });
   }
-
   /**
-   * Delete a group expense (soft delete)
-   * Edge cases handled:
-   * - Only payer or admin can delete
-   * - Cannot delete if settled
-   * - Tracks deletion reason
+   * Delete a group expense - delegated to GroupExpenseService
    */
   async deleteGroupExpense(groupId: string, expenseId: string, userId: string) {
     const group = await this.prisma.group.findUnique({
@@ -859,43 +619,43 @@ export class GroupsService {
       throw new NotFoundException('Group not found');
     }
 
-    const expense = await this.prisma.groupExpense.findFirst({
-      where: { id: expenseId, groupId },
-    });
-
-    if (!expense) {
-      throw new NotFoundException('Expense not found');
-    }
-
-    // Permission check
     const isAdmin = this.isGroupAdmin(group, userId);
-    const isPayer = expense.paidByUserId === userId;
-
-    if (!isPayer && !isAdmin) {
-      throw new ForbiddenException(
-        'Only the payer or admin can delete this expense',
-      );
-    }
-
-    // Cannot delete if settled
-    if (expense.isSettled) {
-      throw new BadRequestException('Cannot delete a settled expense');
-    }
-
-    // Soft delete (or hard delete - your choice)
-    return this.prisma.groupExpense.delete({
-      where: { id: expenseId },
-    });
+    return this.expenseService.deleteExpense(
+      groupId,
+      expenseId,
+      userId,
+      isAdmin,
+    );
   }
 
   // ==================== BALANCE & SETTLEMENT METHODS ====================
 
   /**
-   * Get all balances for a group
+   * Get all balances for a group (with caching)
    */
   async getGroupBalances(groupId: string, userId: string) {
     await this.verifyGroupMembership(groupId, userId);
 
+    // Check cache first
+    const expenseCount = await this.prisma.groupExpense.count({
+      where: { groupId },
+    });
+    const cached = this.cacheService.getCachedBalance(groupId, expenseCount);
+
+    // Return cached if valid
+    if (cached) {
+      return Array.from(cached.values()).map((balance) => ({
+        userId: balance.userId,
+        totalPaid: balance.totalPaid,
+        totalOwed: balance.totalOwed,
+        balance: balance.balance,
+        formatted: this.balanceCalculationService.formatBalance(
+          balance.balance,
+        ),
+      }));
+    }
+
+    // Calculate fresh balances
     const expenses = await this.prisma.groupExpense.findMany({
       where: { groupId },
       include: {
@@ -911,6 +671,9 @@ export class GroupsService {
     const balances = this.balanceCalculationService.calculateGroupBalances(
       expenses as unknown as GroupExpenseWithSplits[],
     );
+
+    // Cache the results
+    this.cacheService.setCachedBalance(groupId, balances, expenseCount);
 
     return Array.from(balances.values()).map((balance) => ({
       userId: balance.userId,
@@ -1016,12 +779,7 @@ export class GroupsService {
   }
 
   /**
-   * Settle an expense (record payment)
-   * Edge cases handled:
-   * - Validates payment amount
-   * - Detects overpayment
-   * - Tracks payment method
-   * - Updates split status
+   * Settle an expense - delegated to GroupExpenseService
    */
   async settleExpense(
     groupId: string,
@@ -1030,63 +788,7 @@ export class GroupsService {
     userId: string,
   ) {
     await this.verifyGroupMembership(groupId, userId);
-
-    const expense = await this.prisma.groupExpense.findFirst({
-      where: { id: expenseId, groupId },
-      include: { splits: true },
-    });
-
-    if (!expense) {
-      throw new NotFoundException('Expense not found');
-    }
-
-    // Find the split for the user
-    const split = expense.splits.find((s) => s.userId === settleDto.userId);
-    if (!split) {
-      throw new NotFoundException('Split not found for this user');
-    }
-
-    // Check for overpayment
-    const remainingOwed = Number(split.amountOwed) - Number(split.amountPaid);
-    if (settleDto.amount > remainingOwed + 0.01) {
-      throw new BadRequestException(
-        `Overpayment detected. Remaining owed: ₹${remainingOwed.toFixed(2)}, ` +
-        `Payment: ₹${settleDto.amount.toFixed(2)}`,
-      );
-    }
-
-    // Update split
-    const newAmountPaid = Number(split.amountPaid) + settleDto.amount;
-    const isFullyPaid = newAmountPaid >= Number(split.amountOwed) - 0.01;
-
-    await this.prisma.groupExpenseSplit.update({
-      where: { id: split.id },
-      data: {
-        amountPaid: newAmountPaid,
-        isPaid: isFullyPaid || settleDto.markAsFullyPaid,
-        paidAt: isFullyPaid ? new Date() : split.paidAt,
-      },
-    });
-
-    // Check if all splits are paid
-    const allSplits = await this.prisma.groupExpenseSplit.findMany({
-      where: { groupExpenseId: expenseId },
-    });
-
-    const allPaid = allSplits.every((s) => s.isPaid);
-    if (allPaid) {
-      await this.prisma.groupExpense.update({
-        where: { id: expenseId },
-        data: { isSettled: true },
-      });
-    }
-
-    return {
-      success: true,
-      amountPaid: settleDto.amount,
-      remainingOwed: Math.max(0, remainingOwed - settleDto.amount),
-      isFullyPaid,
-    };
+    return this.expenseService.settleExpense(groupId, expenseId, settleDto);
   }
 
   /**
@@ -1133,72 +835,15 @@ export class GroupsService {
   // ==================== STATISTICS & ANALYTICS ====================
 
   /**
-   * Get comprehensive group statistics
+   * Get comprehensive group statistics - delegated to GroupStatisticsService
    */
   async getGroupStatistics(groupId: string, userId: string) {
     await this.verifyGroupMembership(groupId, userId);
-
-    const expenses = await this.prisma.groupExpense.findMany({
-      where: { groupId },
-      include: {
-        splits: true,
-        category: true,
-      },
-    });
-
-    if (expenses.length === 0) {
-      return {
-        totalExpenses: 0,
-        totalSpending: 0,
-        yourTotalSpending: 0,
-        yourShare: 0,
-        averageExpense: 0,
-        expenseCount: 0,
-        categoryBreakdown: {},
-      };
-    }
-
-    // Calculate totals
-    const totalSpending = expenses.reduce(
-      (sum, exp) => sum + parseFloat(exp.amount.toString()),
-      0,
-    );
-
-    // Calculate user's total spending (what they paid)
-    const yourTotalSpending = expenses
-      .filter((exp) => exp.paidByUserId === userId)
-      .reduce((sum, exp) => sum + parseFloat(exp.amount.toString()), 0);
-
-    // Calculate user's share (what they owe)
-    const yourShare = expenses.reduce((sum, exp) => {
-      const userSplit = exp.splits.find((s) => s.userId === userId);
-      return (
-        sum + (userSplit ? parseFloat(userSplit.amountOwed.toString()) : 0)
-      );
-    }, 0);
-
-    // Category breakdown
-    const categoryBreakdown: Record<string, number> = {};
-    expenses.forEach((exp) => {
-      const categoryName = exp.category?.name || 'Uncategorized';
-      const amount = parseFloat(exp.amount.toString());
-      categoryBreakdown[categoryName] =
-        (categoryBreakdown[categoryName] || 0) + amount;
-    });
-
-    return {
-      totalExpenses: expenses.length,
-      totalSpending: Math.round(totalSpending * 100) / 100,
-      yourTotalSpending: Math.round(yourTotalSpending * 100) / 100,
-      yourShare: Math.round(yourShare * 100) / 100,
-      averageExpense: Math.round((totalSpending / expenses.length) * 100) / 100,
-      expenseCount: expenses.length,
-      categoryBreakdown,
-    };
+    return this.statisticsService.getGroupStatistics(groupId, userId);
   }
 
   /**
-   * Get monthly analytics for the group
+   * Get monthly analytics - delegated to GroupStatisticsService
    */
   async getMonthlyAnalytics(
     groupId: string,
@@ -1206,98 +851,7 @@ export class GroupsService {
     months: number = 6,
   ) {
     await this.verifyGroupMembership(groupId, userId);
-
-    const startDate = new Date();
-    startDate.setMonth(startDate.getMonth() - months);
-
-    const expenses = await this.prisma.groupExpense.findMany({
-      where: {
-        groupId,
-        expenseDate: {
-          gte: startDate,
-        },
-      },
-      include: {
-        splits: true,
-        category: true,
-      },
-      orderBy: {
-        expenseDate: 'asc',
-      },
-    });
-
-    // Group by month
-    const monthlyData: Record<
-      string,
-      {
-        totalSpending: number;
-        yourShare: number;
-        expenseCount: number;
-        categories: Record<string, number>;
-      }
-    > = {};
-
-    expenses.forEach((exp) => {
-      const date = new Date(exp.expenseDate);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-
-      if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = {
-          totalSpending: 0,
-          yourShare: 0,
-          expenseCount: 0,
-          categories: {},
-        };
-      }
-
-      const amount = parseFloat(exp.amount.toString());
-      monthlyData[monthKey].totalSpending += amount;
-      monthlyData[monthKey].expenseCount += 1;
-
-      // User's share
-      const userSplit = exp.splits.find((s) => s.userId === userId);
-      if (userSplit) {
-        monthlyData[monthKey].yourShare += parseFloat(
-          userSplit.amountOwed.toString(),
-        );
-      }
-
-      // Category breakdown
-      const categoryName = exp.category?.name || 'Uncategorized';
-      monthlyData[monthKey].categories[categoryName] =
-        (monthlyData[monthKey].categories[categoryName] || 0) + amount;
-    });
-
-    // Convert to array format
-    const monthlyArray = Object.entries(monthlyData)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, data]) => {
-        const [year, month] = key.split('-');
-        const date = new Date(parseInt(year), parseInt(month) - 1);
-        return {
-          month: date.toLocaleDateString('en-US', { month: 'short' }),
-          year: date.getFullYear(),
-          totalSpending: Math.round(data.totalSpending * 100) / 100,
-          yourShare: Math.round(data.yourShare * 100) / 100,
-          expenseCount: data.expenseCount,
-          categories: data.categories,
-        };
-      });
-
-    return {
-      months: monthlyArray,
-      summary: {
-        totalMonths: monthlyArray.length,
-        avgMonthlySpending:
-          monthlyArray.length > 0
-            ? Math.round(
-              (monthlyArray.reduce((sum, m) => sum + m.totalSpending, 0) /
-                monthlyArray.length) *
-              100,
-            ) / 100
-            : 0,
-      },
-    };
+    return this.statisticsService.getMonthlyAnalytics(groupId, months);
   }
 
   // ==================== HELPER METHODS ====================

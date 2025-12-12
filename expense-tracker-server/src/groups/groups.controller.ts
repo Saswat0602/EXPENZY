@@ -24,7 +24,7 @@ import type { JwtPayload } from '../auth/jwt-payload.interface';
 @Controller('groups')
 @UseGuards(JwtAuthGuard)
 export class GroupsController {
-  constructor(private readonly groupsService: GroupsService) { }
+  constructor(private readonly groupsService: GroupsService) {}
 
   // ==================== GROUP CRUD ====================
 
