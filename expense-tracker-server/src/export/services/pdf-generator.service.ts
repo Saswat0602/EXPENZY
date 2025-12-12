@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import PDFDocument from 'pdfkit';
+import * as puppeteer from 'puppeteer';
 import * as fs from 'fs';
 import * as path from 'path';
 import {
@@ -7,6 +7,7 @@ import {
   ExpenseExportData,
   TransactionExportData,
 } from '../interfaces/export-data.interface';
+import { generateExpenseReportHTML } from '../templates/expense-report.template';
 
 @Injectable()
 export class PdfGeneratorService {
@@ -21,196 +22,136 @@ export class PdfGeneratorService {
   }
 
   /**
-   * Generate PDF for group report
+   * Category colors matching the design
    */
-  async generateGroupReport(data: GroupExportData): Promise<string> {
-    const date = new Date().toISOString().split('T')[0];
-    const filename = `group-${data.group.name.replace(/\s+/g, '-')}-${date}-${Date.now()}.pdf`;
-    const filepath = path.join(this.uploadsDir, filename);
+  private readonly categoryColors: Record<string, string> = {
+    fuel: '#f59e0b',
+    food: '#ef4444',
+    shopping: '#ec4899',
+    health: '#10b981',
+    transport: '#3b82f6',
+    entertainment: '#8b5cf6',
+    utilities: '#6366f1',
+    groceries: '#14b8a6',
+    beverages: '#f97316',
+    default: '#6b7280',
+  };
 
-    return new Promise((resolve, reject) => {
-      try {
-        const doc = new PDFDocument({ margin: 50 });
-        const stream = fs.createWriteStream(filepath);
-
-        doc.pipe(stream);
-
-        // Header
-        this.addHeader(doc, 'Group Expense Report');
-        doc.moveDown();
-
-        // Group Information
-        doc.fontSize(16).text('Group Information', { underline: true });
-        doc.moveDown(0.5);
-        doc.fontSize(12);
-        doc.text(`Name: ${data.group.name}`);
-        if (data.group.description) {
-          doc.text(`Description: ${data.group.description}`);
-        }
-        doc.text(`Currency: ${data.group.currency}`);
-        doc.text(`Members: ${data.group.memberCount}`);
-        doc.moveDown();
-
-        // Statistics
-        if (data.statistics) {
-          doc.fontSize(16).text('Summary Statistics', { underline: true });
-          doc.moveDown(0.5);
-          doc.fontSize(12);
-          doc.text(`Total Expenses: ${data.statistics.totalExpenses}`);
-          doc.text(
-            `Total Amount: ${data.group.currency} ${data.statistics.totalAmount.toFixed(2)}`,
-          );
-          doc.text(
-            `Average Expense: ${data.group.currency} ${data.statistics.averageExpense.toFixed(2)}`,
-          );
-          doc.moveDown();
-
-          // Category Breakdown
-          if (Object.keys(data.statistics.categoryBreakdown).length > 0) {
-            doc.fontSize(14).text('Category Breakdown:', { underline: true });
-            doc.moveDown(0.5);
-            doc.fontSize(11);
-            Object.entries(data.statistics.categoryBreakdown).forEach(
-              ([category, amount]) => {
-                doc.text(
-                  `  • ${category}: ${data.group.currency} ${amount.toFixed(2)}`,
-                );
-              },
-            );
-            doc.moveDown();
-          }
-        }
-
-        // Expenses List
-        if (data.expenses.length > 0) {
-          doc.addPage();
-          doc.fontSize(16).text('Expense Details', { underline: true });
-          doc.moveDown();
-
-          data.expenses.forEach((expense, index) => {
-            if (index > 0 && index % 5 === 0) {
-              doc.addPage();
-            }
-
-            doc.fontSize(12).font('Helvetica-Bold');
-            doc.text(`${expense.description}`, { continued: true });
-            doc.font('Helvetica');
-            doc.text(` - ${expense.currency} ${expense.amount.toFixed(2)}`, {
-              align: 'left',
-            });
-
-            doc.fontSize(10);
-            doc.text(
-              `Date: ${new Date(expense.expenseDate).toLocaleDateString()}`,
-            );
-            doc.text(`Paid by: ${expense.paidBy.name}`);
-            if (expense.category) {
-              doc.text(`Category: ${expense.category.name}`);
-            }
-
-            if (expense.splits.length > 0) {
-              doc.text('Split:');
-              expense.splits.forEach((split) => {
-                doc.text(
-                  `  • ${split.user.name}: ${expense.currency} ${split.amountOwed.toFixed(2)}`,
-                );
-              });
-            }
-
-            doc.moveDown();
-          });
-        }
-
-        // Footer
-        this.addFooter(doc);
-
-        doc.end();
-
-        stream.on('finish', () => {
-          this.logger.log(`Generated group report: ${filename}`);
-          resolve(filename);
-        });
-
-        stream.on('error', reject);
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error';
-        this.logger.error(`Error generating group report: ${errorMessage}`);
-        reject(error instanceof Error ? error : new Error(errorMessage));
-      }
-    });
+  private getCategoryColor(category: string): string {
+    const key = category.toLowerCase();
+    return this.categoryColors[key] || this.categoryColors.default;
   }
 
   /**
-   * Generate PDF for expense report
+   * Generate PDF for expense report with professional design
    */
   async generateExpenseReport(data: ExpenseExportData): Promise<string> {
     const date = new Date().toISOString().split('T')[0];
-    const filename = `expenses-${date}-${Date.now()}.pdf`;
+    const filename = `expense-report-${date}-${Date.now()}.pdf`;
     const filepath = path.join(this.uploadsDir, filename);
 
-    return new Promise((resolve, reject) => {
-      try {
-        const doc = new PDFDocument({ margin: 50 });
-        const stream = fs.createWriteStream(filepath);
+    try {
+      // Calculate category distribution
+      const categoryMap = new Map<string, number>();
+      data.expenses.forEach((exp) => {
+        const category = exp.category?.name || 'Uncategorized';
+        categoryMap.set(
+          category,
+          (categoryMap.get(category) || 0) + exp.amount,
+        );
+      });
 
-        doc.pipe(stream);
+      const totalAmount = data.summary.totalAmount;
+      const categoryDistribution = Array.from(categoryMap.entries())
+        .map(([category, amount]) => ({
+          category,
+          amount,
+          percentage: (amount / totalAmount) * 100,
+          color: this.getCategoryColor(category),
+        }))
+        .sort((a, b) => b.amount - a.amount);
 
-        // Header
-        this.addHeader(doc, 'Personal Expense Report');
-        doc.moveDown();
+      // Prepare data for template
+      const templateData = {
+        title: 'EXPENSE REPORT',
+        subtitle: 'Monthly Report',
+        dateRange:
+          data.expenses.length > 0
+            ? `${new Date(data.expenses[data.expenses.length - 1].expenseDate).toLocaleDateString()} - ${new Date(data.expenses[0].expenseDate).toLocaleDateString()}`
+            : 'No data',
+        generatedDate: new Date().toLocaleString('en-US', {
+          month: 'short',
+          day: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        summaryCards: [
+          {
+            label: 'TOTAL SPENDING',
+            value: `Rs ${data.summary.totalAmount.toLocaleString()}`,
+          },
+          {
+            label: 'TRANSACTIONS',
+            value: data.summary.totalExpenses.toString(),
+          },
+          {
+            label: 'AVERAGE PER DAY',
+            value: `Rs ${Math.round(data.summary.averageExpense).toLocaleString()}`,
+          },
+          {
+            label: 'TOP CATEGORY',
+            value: categoryDistribution[0]?.category || 'N/A',
+          },
+        ],
+        transactions: data.expenses.map((exp, index) => ({
+          index: index + 1,
+          date: new Date(exp.expenseDate).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: '2-digit',
+          }),
+          category: exp.category?.name || 'Uncategorized',
+          description: exp.description,
+          amount: exp.amount,
+        })),
+        categoryDistribution,
+      };
 
-        // Summary
-        doc.fontSize(16).text('Summary', { underline: true });
-        doc.moveDown(0.5);
-        doc.fontSize(12);
-        doc.text(`Total Expenses: ${data.summary.totalExpenses}`);
-        doc.text(`Total Amount: $${data.summary.totalAmount.toFixed(2)}`);
-        doc.text(`Average Expense: $${data.summary.averageExpense.toFixed(2)}`);
-        doc.moveDown(2);
+      // Generate HTML
+      const html = generateExpenseReportHTML(templateData);
 
-        // Expenses List
-        doc.fontSize(16).text('Expense Details', { underline: true });
-        doc.moveDown();
+      // Launch puppeteer and generate PDF
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
 
-        data.expenses.forEach((expense, index) => {
-          if (index > 0 && index % 8 === 0) {
-            doc.addPage();
-          }
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
 
-          doc.fontSize(12).font('Helvetica-Bold');
-          doc.text(expense.description, { continued: true });
-          doc.font('Helvetica');
-          doc.text(` - $${expense.amount.toFixed(2)}`);
+      await page.pdf({
+        path: filepath,
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '0px',
+          right: '0px',
+          bottom: '0px',
+          left: '0px',
+        },
+      });
 
-          doc.fontSize(10);
-          doc.text(
-            `Date: ${new Date(expense.expenseDate).toLocaleDateString()}`,
-          );
-          if (expense.category) {
-            doc.text(`Category: ${expense.category.name}`);
-          }
-          doc.moveDown(0.5);
-        });
+      await browser.close();
 
-        // Footer
-        this.addFooter(doc);
-
-        doc.end();
-
-        stream.on('finish', () => {
-          this.logger.log(`Generated expense report: ${filename}`);
-          resolve(filename);
-        });
-
-        stream.on('error', reject);
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error';
-        this.logger.error(`Error generating expense report: ${errorMessage}`);
-        reject(error instanceof Error ? error : new Error(errorMessage));
-      }
-    });
+      this.logger.log(`Generated expense report: ${filename}`);
+      return filename;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Error generating expense report: ${errorMessage}`);
+      throw error instanceof Error ? error : new Error(errorMessage);
+    }
   }
 
   /**
@@ -220,83 +161,225 @@ export class PdfGeneratorService {
     data: TransactionExportData,
   ): Promise<string> {
     const date = new Date().toISOString().split('T')[0];
-    const filename = `transactions-${date}-${Date.now()}.pdf`;
+    const filename = `transaction-report-${date}-${Date.now()}.pdf`;
     const filepath = path.join(this.uploadsDir, filename);
 
-    return new Promise((resolve, reject) => {
-      try {
-        const doc = new PDFDocument({ margin: 50 });
-        const stream = fs.createWriteStream(filepath);
-
-        doc.pipe(stream);
-
-        // Header
-        this.addHeader(doc, 'Transaction Report');
-        doc.moveDown();
-
-        // Summary
-        doc.fontSize(16).text('Summary', { underline: true });
-        doc.moveDown(0.5);
-        doc.fontSize(12);
-        doc
-          .fillColor('green')
-          .text(`Total Income: $${data.summary.totalIncome.toFixed(2)}`);
-        doc
-          .fillColor('red')
-          .text(`Total Expenses: $${data.summary.totalExpenses.toFixed(2)}`);
-        doc
-          .fillColor(data.summary.netSavings >= 0 ? 'green' : 'red')
-          .text(`Net Savings: $${data.summary.netSavings.toFixed(2)}`);
-        doc.fillColor('black'); // Reset to black
-        doc.moveDown(2);
-
-        // Transactions List
-        doc.fontSize(16).text('Transaction Details', { underline: true });
-        doc.moveDown();
-
-        data.transactions.forEach((transaction, index) => {
-          if (index > 0 && index % 8 === 0) {
-            doc.addPage();
-          }
-
-          const isIncome = transaction.type === 'income';
-          doc.fontSize(12).font('Helvetica-Bold');
-          doc.fillColor(isIncome ? 'green' : 'red');
-          doc.text(
-            `${isIncome ? '+ ' : '- '}$${transaction.amount.toFixed(2)}`,
-            { continued: true },
+    try {
+      // Calculate category distribution for expenses only
+      const categoryMap = new Map<string, number>();
+      data.transactions
+        .filter((tx) => tx.type === 'expense')
+        .forEach((tx) => {
+          const category = tx.category?.name || 'Uncategorized';
+          categoryMap.set(
+            category,
+            (categoryMap.get(category) || 0) + tx.amount,
           );
-          doc.fillColor('black').font('Helvetica');
-          doc.text(` - ${transaction.description}`);
-
-          doc.fontSize(10);
-          doc.text(`Date: ${new Date(transaction.date).toLocaleDateString()}`);
-          if (transaction.category) {
-            doc.text(`Category: ${transaction.category.name}`);
-          }
-          doc.moveDown(0.5);
         });
 
-        // Footer
-        this.addFooter(doc);
+      const totalExpenses = data.summary.totalExpenses;
+      const categoryDistribution = Array.from(categoryMap.entries())
+        .map(([category, amount]) => ({
+          category,
+          amount,
+          percentage: (amount / totalExpenses) * 100,
+          color: this.getCategoryColor(category),
+        }))
+        .sort((a, b) => b.amount - a.amount);
 
-        doc.end();
+      // Prepare data for template
+      const templateData = {
+        title: 'TRANSACTION REPORT',
+        subtitle: 'Income & Expenses',
+        dateRange:
+          data.transactions.length > 0
+            ? `${new Date(data.transactions[data.transactions.length - 1].date).toLocaleDateString()} - ${new Date(data.transactions[0].date).toLocaleDateString()}`
+            : 'No data',
+        generatedDate: new Date().toLocaleString('en-US', {
+          month: 'short',
+          day: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        summaryCards: [
+          {
+            label: 'TOTAL INCOME',
+            value: `Rs ${data.summary.totalIncome.toLocaleString()}`,
+          },
+          {
+            label: 'TOTAL EXPENSES',
+            value: `Rs ${data.summary.totalExpenses.toLocaleString()}`,
+          },
+          {
+            label: 'NET SAVINGS',
+            value: `Rs ${data.summary.netSavings.toLocaleString()}`,
+          },
+          {
+            label: 'TRANSACTIONS',
+            value: data.transactions.length.toString(),
+          },
+        ],
+        transactions: data.transactions.map((tx, index) => ({
+          index: index + 1,
+          date: new Date(tx.date).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: '2-digit',
+          }),
+          category: tx.category?.name || 'Uncategorized',
+          description: tx.description,
+          amount: tx.amount,
+        })),
+        categoryDistribution,
+      };
 
-        stream.on('finish', () => {
-          this.logger.log(`Generated transaction report: ${filename}`);
-          resolve(filename);
-        });
+      // Generate HTML
+      const html = generateExpenseReportHTML(templateData);
 
-        stream.on('error', reject);
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error';
-        this.logger.error(
-          `Error generating transaction report: ${errorMessage}`,
+      // Launch puppeteer and generate PDF
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+
+      await page.pdf({
+        path: filepath,
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '0px',
+          right: '0px',
+          bottom: '0px',
+          left: '0px',
+        },
+      });
+
+      await browser.close();
+
+      this.logger.log(`Generated transaction report: ${filename}`);
+      return filename;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Error generating transaction report: ${errorMessage}`);
+      throw error instanceof Error ? error : new Error(errorMessage);
+    }
+  }
+
+  /**
+   * Generate PDF for group report
+   */
+  async generateGroupReport(data: GroupExportData): Promise<string> {
+    const date = new Date().toISOString().split('T')[0];
+    const filename = `group-${data.group.name.replace(/\s+/g, '-')}-${date}-${Date.now()}.pdf`;
+    const filepath = path.join(this.uploadsDir, filename);
+
+    try {
+      // Calculate category distribution
+      const categoryMap = new Map<string, number>();
+      data.expenses.forEach((exp) => {
+        const category = exp.category?.name || 'Uncategorized';
+        categoryMap.set(
+          category,
+          (categoryMap.get(category) || 0) + exp.amount,
         );
-        reject(error instanceof Error ? error : new Error(errorMessage));
-      }
-    });
+      });
+
+      const totalAmount = data.statistics?.totalAmount || 0;
+      const categoryDistribution = Array.from(categoryMap.entries())
+        .map(([category, amount]) => ({
+          category,
+          amount,
+          percentage: (amount / totalAmount) * 100,
+          color: this.getCategoryColor(category),
+        }))
+        .sort((a, b) => b.amount - a.amount);
+
+      // Prepare data for template
+      const templateData = {
+        title: `${data.group.name.toUpperCase()} - GROUP REPORT`,
+        subtitle: `${data.group.memberCount} Members`,
+        dateRange:
+          data.expenses.length > 0
+            ? `${new Date(data.expenses[data.expenses.length - 1].expenseDate).toLocaleDateString()} - ${new Date(data.expenses[0].expenseDate).toLocaleDateString()}`
+            : 'No data',
+        generatedDate: new Date().toLocaleString('en-US', {
+          month: 'short',
+          day: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        summaryCards: [
+          {
+            label: 'TOTAL SPENDING',
+            value: `${data.group.currency} ${(data.statistics?.totalAmount || 0).toLocaleString()}`,
+          },
+          {
+            label: 'TOTAL EXPENSES',
+            value: (data.statistics?.totalExpenses || 0).toString(),
+          },
+          {
+            label: 'AVERAGE EXPENSE',
+            value: `${data.group.currency} ${Math.round(data.statistics?.averageExpense || 0).toLocaleString()}`,
+          },
+          {
+            label: 'TOP CATEGORY',
+            value: categoryDistribution[0]?.category || 'N/A',
+          },
+        ],
+        transactions: data.expenses.map((exp, index) => ({
+          index: index + 1,
+          date: new Date(exp.expenseDate).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: '2-digit',
+          }),
+          category: exp.category?.name || 'Uncategorized',
+          description: `${exp.description} (by ${exp.paidBy.name})`,
+          amount: exp.amount,
+        })),
+        categoryDistribution,
+      };
+
+      // Generate HTML
+      const html = generateExpenseReportHTML(templateData);
+
+      // Launch puppeteer and generate PDF
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+
+      await page.pdf({
+        path: filepath,
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '0px',
+          right: '0px',
+          bottom: '0px',
+          left: '0px',
+        },
+      });
+
+      await browser.close();
+
+      this.logger.log(`Generated group report: ${filename}`);
+      return filename;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Error generating group report: ${errorMessage}`);
+      throw error instanceof Error ? error : new Error(errorMessage);
+    }
   }
 
   /**
@@ -304,31 +387,5 @@ export class PdfGeneratorService {
    */
   getFilePath(filename: string): string {
     return path.join(this.uploadsDir, filename);
-  }
-
-  /**
-   * Add header to PDF
-   */
-  private addHeader(doc: PDFKit.PDFDocument, title: string): void {
-    doc.fontSize(24).font('Helvetica-Bold').text(title, { align: 'center' });
-    doc
-      .fontSize(10)
-      .font('Helvetica')
-      .text(`Generated on: ${new Date().toLocaleString()}`, {
-        align: 'center',
-      });
-    doc.moveDown();
-    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-    doc.moveDown();
-  }
-
-  /**
-   * Add footer to PDF
-   */
-  private addFooter(doc: PDFKit.PDFDocument): void {
-    const bottom = doc.page.height - 50;
-    doc
-      .fontSize(10)
-      .text('Generated by EXPENZY', 50, bottom, { align: 'center' });
   }
 }

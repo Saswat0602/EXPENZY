@@ -20,13 +20,12 @@ import {
 } from './dto/export.dto';
 import * as fs from 'fs';
 
-/* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 // The above eslint-disable is for CurrentUser decorator which has type inference issues but is actually type-safe
 
 @Controller('export')
 @UseGuards(JwtAuthGuard)
 export class ExportController {
-  constructor(private readonly exportService: ExportService) { }
+  constructor(private readonly exportService: ExportService) {}
 
   /**
    * Export group report as PDF
