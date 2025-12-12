@@ -23,6 +23,7 @@ export interface GroupExportData {
     currency: string;
     expenseDate: Date;
     paidBy: {
+      id: string;
       name: string;
       email: string;
     };
@@ -31,8 +32,12 @@ export interface GroupExportData {
       icon?: string;
     };
     splits: Array<{
-      user: { name: string };
+      user: {
+        id: string;
+        name: string;
+      };
       amountOwed: number;
+      amountPaid: number;
     }>;
   }>;
   statistics?: {

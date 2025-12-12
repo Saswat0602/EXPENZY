@@ -1,0 +1,90 @@
+# Phase 2: New Features Implementation
+
+## Module 1: Recurring Expenses
+- [ ] Create database schema for RecurringExpense
+- [ ] Create RecurringExpenseService
+- [ ] Create RecurringExpenseController
+- [ ] Add CRUD endpoints
+- [ ] Implement cron job for auto-creation
+- [ ] Add notification system
+- [ ] Frontend: Create UI for managing recurring expenses
+- [ ] Frontend: Add recurring expense list view
+
+## Module 2: Expense Attachments
+- [ ] Create database schema for ExpenseAttachment
+- [ ] Create AttachmentService (reusable)
+- [ ] Integrate file upload (Multer)
+- [ ] Add cloud storage integration (optional)
+- [ ] Create attachment endpoints
+- [ ] Frontend: Add file upload component
+- [ ] Frontend: Add image preview in expense detail
+
+## Module 3: Export Module ✅ COMPLETE
+- [x] Create separate Export module
+- [x] Create ExportService (PDF generation)
+- [x] Create ExportController
+- [x] Implement PDF generation for groups
+- [x] Implement PDF generation for expenses
+- [x] Implement PDF generation for transactions
+- [x] Add file cleanup cron (15 min TTL)
+- [x] Frontend: Add export endpoints
+- [x] Fix all lint errors (30 → 0)
+- [x] Fix TypeScript compilation errors
+- [x] Test all export endpoints
+- [x] Professional PDF design (Purple Luxury theme)
+- [x] Better padding and spacing (40px)
+- [x] 1 decimal formatting (Rs 459.9)
+- [x] Performance logging (2-3s generation)
+- [x] Group template with member breakdown
+- [x] Proper page breaks
+- [ ] Frontend: Add export buttons
+- [ ] Frontend: Handle PDF download
+
+## Module 4: Payment Reminders
+- [ ] Create database schema for Reminder
+- [ ] Create ReminderService
+- [ ] Create ReminderController
+- [ ] Implement reminder scheduling
+- [ ] Add email notification integration
+- [ ] Add in-app notification
+- [ ] Frontend: Reminder settings UI
+
+## Module 5: Expense Categories Analytics
+- [ ] Extend GroupStatisticsService
+- [ ] Add category breakdown endpoint
+- [ ] Add spending trends endpoint
+- [ ] Add budget tracking
+- [ ] Frontend: Create analytics dashboard
+- [ ] Frontend: Add charts (category pie, trends line)
+
+## Module 6: Split Templates
+- [ ] Create database schema for SplitTemplate
+- [ ] Create SplitTemplateService
+- [ ] Create SplitTemplateController
+- [ ] Add CRUD endpoints
+- [ ] Frontend: Template management UI
+- [ ] Frontend: Apply template to expense
+
+## Module 7: Expense Comments
+- [ ] Create database schema for ExpenseComment
+- [ ] Create CommentService
+- [ ] Create CommentController
+- [ ] Add @mention functionality
+- [ ] Add real-time updates (optional)
+- [ ] Frontend: Comment thread UI
+- [ ] Frontend: @mention autocomplete
+
+## Module 8: Group Activity Feed
+- [ ] Create database schema for ActivityLog
+- [ ] Create ActivityService
+- [ ] Add activity tracking for all actions
+- [ ] Create activity feed endpoint
+- [ ] Frontend: Activity feed component
+- [ ] Frontend: Real-time updates (optional)
+
+## Integration & Testing
+- [ ] Update API endpoints file
+- [ ] Test all new endpoints
+- [ ] Integration testing
+- [ ] Performance testing
+- [ ] Documentation

@@ -12,4 +12,4 @@ import { FileCleanupService } from './services/file-cleanup.service';
   providers: [ExportService, PdfGeneratorService, FileCleanupService],
   exports: [ExportService],
 })
-export class ExportModule {}
+export class ExportModule { }

@@ -3,12 +3,17 @@ export function generateGroupReportHTML(data: {
   subtitle: string;
   dateRange: string;
   generatedDate: string;
-  summaryCards: Array<{ label: string; value: string }>;
-  memberSpending: Array<{
+  groupStats: {
+    totalSpending: string;
+    totalExpenses: number;
+    totalMembers: number;
+    averagePerMember: string;
+  };
+  memberBalances: Array<{
     name: string;
+    balance: number;
     totalSpent: number;
     totalOwed: number;
-    transactionCount: number;
     color: string;
   }>;
   transactions: Array<{
@@ -68,7 +73,7 @@ export function generateGroupReportHTML(data: {
     }
     
     .header h1 {
-      font-size: 28px;
+      font-size: 26px;
       font-weight: 700;
       margin-bottom: 6px;
       letter-spacing: -0.5px;
@@ -101,92 +106,80 @@ export function generateGroupReportHTML(data: {
       page-break-after: avoid;
     }
     
-    .summary-grid {
+    /* Group Stats Grid */
+    .stats-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
       margin-bottom: 32px;
       page-break-inside: avoid;
     }
     
-    .summary-card {
-      background: white;
+    .stat-card {
+      background: #fafafa;
       border: 1px solid #e5e5e5;
       border-radius: 6px;
-      padding: 18px 16px;
-      position: relative;
-      overflow: hidden;
-      min-height: 80px;
+      padding: 14px 12px;
+      text-align: center;
     }
     
-    .summary-card::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 3px;
-      background: #7c3aed;
-    }
-    
-    .summary-card .label {
-      font-size: 11px;
+    .stat-label {
+      font-size: 10px;
       text-transform: uppercase;
       color: #737373;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       letter-spacing: 0.5px;
       font-weight: 500;
     }
     
-    .summary-card .value {
-      font-size: 24px;
+    .stat-value {
+      font-size: 20px;
       font-weight: 700;
       color: #0a0a0a;
-      line-height: 1.2;
     }
     
-    /* Member Spending Section */
-    .member-spending {
+    /* Member Balances */
+    .balances-section {
       margin-bottom: 32px;
       page-break-inside: avoid;
     }
     
-    .member-item {
+    .balance-item {
       display: flex;
       align-items: center;
       padding: 14px 16px;
       background: white;
       border: 1px solid #e5e5e5;
       border-radius: 6px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       gap: 16px;
     }
     
-    .member-color {
+    .balance-color {
       width: 12px;
       height: 12px;
       border-radius: 50%;
       flex-shrink: 0;
     }
     
-    .member-name {
+    .balance-name {
       flex: 1;
       font-size: 14px;
       font-weight: 600;
       color: #0a0a0a;
     }
     
-    .member-stats {
+    .balance-stats {
       display: flex;
-      gap: 24px;
+      gap: 20px;
       font-size: 13px;
     }
     
-    .member-stat {
+    .balance-stat {
       text-align: right;
     }
     
-    .member-stat-label {
+    .balance-stat-label {
       font-size: 10px;
       color: #737373;
       text-transform: uppercase;
@@ -194,9 +187,20 @@ export function generateGroupReportHTML(data: {
       margin-bottom: 2px;
     }
     
-    .member-stat-value {
+    .balance-stat-value {
       font-weight: 600;
-      color: #0a0a0a;
+    }
+    
+    .balance-positive {
+      color: #10b981;
+    }
+    
+    .balance-negative {
+      color: #dc2626;
+    }
+    
+    .balance-zero {
+      color: #737373;
     }
     
     /* Transaction Table */
@@ -335,46 +339,50 @@ export function generateGroupReportHTML(data: {
   </div>
   
   <div class="content">
-    <h2 class="section-title">Summary Overview</h2>
-    <div class="summary-grid">
-      ${data.summaryCards
-        .map(
-          (card) => `
-        <div class="summary-card">
-          <div class="label">${card.label}</div>
-          <div class="value">${card.value}</div>
-        </div>
-      `,
-        )
-        .join('')}
+    <h2 class="section-title">Group Statistics</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Spending</div>
+        <div class="stat-value">${data.groupStats.totalSpending}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Expenses</div>
+        <div class="stat-value">${data.groupStats.totalExpenses}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Members</div>
+        <div class="stat-value">${data.groupStats.totalMembers}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg/Member</div>
+        <div class="stat-value">${data.groupStats.averagePerMember}</div>
+      </div>
     </div>
     
-    <h2 class="section-title">Member Spending</h2>
-    <div class="member-spending">
-      ${data.memberSpending
-        .map(
-          (member) => `
-        <div class="member-item">
-          <div class="member-color" style="background: ${member.color}"></div>
-          <div class="member-name">${member.name}</div>
-          <div class="member-stats">
-            <div class="member-stat">
-              <div class="member-stat-label">Spent</div>
-              <div class="member-stat-value">Rs ${member.totalSpent.toFixed(1)}</div>
+    <h2 class="section-title">Member Balances</h2>
+    <div class="balances-section">
+      ${data.memberBalances.map(member => `
+        <div class="balance-item">
+          <div class="balance-color" style="background: ${member.color}"></div>
+          <div class="balance-name">${member.name}</div>
+          <div class="balance-stats">
+            <div class="balance-stat">
+              <div class="balance-stat-label">Spent</div>
+              <div class="balance-stat-value">Rs ${member.totalSpent.toFixed(1)}</div>
             </div>
-            <div class="member-stat">
-              <div class="member-stat-label">Owed</div>
-              <div class="member-stat-value">Rs ${member.totalOwed.toFixed(1)}</div>
+            <div class="balance-stat">
+              <div class="balance-stat-label">Share</div>
+              <div class="balance-stat-value">Rs ${member.totalOwed.toFixed(1)}</div>
             </div>
-            <div class="member-stat">
-              <div class="member-stat-label">Transactions</div>
-              <div class="member-stat-value">${member.transactionCount}</div>
+            <div class="balance-stat">
+              <div class="balance-stat-label">Balance</div>
+              <div class="balance-stat-value ${member.balance > 0 ? 'balance-positive' : member.balance < 0 ? 'balance-negative' : 'balance-zero'}">
+                ${member.balance > 0 ? '+' : ''}Rs ${member.balance.toFixed(1)}
+              </div>
             </div>
           </div>
         </div>
-      `,
-        )
-        .join('')}
+      `).join('')}
     </div>
     
     <h2 class="section-title">Transaction Details</h2>
@@ -390,9 +398,7 @@ export function generateGroupReportHTML(data: {
         </tr>
       </thead>
       <tbody>
-        ${data.transactions
-          .map(
-            (tx) => `
+        ${data.transactions.map(tx => `
           <tr>
             <td>${tx.index}</td>
             <td>${tx.date}</td>
@@ -401,21 +407,15 @@ export function generateGroupReportHTML(data: {
             <td>${tx.paidBy}</td>
             <td>Rs ${tx.amount.toFixed(1)}</td>
           </tr>
-        `,
-          )
-          .join('')}
+        `).join('')}
       </tbody>
     </table>
     
-    ${
-      data.categoryDistribution.length > 0
-        ? `
+    ${data.categoryDistribution.length > 0 ? `
       <div class="page-break"></div>
       <h2 class="section-title">Category Distribution</h2>
       <div class="category-distribution">
-        ${data.categoryDistribution
-          .map(
-            (cat) => `
+        ${data.categoryDistribution.map(cat => `
           <div class="category-item">
             <div class="category-color" style="background: ${cat.color}"></div>
             <div class="category-name">${cat.category}</div>
@@ -425,13 +425,9 @@ export function generateGroupReportHTML(data: {
             <div class="category-amount">Rs ${cat.amount.toFixed(1)}</div>
             <div class="category-percentage">${cat.percentage.toFixed(1)}%</div>
           </div>
-        `,
-          )
-          .join('')}
+        `).join('')}
       </div>
-    `
-        : ''
-    }
+    ` : ''}
   </div>
 </body>
 </html>

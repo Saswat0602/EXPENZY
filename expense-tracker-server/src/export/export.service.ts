@@ -17,7 +17,7 @@ export class ExportService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly pdfGenerator: PdfGeneratorService,
-  ) {}
+  ) { }
 
   /**
    * Export group report as PDF
@@ -62,6 +62,7 @@ export class ExportService {
       include: {
         paidBy: {
           select: {
+            id: true,
             firstName: true,
             lastName: true,
             email: true,
@@ -77,6 +78,7 @@ export class ExportService {
           include: {
             user: {
               select: {
+                id: true,
                 firstName: true,
                 lastName: true,
               },
@@ -92,25 +94,25 @@ export class ExportService {
     // Calculate statistics
     const statistics = options.includeStatistics
       ? {
-          totalExpenses: expenses.length,
-          totalAmount: expenses.reduce(
-            (sum, exp) => sum + Number(exp.amount),
-            0,
-          ),
-          averageExpense:
-            expenses.length > 0
-              ? expenses.reduce((sum, exp) => sum + Number(exp.amount), 0) /
-                expenses.length
-              : 0,
-          categoryBreakdown: expenses.reduce(
-            (acc, exp) => {
-              const categoryName = exp.category?.name || 'Uncategorized';
-              acc[categoryName] = (acc[categoryName] || 0) + Number(exp.amount);
-              return acc;
-            },
-            {} as Record<string, number>,
-          ),
-        }
+        totalExpenses: expenses.length,
+        totalAmount: expenses.reduce(
+          (sum, exp) => sum + Number(exp.amount),
+          0,
+        ),
+        averageExpense:
+          expenses.length > 0
+            ? expenses.reduce((sum, exp) => sum + Number(exp.amount), 0) /
+            expenses.length
+            : 0,
+        categoryBreakdown: expenses.reduce(
+          (acc, exp) => {
+            const categoryName = exp.category?.name || 'Uncategorized';
+            acc[categoryName] = (acc[categoryName] || 0) + Number(exp.amount);
+            return acc;
+          },
+          {} as Record<string, number>,
+        ),
+      }
       : undefined;
 
     // Format data for PDF
@@ -129,6 +131,7 @@ export class ExportService {
         currency: exp.currency,
         expenseDate: exp.expenseDate,
         paidBy: {
+          id: exp.paidBy?.id || '',
           name:
             `${exp.paidBy?.firstName || ''} ${exp.paidBy?.lastName || ''}`.trim() ||
             'Unknown',
@@ -136,17 +139,19 @@ export class ExportService {
         },
         category: exp.category
           ? {
-              name: exp.category.name,
-              icon: exp.category.icon || undefined,
-            }
+            name: exp.category.name,
+            icon: exp.category.icon || undefined,
+          }
           : undefined,
         splits: exp.splits.map((split) => ({
           user: {
+            id: split.user?.id || '',
             name:
               `${split.user?.firstName || ''} ${split.user?.lastName || ''}`.trim() ||
               'Unknown',
           },
           amountOwed: Number(split.amountOwed),
+          amountPaid: Number(split.amountPaid),
         })),
       })),
       statistics,
@@ -215,8 +220,8 @@ export class ExportService {
         expenseDate: exp.expenseDate,
         category: exp.category
           ? {
-              name: exp.category.name,
-            }
+            name: exp.category.name,
+          }
           : undefined,
       })),
       summary,
@@ -294,8 +299,8 @@ export class ExportService {
         date: exp.expenseDate,
         category: exp.category
           ? {
-              name: exp.category.name,
-            }
+            name: exp.category.name,
+          }
           : undefined,
       })),
       ...incomes.map((inc) => ({
@@ -307,8 +312,8 @@ export class ExportService {
         date: inc.incomeDate,
         category: inc.category
           ? {
-              name: inc.category.name,
-            }
+            name: inc.category.name,
+          }
           : undefined,
       })),
     ].sort((a, b) => b.date.getTime() - a.date.getTime());

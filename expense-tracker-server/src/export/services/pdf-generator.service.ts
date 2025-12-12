@@ -15,7 +15,9 @@ export class PdfGeneratorService {
   private readonly logger = new Logger(PdfGeneratorService.name);
   private readonly uploadsDir = path.join(process.cwd(), 'uploads', 'exports');
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+  ) {
     // Ensure uploads directory exists
     if (!fs.existsSync(this.uploadsDir)) {
       fs.mkdirSync(this.uploadsDir, { recursive: true });
@@ -304,7 +306,7 @@ export class PdfGeneratorService {
   }
 
   /**
-   * Generate PDF for group report with member spending breakdown
+   * Generate PDF for group report with simplified debts
    */
   async generateGroupReport(data: GroupExportData): Promise<string> {
     const startTime = Date.now();
@@ -313,53 +315,71 @@ export class PdfGeneratorService {
     const filepath = path.join(this.uploadsDir, filename);
 
     try {
-      // Calculate member spending
-      const memberMap = new Map<
-        string,
-        { totalSpent: number; totalOwed: number; count: number }
-      >();
+      // Member colors
+      const memberColors = [
+        '#7c3aed', // purple
+        '#10b981', // green
+        '#dc2626', // red
+        '#f59e0b', // amber
+        '#ec4899', // pink
+        '#8b5cf6', // violet
+      ];
+
+      // Create user ID to name and color mapping
+      const userMap = new Map<string, { name: string; color: string }>();
+      let colorIndex = 0;
 
       data.expenses.forEach((exp) => {
-        const paidByName = exp.paidBy.name;
-        if (!memberMap.has(paidByName)) {
-          memberMap.set(paidByName, { totalSpent: 0, totalOwed: 0, count: 0 });
+        if (!userMap.has(exp.paidBy.id)) {
+          userMap.set(exp.paidBy.id, {
+            name: exp.paidBy.name,
+            color: memberColors[colorIndex % memberColors.length],
+          });
+          colorIndex++;
         }
-        const member = memberMap.get(paidByName)!;
-        member.totalSpent += exp.amount;
-        member.count += 1;
-
-        // Calculate what others owe
         exp.splits.forEach((split) => {
-          if (split.user.name !== paidByName) {
-            if (!memberMap.has(split.user.name)) {
-              memberMap.set(split.user.name, {
-                totalSpent: 0,
-                totalOwed: 0,
-                count: 0,
-              });
-            }
-            memberMap.get(split.user.name)!.totalOwed += split.amountOwed;
+          if (!userMap.has(split.user.id)) {
+            userMap.set(split.user.id, {
+              name: split.user.name,
+              color: memberColors[colorIndex % memberColors.length],
+            });
+            colorIndex++;
           }
         });
       });
 
-      const memberColors = [
-        '#7c3aed',
-        '#10b981',
-        '#dc2626',
-        '#f59e0b',
-        '#ec4899',
-        '#8b5cf6',
-      ];
-      const memberSpending = Array.from(memberMap.entries())
-        .map(([name, stats], index) => ({
-          name,
-          totalSpent: stats.totalSpent,
-          totalOwed: stats.totalOwed,
-          transactionCount: stats.count,
-          color: memberColors[index % memberColors.length],
-        }))
-        .sort((a, b) => b.totalSpent - a.totalSpent);
+      // Calculate member balances
+      const balanceMap = new Map<string, { totalSpent: number; totalOwed: number }>();
+
+      data.expenses.forEach((exp) => {
+        // Track what each person paid
+        if (!balanceMap.has(exp.paidBy.id)) {
+          balanceMap.set(exp.paidBy.id, { totalSpent: 0, totalOwed: 0 });
+        }
+        balanceMap.get(exp.paidBy.id)!.totalSpent += exp.amount;
+
+        // Track what each person owes
+        exp.splits.forEach((split) => {
+          if (!balanceMap.has(split.user.id)) {
+            balanceMap.set(split.user.id, { totalSpent: 0, totalOwed: 0 });
+          }
+          balanceMap.get(split.user.id)!.totalOwed += split.amountOwed;
+        });
+      });
+
+      // Format member balances
+      const memberBalances = Array.from(balanceMap.entries())
+        .map(([userId, stats]) => {
+          const user = userMap.get(userId)!;
+          return {
+            name: user.name,
+            totalSpent: stats.totalSpent,
+            totalOwed: stats.totalOwed,
+            balance: stats.totalSpent - stats.totalOwed,
+            color: user.color,
+          };
+        })
+        .sort((a, b) => b.balance - a.balance);
 
       // Calculate category distribution
       const categoryMap = new Map<string, number>();
@@ -394,7 +414,7 @@ export class PdfGeneratorService {
         subtitle: `${data.group.memberCount} Members • ${data.group.currency}`,
         dateRange:
           data.expenses.length > 0
-            ? `${new Date(data.expenses[data.expenses.length - 1].expenseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} - ${new Date(data.expenses[0].expenseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`
+            ? `${new Date(data.expenses[0].expenseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} - ${new Date(data.expenses[data.expenses.length - 1].expenseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`
             : 'No data',
         generatedDate: new Date().toLocaleString('en-US', {
           month: 'short',
@@ -403,25 +423,13 @@ export class PdfGeneratorService {
           hour: '2-digit',
           minute: '2-digit',
         }),
-        summaryCards: [
-          {
-            label: 'TOTAL SPENDING',
-            value: `${data.group.currency} ${this.formatAmount(data.statistics?.totalAmount || 0)}`,
-          },
-          {
-            label: 'TOTAL EXPENSES',
-            value: (data.statistics?.totalExpenses || 0).toString(),
-          },
-          {
-            label: 'AVERAGE EXPENSE',
-            value: `${data.group.currency} ${this.formatAmount(data.statistics?.averageExpense || 0)}`,
-          },
-          {
-            label: 'TOP SPENDER',
-            value: memberSpending[0]?.name || 'N/A',
-          },
-        ],
-        memberSpending,
+        groupStats: {
+          totalSpending: `${data.group.currency} ${this.formatAmount(totalAmount)}`,
+          totalExpenses: data.statistics?.totalExpenses || 0,
+          totalMembers: data.group.memberCount,
+          averagePerMember: `${data.group.currency} ${this.formatAmount(totalAmount / data.group.memberCount)}`,
+        },
+        memberBalances,
         transactions: data.expenses.map((exp, index) => ({
           index: index + 1,
           date: new Date(exp.expenseDate).toLocaleDateString('en-GB', {
