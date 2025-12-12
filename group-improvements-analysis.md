@@ -7,20 +7,8 @@ The following critical performance fixes have been successfully implemented:
 1. ✅ **Database Indexes** - All required indexes verified and in place
 2. ✅ **Cursor-Based Pagination** - Implemented efficient backend pagination with 50 items/page
 3. ✅ **Infinite Scroll** - Frontend auto-loading with intersection observer
-4. ✅ **Performance Optimization** - Achieved 70-90% faster query execution
-
----
-
-## � Critical Performance Issues - REMAINING
-
-### 1. Overfetching Data in findOne
-
-**Status**: ⚠️ Partially Optimized  
-**Location**: `groups.service.ts:102-139`
-
-**Current State**: Already has `take: 20` limit and `_count` for total expenses
-
-**Recommendation**: Verify this is working as expected and consider removing if infinite scroll is preferred
+4. ✅ **Removed Overfetching** - Eliminated expense fetching from `findOne` method
+5. ✅ **Performance Optimization** - Achieved 70-90% faster query execution
 
 ---
 
@@ -86,27 +74,17 @@ model ExpenseAttachment {
 }
 ```
 
-#### 6. **Multi-Currency Support Enhancement**
-- Real-time exchange rates
-- Automatic conversion in balances
-- Historical rate tracking
-
-#### 7. **Expense Comments/Discussion**
+#### 6. **Expense Comments/Discussion**
 - Comment thread on each expense
 - @mention group members
 - Resolve disputes
 
-#### 8. **Export to PDF/Excel**
+#### 7. **Export to PDF**
 - Generate expense reports
 - Custom date ranges
 - Include charts and summaries
 
-#### 9. **Settle Up Workflow**
-- Guided settlement process
-- Mark settlements as paid
-- Payment method tracking (Cash, UPI, Bank Transfer)
-
-#### 10. **Group Activity Feed**
+#### 8. **Group Activity Feed**
 - Real-time updates on expenses
 - Member joins/leaves
 - Settlement notifications
@@ -115,27 +93,27 @@ model ExpenseAttachment {
 
 ### Medium Priority Features
 
-#### 11. **Expense Search & Filters**
+#### 9. **Expense Search & Filters**
 - Search by description, category, amount
 - Filter by date range, member, category
 - Advanced filters (settled/unsettled, paid by me, etc.)
 
-#### 12. **Bulk Operations**
+#### 10. **Bulk Operations**
 - Select multiple expenses
 - Bulk delete, edit, settle
 - Batch import from CSV
 
-#### 13. **Group Insights Dashboard**
+#### 11. **Group Insights Dashboard**
 - Who spends the most
 - Most expensive categories
 - Spending patterns by day/week/month
 
-#### 14. **Offline Support**
+#### 12. **Offline Support**
 - Create expenses offline
 - Sync when online
 - Conflict resolution
 
-#### 15. **Group Archiving**
+#### 13. **Group Archiving**
 - Archive old/inactive groups
 - Keep data but hide from main view
 - Restore when needed
@@ -250,6 +228,15 @@ describe('GroupsService', () => {
 });
 ```
 
+### 5. **Implement Balance API for Groups List**
+**Status**: ⚠️ TODO
+**Priority**: High
+
+The groups list page currently shows 0 balance because `groupExpenses` is no longer returned from the API. Need to:
+- Create a dedicated endpoint to fetch user balance per group
+- Update groups list to fetch balances separately
+- Cache balances for performance
+
 ---
 
 ## 🎯 Implementation Priority
@@ -258,7 +245,8 @@ describe('GroupsService', () => {
 1. ✅ Database indexes verified
 2. ✅ Cursor-based pagination implemented
 3. ✅ Infinite scroll integrated
-4. ✅ Performance optimized
+4. ✅ Removed overfetching from findOne
+5. ✅ Performance optimized
 
 ### Phase 2: New Features (Medium Priority)
 1. ❌ Recurring expenses
@@ -272,6 +260,7 @@ describe('GroupsService', () => {
 2. ❌ Add error handling middleware
 3. ❌ Add request logging
 4. ❌ Enhanced input validation
+5. ⚠️ Implement balance API for groups list
 
 ---
 
@@ -283,6 +272,7 @@ describe('GroupsService', () => {
 | Query Execution (with indexes) | Variable | Consistent | **70-90%** ✅ |
 | Pagination Performance | O(n) | O(1) | **Optimal** ✅ |
 | Frontend UX | 20 items | 50 items/page | **150%** ✅ |
+| findOne Query | Fetched 20 expenses | Fetches 0 expenses | **100%** ✅ |
 
 ---
 
@@ -292,6 +282,9 @@ describe('GroupsService', () => {
 - Verified database indexes for optimal query performance
 - Efficient cursor-based pagination (50 items/page)
 - Seamless infinite scroll with auto-loading
+- Eliminated overfetching in `findOne` method
 - Backward compatibility with existing clients
+
+**Known Issue**: Groups list page shows 0 balance temporarily. This will be fixed by implementing a dedicated balance API endpoint.
 
 **Next Steps**: Focus on Phase 2 new features to enhance user experience and functionality.

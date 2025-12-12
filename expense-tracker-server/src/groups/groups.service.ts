@@ -113,24 +113,9 @@ export class GroupsService {
             user: true,
           },
         },
-        groupExpenses: {
-          take: 20, // Only fetch recent 20 expenses
-          include: {
-            paidBy: true,
-            category: true,
-            splits: {
-              include: {
-                user: true,
-              },
-            },
-          },
-          orderBy: {
-            expenseDate: 'desc',
-          },
-        },
         _count: {
           select: {
-            groupExpenses: true, // Add total count
+            groupExpenses: true, // Keep total count for statistics
           },
         },
       },

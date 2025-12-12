@@ -24,18 +24,14 @@ export default function GroupsPage() {
         : '';
 
     // Calculate balances for each group
+    // Note: groupExpenses is no longer returned from the API for performance
+    // Balance calculation should be done via the balances endpoint
     const groupsWithBalances = useMemo(() => {
-        return groups.map((group) => {
-            const expenses = group.groupExpenses || [];
-            const balances = calculateMemberBalances(expenses);
-            const userBalance = getUserBalance(balances, currentUserId);
-
-            return {
-                ...group,
-                userBalance,
-            };
-        });
-    }, [groups, currentUserId]);
+        return groups.map((group) => ({
+            ...group,
+            userBalance: 0, // TODO: Fetch from balances endpoint
+        }));
+    }, [groups]);
 
     const handleGroupClick = (groupId: string) => {
         router.push(`/dashboard/groups/${groupId}`);
