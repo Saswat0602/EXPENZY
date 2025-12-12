@@ -76,4 +76,4 @@ import { ExportModule } from './export/export.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

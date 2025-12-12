@@ -7,9 +7,9 @@ import { PdfGeneratorService } from './services/pdf-generator.service';
 import { FileCleanupService } from './services/file-cleanup.service';
 
 @Module({
-    imports: [PrismaModule, ScheduleModule.forRoot()],
-    controllers: [ExportController],
-    providers: [ExportService, PdfGeneratorService, FileCleanupService],
-    exports: [ExportService],
+  imports: [PrismaModule, ScheduleModule.forRoot()],
+  controllers: [ExportController],
+  providers: [ExportService, PdfGeneratorService, FileCleanupService],
+  exports: [ExportService],
 })
-export class ExportModule { }
+export class ExportModule {}
