@@ -5,7 +5,7 @@ import { RecurringExpensesService } from './recurring-expenses.service';
 import { RecurringExpensesController } from './recurring-expenses.controller';
 
 @Module({
-  controllers: [ExpensesController, RecurringExpensesController],
+  controllers: [RecurringExpensesController, ExpensesController], // Recurring MUST come first!
   providers: [ExpensesService, RecurringExpensesService],
   exports: [ExpensesService, RecurringExpensesService],
 })

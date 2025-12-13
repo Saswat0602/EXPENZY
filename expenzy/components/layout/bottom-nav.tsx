@@ -31,9 +31,15 @@ export function BottomNav({ visible = true }: BottomNavProps) {
             <div className="flex items-center justify-around h-16">
                 {tabs.map((tab) => {
                     // Special handling for Dashboard - only active on exact match
-                    const isActive = tab.route === ROUTES.DASHBOARD
+                    let isActive = tab.route === ROUTES.DASHBOARD
                         ? pathname === tab.route
                         : pathname === tab.route || pathname.startsWith(tab.route + '/');
+
+                    // Special case: highlight Transactions when on recurring expenses page
+                    if (tab.route === ROUTES.TRANSACTIONS && pathname === ROUTES.RECURRING_EXPENSES) {
+                        isActive = true;
+                    }
+
                     const Icon = tab.icon;
 
                     return (

@@ -72,9 +72,15 @@ export function DesktopSidebar() {
             <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
                 {navigation.map((item) => {
                     // Special handling for Dashboard - only active on exact match
-                    const isActive = item.route === ROUTES.DASHBOARD
+                    let isActive = item.route === ROUTES.DASHBOARD
                         ? pathname === item.route
                         : pathname === item.route || pathname.startsWith(item.route + '/');
+
+                    // Special case: highlight Recurring when on recurring expenses page
+                    if (item.route === ROUTES.RECURRING_EXPENSES && pathname === ROUTES.RECURRING_EXPENSES) {
+                        isActive = true;
+                    }
+
                     const Icon = item.icon;
 
                     return (

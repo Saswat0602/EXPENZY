@@ -3,10 +3,11 @@
 import { MobileActionMenu, createEditAction, createDeleteAction } from '@/components/shared/mobile-action-menu';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useDeleteExpense } from '@/lib/hooks/use-expenses';
 import { useDeleteIncome } from '@/lib/hooks/use-income';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Repeat } from 'lucide-react';
 import { CategoryIcon, formatCategoryName } from '@/lib/categorization/category-icons';
 import { TransactionModal } from '@/components/modals/transaction-modal';
 import { ConfirmationModal } from '@/components/modals/confirmation-modal';
@@ -16,6 +17,7 @@ import { PageWrapper } from '@/components/layout/page-wrapper';
 import { TransactionExportButton } from '@/components/features/transaction-export-button';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { ROUTES } from '@/lib/routes';
 import type { Expense } from '@/types/expense';
 import type { Income } from '@/types/income';
 
@@ -25,6 +27,7 @@ type Transaction = (Expense | Income) & { type: TransactionType };
 const ITEMS_PER_PAGE = 20;
 
 export default function TransactionsPage() {
+    const router = useRouter();
     const [type, setType] = useState<TransactionType>('expense');
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -176,6 +179,14 @@ export default function TransactionsPage() {
                     action={
                         <div className="flex items-center gap-2">
                             <TransactionExportButton variant="outline" />
+                            <button
+                                onClick={() => router.push(ROUTES.RECURRING_EXPENSES)}
+                                className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-accent transition-colors"
+                                title="Manage Recurring Expenses"
+                            >
+                                <Repeat className="w-5 h-5" />
+                                <span className="hidden sm:inline">Recurring</span>
+                            </button>
                             <button
                                 onClick={() => setIsModalOpen(true)}
                                 className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"

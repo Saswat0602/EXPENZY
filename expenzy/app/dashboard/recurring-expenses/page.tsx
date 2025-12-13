@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useRecurringExpenses } from '@/lib/hooks/use-recurring-expenses';
 import { AddRecurringExpenseModal } from '@/components/modals/add-recurring-expense-modal';
 import { RecurringExpensesList } from '@/components/features/recurring-expenses-list';
@@ -9,15 +10,26 @@ import { PageWrapper } from '@/components/layout/page-wrapper';
 import { EmptyState } from '@/components/shared/empty-state';
 import { LoadingSkeleton } from '@/components/shared/loading-skeleton';
 import { Button } from '@/components/ui/button';
-import { Plus, Repeat } from 'lucide-react';
+import { Plus, Repeat, ArrowLeft } from 'lucide-react';
+import { ROUTES } from '@/lib/routes';
 
 export default function RecurringExpensesPage() {
+    const router = useRouter();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { data: recurringExpenses = [], isLoading } = useRecurringExpenses();
 
     return (
         <PageWrapper>
             <div className="space-y-6">
+                {/* Back Button */}
+                <button
+                    onClick={() => router.push(ROUTES.TRANSACTIONS)}
+                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="text-sm">Back to Transactions</span>
+                </button>
+
                 {/* Header */}
                 <PageHeader
                     title="Recurring Expenses"

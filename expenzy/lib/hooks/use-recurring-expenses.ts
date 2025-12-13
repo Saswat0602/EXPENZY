@@ -32,10 +32,9 @@ export function useRecurringExpenses() {
     return useQuery({
         queryKey: ['recurring-expenses'],
         queryFn: async () => {
-            const response = await apiClient.get<RecurringExpense[]>(
+            return await apiClient.get<RecurringExpense[]>(
                 API_ENDPOINTS.RECURRING_EXPENSES.BASE
             );
-            return response.data;
         },
     });
 }
@@ -44,10 +43,9 @@ export function useRecurringExpense(id: string) {
     return useQuery({
         queryKey: ['recurring-expense', id],
         queryFn: async () => {
-            const response = await apiClient.get<RecurringExpense>(
+            return await apiClient.get<RecurringExpense>(
                 API_ENDPOINTS.RECURRING_EXPENSES.BY_ID(id)
             );
-            return response.data;
         },
         enabled: !!id,
     });
@@ -58,11 +56,10 @@ export function useCreateRecurringExpense() {
 
     return useMutation({
         mutationFn: async (data: CreateRecurringExpenseInput) => {
-            const response = await apiClient.post<RecurringExpense>(
+            return await apiClient.post<RecurringExpense>(
                 API_ENDPOINTS.RECURRING_EXPENSES.BASE,
                 data
             );
-            return response.data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['recurring-expenses'] });
@@ -81,11 +78,10 @@ export function useUpdateRecurringExpense() {
             id: string;
             data: Partial<CreateRecurringExpenseInput>;
         }) => {
-            const response = await apiClient.patch<RecurringExpense>(
+            return await apiClient.patch<RecurringExpense>(
                 API_ENDPOINTS.RECURRING_EXPENSES.BY_ID(id),
                 data
             );
-            return response.data;
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['recurring-expenses'] });
