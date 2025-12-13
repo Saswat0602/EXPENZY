@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils/cn';
 import {
     LayoutDashboard,
     Receipt,
+    Repeat,
     BarChart3,
     Wallet,
     ChevronLeft,
@@ -23,6 +24,7 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 const navigation = [
     { name: 'Dashboard', route: ROUTES.DASHBOARD, icon: LayoutDashboard },
     { name: 'Transactions', route: ROUTES.TRANSACTIONS, icon: Receipt },
+    { name: 'Recurring', route: ROUTES.RECURRING_EXPENSES, icon: Repeat },
     { name: 'Analytics', route: ROUTES.ANALYTICS, icon: BarChart3 },
     { name: 'Budget', route: ROUTES.BUDGET, icon: Wallet },
     { name: 'Savings', route: ROUTES.SAVINGS, icon: PiggyBank },

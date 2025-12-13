@@ -22,4 +22,8 @@ export interface ExportExpenseOptions extends ExportOptions {
 export interface ExportTransactionOptions extends ExportOptions {
     // Additional options for transaction export
     accountId?: string;
+    type?: 'expense' | 'income';
 }
+
+// Alias for consistency
+export type ExportTransactionsOptions = ExportTransactionOptions;

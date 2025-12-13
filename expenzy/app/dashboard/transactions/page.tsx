@@ -13,6 +13,7 @@ import { ConfirmationModal } from '@/components/modals/confirmation-modal';
 import { VirtualList } from '@/components/shared/virtual-list';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageWrapper } from '@/components/layout/page-wrapper';
+import { TransactionExportButton } from '@/components/features/transaction-export-button';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import type { Expense } from '@/types/expense';
@@ -173,13 +174,16 @@ export default function TransactionsPage() {
                     title="Transactions"
                     description="Track all your income and expenses"
                     action={
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-                        >
-                            <Plus className="w-5 h-5" />
-                            <span className="hidden sm:inline">Add Transaction</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <TransactionExportButton variant="outline" />
+                            <button
+                                onClick={() => setIsModalOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                            >
+                                <Plus className="w-5 h-5" />
+                                <span className="hidden sm:inline">Add Transaction</span>
+                            </button>
+                        </div>
                     }
                 />
 

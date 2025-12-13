@@ -8,6 +8,7 @@ import { useCreateIncome, useUpdateIncome } from '@/lib/hooks/use-income';
 import { useKeywordMatcher, CategoryMatch } from '@/lib/categorization/keyword-matcher';
 import { CategoryIcon, formatCategoryName } from '@/lib/categorization/category-icons';
 import { CategorySelector } from '@/components/shared/category-selector';
+import { FileUpload } from '@/components/shared/file-upload';
 import { useCalculatorInput } from '@/lib/hooks/use-calculator-input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -377,6 +378,18 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
                             </PopoverContent>
                         </Popover>
                     </div>
+
+                    {/* File Attachments - Only show in edit mode when transaction exists */}
+                    {mode === 'edit' && transaction && (
+                        <div className="space-y-2 pt-4 border-t">
+                            <Label className="text-sm font-medium">Attachments</Label>
+                            <FileUpload
+                                entityType={selectedType}
+                                entityId={transaction.id}
+                                maxSize={10}
+                            />
+                        </div>
+                    )}
 
                     {/* Actions */}
                     <div className="flex gap-3 justify-end pt-4">
