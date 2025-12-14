@@ -118,11 +118,11 @@ export function useInfiniteIncome(filters?: IncomeFilters) {
             }
 
             const url = `${API_ENDPOINTS.INCOME.BASE}?${params.toString()}`;
-            const response = await apiClient.get<CursorResponse<Income>>(url);
+            const response = await apiClient.getRaw<CursorResponse<Income>>(url);
 
             return response;
         },
-        getNextPageParam: (lastPage) => lastPage.meta.nextCursor,
+        getNextPageParam: (lastPage) => lastPage?.meta?.nextCursor ?? null,
         initialPageParam: undefined as string | undefined,
         staleTime: 1000 * 60, // 1 minute
     });

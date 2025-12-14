@@ -92,9 +92,13 @@ export default function TransactionsPage() {
         return baseFilters;
     }, [search, filters]);
 
-    // Use infinite queries based on type
-    const expensesQuery = useInfiniteExpenses(type === 'expense' ? (queryFilters as any) : undefined);
-    const incomeQuery = useInfiniteIncome(type === 'income' ? (queryFilters as any) : undefined);
+    // Use infinite queries based on type with enabled option
+    const expensesQuery = useInfiniteExpenses(
+        type === 'expense' ? (queryFilters as any) : {},
+    );
+    const incomeQuery = useInfiniteIncome(
+        type === 'income' ? (queryFilters as any) : {},
+    );
 
     const activeQuery = type === 'expense' ? expensesQuery : incomeQuery;
 
@@ -102,9 +106,27 @@ export default function TransactionsPage() {
     const transactions = useMemo(() => {
         if (!activeQuery.data?.pages) return [];
 
-        const items = activeQuery.data.pages.flatMap((page: any) => page.data as (Expense | Income)[]);
+        // Each page has structure: { data: [...], meta: { nextCursor, hasMore, limit } }
+        const items = activeQuery.data.pages.flatMap((page: any) => {
+            // Safely extract data array, handle both cursor and offset response formats
+            const pageData = page?.data || page || [];
+            return Array.isArray(pageData) ? pageData : [];
+        });
+
         return items.map(item => ({ ...item, type } as Transaction));
     }, [activeQuery.data, type]);
+
+    // Debug infinite scroll
+    useEffect(() => {
+        const lastPage = activeQuery.data?.pages?.[activeQuery.data.pages.length - 1];
+        console.log('Infinite Scroll Debug:', {
+            hasNextPage: activeQuery.hasNextPage,
+            isFetchingNextPage: activeQuery.isFetchingNextPage,
+            pagesCount: activeQuery.data?.pages?.length,
+            lastPageMeta: lastPage?.meta,
+            totalItems: activeQuery.data?.pages?.reduce((sum, page: any) => sum + (page?.data?.length || 0), 0),
+        });
+    }, [activeQuery.hasNextPage, activeQuery.isFetchingNextPage, activeQuery.data?.pages]);
 
     // Intersection observer for infinite scroll
     const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -113,6 +135,7 @@ export default function TransactionsPage() {
         (entries: IntersectionObserverEntry[]) => {
             const [target] = entries;
             if (target.isIntersecting && activeQuery.hasNextPage && !activeQuery.isFetchingNextPage) {
+                console.log('Loading more transactions...');
                 activeQuery.fetchNextPage();
             }
         },
@@ -123,7 +146,7 @@ export default function TransactionsPage() {
         const element = loadMoreRef.current;
         if (!element) return;
 
-        const option = { threshold: 0 };
+        const option = { threshold: 0.1, rootMargin: '100px' };
         const observer = new IntersectionObserver(handleObserver, option);
         observer.observe(element);
 
@@ -172,6 +195,9 @@ export default function TransactionsPage() {
             ? (transaction as Income).source
             : (transaction as Expense).description;
 
+        // Handle amount - convert to number if needed
+        const amount = Number(transaction.amount) || 0;
+
         return (
             <div key={transaction.id} className="bg-card border border-border rounded-lg p-4 hover:bg-accent/5 transition-colors">
                 <div className="flex items-start gap-3">
@@ -199,7 +225,7 @@ export default function TransactionsPage() {
                     {/* Amount and Actions */}
                     <div className="flex items-start gap-3 flex-shrink-0">
                         <p className="font-semibold text-base tabular-nums">
-                            {formatCurrency(transaction.amount)}
+                            {formatCurrency(amount)}
                         </p>
 
                         {/* Mobile Action Menu */}

@@ -1,7 +1,13 @@
-import { IsOptional, IsString, IsDateString, IsNumber, MinLength } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsDateString,
+  IsNumber,
+  MinLength,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { PaginationQueryDto, CursorPaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
 export class ExpenseFilterDto {
   @ApiPropertyOptional({
@@ -164,7 +170,7 @@ export class ExpenseQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({
     type: String,
     minLength: 2,
-    description: 'Search query (minimum 2 characters)'
+    description: 'Search query (minimum 2 characters)',
   })
   @IsString()
   @IsOptional()
@@ -182,7 +188,7 @@ export class ExpenseQueryDto extends PaginationQueryDto {
       : undefined;
   }
 
-  // Override limit default to 50 for cursor pagination
+  // Set default limit to 50 for cursor pagination
   @ApiPropertyOptional({
     description: 'Number of items (default 50 for cursor, 20 for offset)',
     minimum: 1,
@@ -192,5 +198,5 @@ export class ExpenseQueryDto extends PaginationQueryDto {
   @Type(() => Number)
   @IsNumber()
   @IsOptional()
-  override limit?: number;
+  limit?: number = 50;
 }

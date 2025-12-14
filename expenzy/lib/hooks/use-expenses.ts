@@ -173,11 +173,11 @@ export function useInfiniteExpenses(filters?: ExpenseFilters) {
             }
 
             const url = `${API_ENDPOINTS.EXPENSES.BASE}?${params.toString()}`;
-            const response = await apiClient.get<CursorResponse<Expense>>(url);
+            const response = await apiClient.getRaw<CursorResponse<Expense>>(url);
 
             return response;
         },
-        getNextPageParam: (lastPage) => lastPage.meta.nextCursor,
+        getNextPageParam: (lastPage) => lastPage?.meta?.nextCursor ?? null,
         initialPageParam: undefined as string | undefined,
         staleTime: 1000 * 60, // 1 minute
     });

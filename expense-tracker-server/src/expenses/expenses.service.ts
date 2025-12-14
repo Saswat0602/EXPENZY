@@ -13,7 +13,7 @@ import { QueryBuilder } from '../common/utils/query-builder.util';
 
 @Injectable()
 export class ExpensesService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(createExpenseDto: CreateExpenseDto, userId: string) {
     return this.prisma.expense.create({
@@ -52,7 +52,8 @@ export class ExpensesService {
       // For descending order, use lt (less than)
       // For ascending order, use gt (greater than)
       const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
-      where.id = sortOrder === 'desc' ? { lt: query.cursor } : { gt: query.cursor };
+      where.id =
+        sortOrder === 'desc' ? { lt: query.cursor } : { gt: query.cursor };
     }
 
     // Add filters
@@ -102,8 +103,8 @@ export class ExpensesService {
     // Build sorting
     const sortBy =
       query.sortBy === 'amount' ||
-        query.sortBy === 'createdAt' ||
-        query.sortBy === 'updatedAt'
+      query.sortBy === 'createdAt' ||
+      query.sortBy === 'updatedAt'
         ? query.sortBy
         : 'expenseDate';
     const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
@@ -126,7 +127,8 @@ export class ExpensesService {
 
       const hasMore = data.length > limit;
       const items = hasMore ? data.slice(0, limit) : data;
-      const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].id : null;
+      const nextCursor =
+        hasMore && items.length > 0 ? items[items.length - 1].id : null;
 
       return {
         data: items,
