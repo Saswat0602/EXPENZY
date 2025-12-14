@@ -1,17 +1,15 @@
 'use client';
 
 import { MobileActionMenu, createEditAction, createDeleteAction } from '@/components/shared/mobile-action-menu';
-
-import { useState } from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useDeleteExpense } from '@/lib/hooks/use-expenses';
-import { useDeleteIncome } from '@/lib/hooks/use-income';
+import { useDeleteExpense, useInfiniteExpenses } from '@/lib/hooks/use-expenses';
+import { useDeleteIncome, useInfiniteIncome } from '@/lib/hooks/use-income';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
-import { Plus, Search, Repeat } from 'lucide-react';
+import { Plus, Search, Repeat, Loader2 } from 'lucide-react';
 import { CategoryIcon, formatCategoryName } from '@/lib/categorization/category-icons';
 import { TransactionModal } from '@/components/modals/transaction-modal';
 import { ConfirmationModal } from '@/components/modals/confirmation-modal';
-import { VirtualList } from '@/components/shared/virtual-list';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { TransactionExportButton } from '@/components/features/transaction-export-button';
@@ -20,16 +18,12 @@ import { TransactionStats } from '@/components/features/transactions/transaction
 import { useCategories } from '@/lib/hooks/use-categories';
 import { useExpenses } from '@/lib/hooks/use-expenses';
 import { useIncome } from '@/lib/hooks/use-income';
-import { apiClient } from '@/lib/api/client';
-import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { ROUTES } from '@/lib/routes';
 import type { Expense } from '@/types/expense';
 import type { Income } from '@/types/income';
 
 type TransactionType = 'expense' | 'income';
 type Transaction = (Expense | Income) & { type: TransactionType };
-
-const ITEMS_PER_PAGE = 20;
 
 export default function TransactionsPage() {
     const router = useRouter();
@@ -47,62 +41,94 @@ export default function TransactionsPage() {
     });
 
     const { data: categories = [] } = useCategories();
+
+    // For stats widget - fetch all data
     const { data: expensesData } = useExpenses();
     const { data: incomesData } = useIncome();
-
-    // Extract arrays from paginated responses
     const allExpenses = Array.isArray(expensesData) ? expensesData : (expensesData?.data || []);
     const allIncomes = Array.isArray(incomesData) ? incomesData : [];
 
     const deleteExpense = useDeleteExpense();
     const deleteIncome = useDeleteIncome();
 
-    // Fetch function for VirtualList
-    const fetchTransactions = async (page: number) => {
-        const params = new URLSearchParams();
-        params.append('page', page.toString());
-        params.append('limit', ITEMS_PER_PAGE.toString());
-        if (search) params.append('search', search);
+    // Build filters for infinite query
+    const queryFilters = useMemo(() => {
+        const baseFilters: {
+            search?: string;
+            categoryId?: string;
+            startDate?: string;
+            endDate?: string;
+            minAmount?: number;
+            maxAmount?: number;
+            sortBy?: 'expenseDate' | 'amount' | 'createdAt' | 'updatedAt';
+            sortOrder?: 'asc' | 'desc';
+        } = {
+            search: search.trim().length >= 2 ? search.trim() : undefined,
+            sortBy: filters.sortBy === 'date' ? 'expenseDate' : filters.sortBy as any,
+            sortOrder: filters.sortOrder,
+        };
 
-        if (type === 'expense') {
-            const url = `${API_ENDPOINTS.EXPENSES.BASE}?${params.toString()}`;
-            const response = await apiClient.getRaw<{
-                data: Expense[];
-                meta: {
-                    total: number;
-                    page: number;
-                    limit: number;
-                    totalPages: number;
-                    hasNext: boolean;
-                    hasPrevious: boolean;
-                };
-            }>(url);
-
-            return {
-                data: response.data.map(item => ({ ...item, type: 'expense' as const })),
-                hasMore: response.meta.hasNext,
-                total: response.meta.total,
-            };
-        } else {
-            // Income - fetch all for now (backend doesn't have pagination)
-            const url = `${API_ENDPOINTS.INCOME.BASE}?${params.toString()}`;
-            const response = await apiClient.get<Income[]>(url);
-
-            // Ensure we have an array
-            const dataArray = Array.isArray(response) ? response : [];
-
-            // Client-side pagination for income
-            const startIdx = (page - 1) * ITEMS_PER_PAGE;
-            const endIdx = startIdx + ITEMS_PER_PAGE;
-            const paginatedData = dataArray.slice(startIdx, endIdx);
-
-            return {
-                data: paginatedData.map(item => ({ ...item, type: 'income' as const })),
-                hasMore: endIdx < dataArray.length,
-                total: dataArray.length,
-            };
+        // Add category filter (only first one for now)
+        if (filters.categories.length > 0) {
+            baseFilters.categoryId = filters.categories[0];
         }
-    };
+
+        // Add date range
+        if (filters.dateRange.from) {
+            baseFilters.startDate = filters.dateRange.from.toISOString().split('T')[0];
+        }
+        if (filters.dateRange.to) {
+            baseFilters.endDate = filters.dateRange.to.toISOString().split('T')[0];
+        }
+
+        // Add amount range
+        if (filters.amountRange.min > 0) {
+            baseFilters.minAmount = filters.amountRange.min;
+        }
+        if (filters.amountRange.max < 10000) {
+            baseFilters.maxAmount = filters.amountRange.max;
+        }
+
+        return baseFilters;
+    }, [search, filters]);
+
+    // Use infinite queries based on type
+    const expensesQuery = useInfiniteExpenses(type === 'expense' ? (queryFilters as any) : undefined);
+    const incomeQuery = useInfiniteIncome(type === 'income' ? (queryFilters as any) : undefined);
+
+    const activeQuery = type === 'expense' ? expensesQuery : incomeQuery;
+
+    // Flatten pages into single array
+    const transactions = useMemo(() => {
+        if (!activeQuery.data?.pages) return [];
+
+        const items = activeQuery.data.pages.flatMap((page: any) => page.data as (Expense | Income)[]);
+        return items.map(item => ({ ...item, type } as Transaction));
+    }, [activeQuery.data, type]);
+
+    // Intersection observer for infinite scroll
+    const loadMoreRef = useRef<HTMLDivElement>(null);
+
+    const handleObserver = useCallback(
+        (entries: IntersectionObserverEntry[]) => {
+            const [target] = entries;
+            if (target.isIntersecting && activeQuery.hasNextPage && !activeQuery.isFetchingNextPage) {
+                activeQuery.fetchNextPage();
+            }
+        },
+        [activeQuery]
+    );
+
+    useEffect(() => {
+        const element = loadMoreRef.current;
+        if (!element) return;
+
+        const option = { threshold: 0 };
+        const observer = new IntersectionObserver(handleObserver, option);
+        observer.observe(element);
+
+        return () => observer.disconnect();
+    }, [handleObserver]);
 
     // Event handlers
     const handleFilterChange = (newType: TransactionType) => {
@@ -147,7 +173,7 @@ export default function TransactionsPage() {
             : (transaction as Expense).description;
 
         return (
-            <div className="bg-card border border-border rounded-lg p-4 hover:bg-accent/5 transition-colors">
+            <div key={transaction.id} className="bg-card border border-border rounded-lg p-4 hover:bg-accent/5 transition-colors">
                 <div className="flex items-start gap-3">
                     {/* Category Icon */}
                     <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -267,7 +293,7 @@ export default function TransactionsPage() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                         <input
                             type="text"
-                            placeholder="Search transactions..."
+                            placeholder="Search transactions (min 2 chars)..."
                             value={search}
                             onChange={(e) => handleSearchChange(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
@@ -299,15 +325,32 @@ export default function TransactionsPage() {
                     />
                 </div>
 
-                {/* Virtual List */}
-                <VirtualList
-                    fetchData={fetchTransactions}
-                    renderItem={renderTransactionCard}
-                    getItemKey={(item) => item.id}
-                    dependencies={[type, search, filters]}
-                    itemsPerPage={ITEMS_PER_PAGE}
-                    enableDesktopPagination={true}
-                />
+                {/* Transactions List */}
+                <div className="space-y-3">
+                    {activeQuery.isLoading ? (
+                        <div className="flex justify-center py-12">
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        </div>
+                    ) : transactions.length === 0 ? (
+                        <div className="text-center py-12 text-muted-foreground">
+                            <p className="font-medium">No transactions found</p>
+                            <p className="text-sm mt-1">Try adjusting your filters or add a new transaction</p>
+                        </div>
+                    ) : (
+                        <>
+                            {transactions.map(renderTransactionCard)}
+
+                            {/* Load more trigger */}
+                            <div ref={loadMoreRef} className="py-4">
+                                {activeQuery.isFetchingNextPage && (
+                                    <div className="flex justify-center">
+                                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
         </PageWrapper>
     );
