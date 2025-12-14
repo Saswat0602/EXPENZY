@@ -15,6 +15,11 @@ import { VirtualList } from '@/components/shared/virtual-list';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { TransactionExportButton } from '@/components/features/transaction-export-button';
+import { TransactionFiltersComponent, type TransactionFilters } from '@/components/features/transactions/transaction-filters';
+import { TransactionStats } from '@/components/features/transactions/transaction-stats';
+import { useCategories } from '@/lib/hooks/use-categories';
+import { useExpenses } from '@/lib/hooks/use-expenses';
+import { useIncome } from '@/lib/hooks/use-income';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { ROUTES } from '@/lib/routes';
@@ -33,6 +38,21 @@ export default function TransactionsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editTransaction, setEditTransaction] = useState<Transaction | null>(null);
     const [deleteItem, setDeleteItem] = useState<Transaction | null>(null);
+    const [filters, setFilters] = useState<TransactionFilters>({
+        categories: [],
+        dateRange: { from: null, to: null },
+        amountRange: { min: 0, max: 10000 },
+        sortBy: 'date',
+        sortOrder: 'desc',
+    });
+
+    const { data: categories = [] } = useCategories();
+    const { data: expensesData } = useExpenses();
+    const { data: incomesData } = useIncome();
+
+    // Extract arrays from paginated responses
+    const allExpenses = Array.isArray(expensesData) ? expensesData : (expensesData?.data || []);
+    const allIncomes = Array.isArray(incomesData) ? incomesData : [];
 
     const deleteExpense = useDeleteExpense();
     const deleteIncome = useDeleteIncome();
@@ -233,6 +253,13 @@ export default function TransactionsPage() {
                     )}
                 </ConfirmationModal>
 
+                {/* Stats Widget */}
+                <TransactionStats
+                    expenses={allExpenses}
+                    incomes={allIncomes}
+                    currency="INR"
+                />
+
                 {/* Filters */}
                 <div className="flex flex-col sm:flex-row gap-4">
                     {/* Search */}
@@ -262,6 +289,14 @@ export default function TransactionsPage() {
                             </button>
                         ))}
                     </div>
+
+                    {/* Advanced Filters */}
+                    <TransactionFiltersComponent
+                        filters={filters}
+                        onFiltersChange={setFilters}
+                        categories={categories}
+                        maxAmount={10000}
+                    />
                 </div>
 
                 {/* Virtual List */}
@@ -269,7 +304,7 @@ export default function TransactionsPage() {
                     fetchData={fetchTransactions}
                     renderItem={renderTransactionCard}
                     getItemKey={(item) => item.id}
-                    dependencies={[type, search]}
+                    dependencies={[type, search, filters]}
                     itemsPerPage={ITEMS_PER_PAGE}
                     enableDesktopPagination={true}
                 />

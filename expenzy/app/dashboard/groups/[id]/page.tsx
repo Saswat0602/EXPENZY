@@ -8,7 +8,7 @@ import { useSimplifiedDebts } from '@/lib/hooks/use-group-balances';
 import { useGroupStatistics } from '@/lib/hooks/use-group-statistics';
 import { useProfile } from '@/lib/hooks/use-profile';
 import { useLayout } from '@/contexts/layout-context';
-import { Plus, Receipt, ArrowLeft } from 'lucide-react';
+import { Plus, Receipt, ArrowLeft, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { GroupHeader } from '@/components/features/groups/group-header';
@@ -90,6 +90,7 @@ export default function GroupDetailPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isStatisticsModalOpen, setIsStatisticsModalOpen] = useState(false);
     const [isSettleUpModalOpen, setIsSettleUpModalOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Hide mobile header on mount, restore on unmount (keep bottom nav)
     useEffect(() => {
@@ -120,7 +121,18 @@ export default function GroupDetailPage() {
         if (!expensesData?.pages) return [];
 
         // Flatten all pages
-        const allExpenses = expensesData.pages.flatMap((page) => page.data);
+        let allExpenses = expensesData.pages.flatMap((page) => page.data);
+
+        // Apply search filter
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            allExpenses = allExpenses.filter((expense) => {
+                const description = expense.description?.toLowerCase() || '';
+                const category = expense.category?.name?.toLowerCase() || '';
+                const paidBy = `${expense.paidBy?.firstName} ${expense.paidBy?.lastName}`.toLowerCase();
+                return description.includes(query) || category.includes(query) || paidBy.includes(query);
+            });
+        }
 
         type GroupedExpense = {
             monthName: string;
@@ -143,7 +155,7 @@ export default function GroupDetailPage() {
         }, {} as Record<string, GroupedExpense>);
 
         return Object.values(grouped);
-    }, [expensesData]);
+    }, [expensesData, searchQuery]);
 
     if (groupLoading) {
         return (
@@ -314,6 +326,18 @@ export default function GroupDetailPage() {
                     currentUserId={currentUserId}
                     currency={group.currency as 'INR' | 'USD' | 'EUR'}
                 />
+
+                {/* Search Bar */}
+                <div className="relative mb-4">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                        type="text"
+                        placeholder="Search expenses..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring text-sm"
+                    />
+                </div>
 
                 {/* Expenses List - Infinite Scroll */}
                 <div className="pt-2">
