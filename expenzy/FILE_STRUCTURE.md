@@ -17,23 +17,26 @@ All route-based pages using Next.js 14+ App Router pattern.
 - **`/app/dashboard/`** - Main dashboard pages (protected routes)
   - `page.tsx` - Dashboard home/overview page with stats and charts
   - `layout.tsx` - Shared dashboard layout with sidebar/header
-  - `/transactions/page.tsx` - Transaction list with filters, search & pagination
-  - `/budget/page.tsx` - Budget management and tracking
+  - `/accounts/page.tsx` - Bank account management
   - `/analytics/page.tsx` - Analytics, insights & spending trends
-  - `/loans/page.tsx` - Loan tracking (lent/borrowed money)
+  - `/budget/page.tsx` - Budget management and tracking
   - `/groups/page.tsx` - Group expense splitting
+  - `/groups/[id]/page.tsx` - Individual group details
+  - `/loans/page.tsx` - Loan tracking (lent/borrowed money)
+  - `/notifications/page.tsx` - Notification center
+  - `/payment-methods/page.tsx` - Payment method management
+  - `/profile/page.tsx` - User profile & settings
+  - `/recurring-expenses/page.tsx` - Recurring expense management
   - `/savings/page.tsx` - Savings goals management
   - `/subscriptions/page.tsx` - Recurring subscriptions tracking
-  - `/accounts/page.tsx` - Bank account management
-  - `/payment-methods/page.tsx` - Payment method management
   - `/tags/page.tsx` - Tag organization for transactions
-  - `/notifications/page.tsx` - Notification center
-  - `/profile/page.tsx` - User profile & settings
+  - `/transactions/page.tsx` - Transaction list with filters, search & pagination
 - **`/app/login/`** - Login page (public)
 - **`/app/signup/`** - Signup page (public)
 - **`/app/globals.css`** - Global styles & Tailwind imports
 - **`/app/layout.tsx`** - Root layout with providers
 - **`/app/page.tsx`** - Landing page (redirects to dashboard if logged in)
+- **`/app/providers.tsx`** - Global providers (React Query, Theme, etc.)
 
 ---
 
@@ -44,25 +47,41 @@ Organized by component type for reusability.
 Complex components tied to specific features:
 - `expense-modal.tsx` - Expense creation/edit modal (legacy)
 - `income-modal.tsx` - Income creation/edit modal (legacy)
-- `/profile/*` - Profile page sections:
-  - `appearance-section.tsx` - Theme and display preferences
-  - `notification-settings.tsx` - Notification preferences
-  - `privacy-section.tsx` - Privacy settings
-  - `security-section.tsx` - Password and security
-  - `profile-header.tsx` - Profile header with avatar
-  - `profile-info.tsx` - Basic profile information
-  - `account-section.tsx` - Account management
-  - `preferences-section.tsx` - User preferences
-  - `data-export.tsx` - Export user data
-- `/groups/*` - Group expense management components:
+- `recurring-expenses-list.tsx` - List of recurring expenses
+- `reminders-list.tsx` - List of reminders
+- `transaction-export-button.tsx` - Button to export transactions
+- `/groups/` - Group expense management components:
+  - `add-member-modal.tsx` - Add member to group modal
+  - `expense-card.tsx` - Card display for group expense
+  - `expense-detail-modal.tsx` - Details of a group expense
   - `group-avatar.tsx` - Group avatar with color generation and icons
   - `group-card.tsx` - Group card for list view with balance
+  - `group-export-button.tsx` - Export group data
   - `group-header.tsx` - Group detail page header
   - `group-member-list.tsx` - Member list with roles and balances
+  - `group-statistics-modal.tsx` - Group spending statistics
+  - `member-avatar.tsx` - Individual member avatar
   - `member-list-item.tsx` - Individual member display with actions
-  - `balance-summary.tsx` - Balance summary component
-  - `add-member-modal.tsx` - Add member to group modal
+  - `settle-up-bar.tsx` - Bar showing settlement status
+  - `settle-up-modal.tsx` - Modal to settle debts
+  - `simplified-balance-view.tsx` - Simplified debt view
+  - `simplified-debts-card.tsx` - Card showing simplified debts
+  - `split-configurator.tsx` - UI for configuring expense splits
+  - `split-input.tsx` - Input for split amounts
   - `index.ts` - Barrel export for all group components
+- `/profile/` - Profile page sections:
+  - `appearance-settings.tsx` - Theme and display preferences
+  - `danger-zone.tsx` - Account deletion and critical actions
+  - `data-privacy-settings.tsx` - Privacy settings
+  - `notification-settings.tsx` - Notification preferences
+  - `preferences-settings.tsx` - User preferences
+  - `profile-header.tsx` - Profile header with avatar
+  - `security-settings.tsx` - Password and security
+  - `constants.ts` - Profile constants
+  - `index.ts` - Barrel export
+- `/transactions/` - Transaction specific components:
+  - `transaction-filters.tsx` - Filter controls for transactions
+  - `transaction-stats.tsx` - Statistics summary for transactions
 
 #### `/components/layout/` - Layout Components
 Shared layout elements used across pages:
@@ -75,56 +94,65 @@ Shared layout elements used across pages:
 
 #### `/components/modals/` - Reusable Modals
 All modal dialogs for CRUD operations:
-- `add-transaction-modal.tsx` - Add transaction (income/expense) with AI categorization
-- `transaction-modal.tsx` - View/edit transaction details
 - `add-budget-modal.tsx` - Create/edit budget
-- `add-loan-modal.tsx` - Create/edit loan
 - `add-group-modal.tsx` - Create/edit group
+- `add-loan-modal.tsx` - Create/edit loan
+- `add-recurring-expense-modal.tsx` - Create/edit recurring expense
+- `add-reminder-modal.tsx` - Create/edit reminder
 - `add-savings-goal-modal.tsx` - Create/edit savings goal
 - `add-subscription-modal.tsx` - Create/edit subscription
-- `edit-profile-modal.tsx` - Edit user profile
 - `change-password-modal.tsx` - Change password
-- `delete-account-modal.tsx` - Account deletion confirmation
 - `confirmation-modal.tsx` - Generic confirmation dialog
+- `delete-account-modal.tsx` - Account deletion confirmation
+- `edit-group-modal.tsx` - Edit group details
+- `edit-profile-modal.tsx` - Edit user profile
+- `transaction-modal.tsx` - View/edit transaction details (and add new)
 
 #### `/components/shared/` - Shared Utility Components
 Reusable components used across multiple features:
-- `glass-card.tsx` - Glassmorphism styled card wrapper
-- `stat-card.tsx` - Dashboard statistics card with icon
-- `empty-state.tsx` - Empty state placeholder with icon
-- `loading-skeleton.tsx` - Loading skeleton states
-- `virtual-list.tsx` - Infinite scroll/virtual list with pagination (mobile & desktop)
-- `mobile-action-menu.tsx` - Mobile 3-dot menu for edit/delete actions
 - `category-selector.tsx` - Category selection component with icons
+- `empty-state.tsx` - Empty state placeholder with icon
+- `file-upload.tsx` - File upload component
+- `glass-card.tsx` - Glassmorphism styled card wrapper
+- `loading-skeleton.tsx` - Loading skeleton states
+- `mobile-action-menu.tsx` - Mobile 3-dot menu for edit/delete actions
+- `stat-card.tsx` - Dashboard statistics card with icon
+- `virtual-list.tsx` - Infinite scroll/virtual list with pagination (mobile & desktop)
 
 #### `/components/ui/` - Shadcn UI Components
 Base UI components from shadcn/ui (DO NOT MODIFY directly, regenerate via CLI):
-- `button.tsx` - Button component with variants
-- `input.tsx` - Input field component
-- `select.tsx` - Select dropdown component
-- `dialog.tsx` - Modal dialog primitive
-- `sheet.tsx` - Drawer/sheet primitive
-- `form.tsx` - React Hook Form integration
-- `label.tsx` - Form label component
-- `checkbox.tsx` - Checkbox component
-- `radio-group.tsx` - Radio button group
-- `switch.tsx` - Toggle switch component
-- `progress.tsx` - Progress bar component
-- `separator.tsx` - Horizontal/vertical separator
+- `alert-dialog.tsx` - Alert dialog component
+- `alert.tsx` - Alert component
 - `avatar.tsx` - User avatar component
-- `dropdown-menu.tsx` - Dropdown menu component
-- `popover.tsx` - Popover component
 - `badge.tsx` - Badge/chip component
-- `card.tsx` - Card container component
-- `tabs.tsx` - Tabs component
-- `toast.tsx` - Toast notification component
+- `button.tsx` - Button component with variants
 - `calendar.tsx` - Date picker calendar
-- `command.tsx` - Command palette component
+- `card.tsx` - Card container component
+- `checkbox.tsx` - Checkbox component
+- `data-table.tsx` - Data table component
+- `dialog.tsx` - Modal dialog primitive
+- `dropdown-menu.tsx` - Dropdown menu component
+- `form.tsx` - React Hook Form integration
+- `group-icon.tsx` - Group icon component
+- `input.tsx` - Input field component
+- `label.tsx` - Form label component
+- `letter-avatar.tsx` - Letter avatar component
+- `popover.tsx` - Popover component
+- `progress.tsx` - Progress bar component
+- `radio-group.tsx` - Radio button group
 - `scroll-area.tsx` - Custom scrollbar area
+- `select.tsx` - Select dropdown component
+- `separator.tsx` - Horizontal/vertical separator
+- `sheet.tsx` - Drawer/sheet primitive
 - `skeleton.tsx` - Skeleton loading component
+- `slider.tsx` - Slider component
+- `switch.tsx` - Toggle switch component
 - `table.tsx` - Table component
+- `tabs.tsx` - Tabs component
 - `textarea.tsx` - Textarea component
+- `toast.tsx` - Toast notification component
 - `tooltip.tsx` - Tooltip component
+- `user-avatar.tsx` - User avatar component
 
 ---
 
@@ -134,48 +162,56 @@ Core business logic and helpers.
 #### `/lib/api/` - API Layer
 - `client.ts` - Axios instance with auth interceptors, 401 handling, multi-tab logout
 - `endpoints.ts` - API endpoint constants (BASE URLs for all resources)
+- `export.ts` - Export API utilities
 
 #### `/lib/categorization/` - AI Categorization System
 - `keyword-dictionary.ts` - Comprehensive keyword mappings for expense categories
 - `keyword-matcher.ts` - Fuzzy matching algorithm for categorization
 - `category-icons.tsx` - Category icon mappings and components
-- `category-utils.ts` - Category helper functions
 
 #### `/lib/hooks/` - React Query Hooks
 Custom hooks for data fetching (ALWAYS USE THESE, don't create new API calls):
-- `use-expenses.ts` - Expense CRUD & pagination
-- `use-income.ts` - Income CRUD & pagination
-- `use-budget.ts` - Budget operations
-- `use-loans.ts` - Loan operations
-- `use-groups.ts` - Group operations
-- `use-savings.ts` - Savings goal operations
-- `use-subscriptions.ts` - Subscription operations
 - `use-accounts.ts` - Account operations
-- `use-payment-methods.ts` - Payment method operations
-- `use-categories.ts` - Category fetching
-- `use-tags.ts` - Tag operations
 - `use-analytics.ts` - Analytics data
+- `use-attachments.ts` - Attachment operations
+- `use-avatar.ts` - Avatar operations
+- `use-budget.ts` - Budget operations
+- `use-calculator-input.ts` - Calculator input logic
+- `use-categories.ts` - Category fetching
+- `use-expenses.ts` - Expense CRUD & pagination
+- `use-export.ts` - Data export operations
+- `use-group-balances.ts` - Group balance calculations
+- `use-group-expenses.ts` - Group expense operations
+- `use-group-statistics.ts` - Group statistics
+- `use-groups.ts` - Group operations
+- `use-income.ts` - Income CRUD & pagination
+- `use-loans.ts` - Loan operations
 - `use-notifications.ts` - Notifications
+- `use-payment-methods.ts` - Payment method operations
 - `use-profile.ts` - User profile operations
+- `use-recurring-expenses.ts` - Recurring expense operations
+- `use-reminders.ts` - Reminder operations
+- `use-savings.ts` - Savings goal operations
 - `use-settings.ts` - User settings
-
-#### `/lib/stores/` - State Management
-- `auth-store.ts` - Authentication state (removed - using localStorage)
+- `use-subscriptions.ts` - Subscription operations
+- `use-tags.ts` - Tag operations
 
 #### `/lib/utils/` - Utility Functions
 Pure helper functions (REUSE these, don't duplicate):
+- `avatar-utils.ts` - Avatar generation utilities
+- `balance-utils.ts` - Group balance calculations and settlement suggestions
 - `cn.ts` - Class name merger (tailwind-merge + clsx)
 - `currency.ts` - Currency formatting utilities
 - `format.ts` - Date/number formatting functions
+- `split-utils.ts` - Split expense calculation utilities
 - `transaction-helpers.ts` - Transaction-specific helper functions
-- `balance-utils.ts` - Group balance calculations and settlement suggestions
 
 #### `/lib/validations/` - Zod Schemas
 Form validation schemas (ALWAYS USE for forms):
-- `schemas.ts` - Main validation schemas (budget, loan, transaction, group, account, payment method)
 - `auth.ts` - Auth schemas (login, signup, forgot password)
 - `profile.schema.ts` - Profile update schemas
 - `savings.schema.ts` - Savings goal schemas
+- `schemas.ts` - Main validation schemas (budget, loan, transaction, group, account, payment method)
 - `subscription.schema.ts` - Subscription schemas
 
 #### `/lib/config/`
@@ -190,39 +226,35 @@ Form validation schemas (ALWAYS USE for forms):
 ### `/types` - TypeScript Type Definitions
 Centralized type definitions (ALWAYS IMPORT from here):
 - `index.ts` - Re-exports all types for easy importing
-- `expense.ts` - Expense & transaction types
-- `income.ts` - Income types
-- `budget.ts` - Budget types
-- `loan.ts` - Loan types
-- `group.ts` - Group & split types
-- `split.ts` - Split expense types
-- `savings-goal.ts` - Savings goal types
-- `subscription.ts` - Subscription types
 - `account.ts` - Account types
-- `payment-method.ts` - Payment method types
+- `analytics.ts` - Analytics types
+- `api.ts` - API response types (paginated responses, error responses)
+- `auth.ts` - Auth types (JWT payload, login response)
+- `budget.ts` - Budget types
 - `category.ts` - Category types
+- `expense.ts` - Expense & transaction types
+- `export.ts` - Data export types
+- `group.ts` - Group & split types
+- `income.ts` - Income types
+- `loan.ts` - Loan types
+- `next-auth.d.ts` - NextAuth type extensions
+- `notification.ts` - Notification types
+- `payment-method.ts` - Payment method types
+- `savings-goal.ts` - Savings goal types
+- `split.ts` - Split expense types
+- `subscription.ts` - Subscription types
 - `tag.ts` - Tag types
 - `user.ts` - User & profile types
-- `analytics.ts` - Analytics types
-- `notification.ts` - Notification types
-- `auth.ts` - Auth types (JWT payload, login response)
-- `api.ts` - API response types (paginated responses, error responses)
-- `next-auth.d.ts` - NextAuth type extensions
-
----
-
-### `/contexts` - React Context Providers
-Global state management (currently minimal, using React Query for most state):
-- Auth context (if needed)
-- Theme context (if needed)
-- User preferences context (if needed)
 
 ---
 
 ### `/public` - Static Assets
 Images, icons, fonts (accessible via `/filename.ext` in code)
-- Logos, favicons, images
-- Font files (if any)
+- `file.svg`
+- `globe.svg`
+- `next.svg`
+- `vercel.svg`
+- `window.svg`
 
 ---
 
@@ -243,6 +275,8 @@ Images, icons, fonts (accessible via `/filename.ext` in code)
 - **`package.json`** - Dependencies and scripts
 - **`.eslintrc.json`** - ESLint configuration
 - **`.prettierrc`** - Prettier configuration (if exists)
+- **`plan.md`** - Implementation plan
+- **`theme.md`** - Theme documentation
 
 ---
 
