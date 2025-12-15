@@ -17,7 +17,7 @@ export class GroupExpenseService {
     private prisma: PrismaService,
     private splitCalculationService: SplitCalculationService,
     private cacheService: GroupCacheService,
-  ) {}
+  ) { }
 
   /**
    * Create a group expense
@@ -116,22 +116,6 @@ export class GroupExpenseService {
         })),
       });
 
-      // Create calculation metadata
-      const roundingDiff = splitService.calculateRoundingDifference(
-        createExpenseDto.amount,
-        splits,
-      );
-
-      await tx.splitCalculation.create({
-        data: {
-          groupExpenseId: expense.id,
-          splitType: createExpenseDto.splitType,
-          totalAmount: createExpenseDto.amount,
-          participantsCount: splits.length,
-          roundingDifference: roundingDiff,
-        },
-      });
-
       // Fetch the expense again with splits to return in response
       const expenseWithSplits = await tx.groupExpense.findUnique({
         where: { id: expense.id },
@@ -151,7 +135,7 @@ export class GroupExpenseService {
           },
           paidBy: true,
           category: true,
-          splitCalculations: true,
+          // splitCalculations removed - model deleted
         },
       });
 

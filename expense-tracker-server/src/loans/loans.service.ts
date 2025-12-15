@@ -181,7 +181,7 @@ export class LoansService {
           },
         },
         _count: {
-          select: { payments: true },
+          select: { adjustments: true },
         },
       },
       orderBy,
@@ -203,8 +203,8 @@ export class LoansService {
       include: {
         lender: true,
         borrower: true,
-        payments: {
-          orderBy: { paymentDate: 'desc' },
+        adjustments: {
+          orderBy: { createdAt: 'desc' },
         },
       },
     });
@@ -292,7 +292,7 @@ export class LoansService {
   ) {
     const loan = await this.prisma.loan.findUnique({
       where: { id },
-      include: { payments: true },
+      include: { adjustments: true },
     });
 
     if (!loan) {
@@ -314,15 +314,17 @@ export class LoansService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      // Create payment
-      await tx.loanPayment.create({
+      // Create loan adjustment (payment)
+      await tx.loanAdjustment.create({
         data: {
           loanId: id,
+          adjustmentType: 'payment',
           amount: createLoanPaymentDto.amount,
           currency: createLoanPaymentDto.currency || loan.currency,
           paymentDate: new Date(createLoanPaymentDto.paymentDate),
           paymentMethod: createLoanPaymentDto.paymentMethod,
           notes: createLoanPaymentDto.notes,
+          createdBy: userId,
         },
       });
 
@@ -342,7 +344,7 @@ export class LoansService {
         include: {
           lender: true,
           borrower: true,
-          payments: true,
+          adjustments: true,
         },
       });
 
@@ -390,7 +392,6 @@ export class LoansService {
         _count: {
           select: {
             adjustments: true,
-            payments: true,
           },
         },
       },
@@ -737,11 +738,7 @@ export class LoansService {
             createdAt: 'desc',
           },
         },
-        payments: {
-          orderBy: {
-            paymentDate: 'desc',
-          },
-        },
+        // payments removed - using adjustments instead
         group: {
           select: {
             id: true,

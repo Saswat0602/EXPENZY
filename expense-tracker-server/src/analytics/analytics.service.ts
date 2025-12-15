@@ -4,7 +4,7 @@ import { AnalyticsQueryDto, AnalyticsPeriod } from './dto/analytics-query.dto';
 
 @Injectable()
 export class AnalyticsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   private getDateRange(
     period: AnalyticsPeriod,
@@ -52,10 +52,8 @@ export class AnalyticsService {
       totalExpenses,
       budgets,
       savingsGoals,
-      upcomingSubscriptions,
       recentTransactions,
       topCategories,
-      accountBalances,
     ] = await Promise.all([
       // Total Income
       this.prisma.income.aggregate({
@@ -100,21 +98,6 @@ export class AnalyticsService {
         take: 5,
       }),
 
-      // Upcoming Subscriptions (next 30 days)
-      this.prisma.subscription.findMany({
-        where: {
-          userId,
-          isActive: true,
-          nextBillingDate: {
-            gte: new Date(),
-            lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          },
-        },
-        include: { category: true },
-        orderBy: { nextBillingDate: 'asc' },
-        take: 10,
-      }),
-
       // Recent Transactions (expenses)
       this.prisma.expense.findMany({
         where: {
@@ -139,24 +122,11 @@ export class AnalyticsService {
         orderBy: { _sum: { amount: 'desc' } },
         take: 5,
       }),
-
-      // Account Balances
-      this.prisma.account.findMany({
-        where: {
-          userId,
-          isActive: true,
-          includeInTotal: true,
-        },
-      }),
     ]);
 
     const income = Number(totalIncome._sum.amount || 0);
     const expenses = Number(totalExpenses._sum.amount || 0);
     const netSavings = income - expenses;
-    const totalBalance = accountBalances.reduce(
-      (sum, acc) => sum + Number(acc.balance),
-      0,
-    );
 
     // Get category details for top categories
     const categoryIds = topCategories
@@ -208,23 +178,14 @@ export class AnalyticsService {
         totalExpenses: expenses,
         netSavings,
         savingsRate: income > 0 ? (netSavings / income) * 100 : 0,
-        totalBalance,
       },
       budgets: budgetUtilization,
       savingsGoals: savingsProgress,
-      upcomingSubscriptions: upcomingSubscriptions.map((sub) => ({
-        ...sub,
-        amount: Number(sub.amount),
-      })),
       recentTransactions: recentTransactions.map((tx) => ({
         ...tx,
         amount: Number(tx.amount),
       })),
       topCategories: topCategoriesWithDetails,
-      accounts: accountBalances.map((acc) => ({
-        ...acc,
-        balance: Number(acc.balance),
-      })),
     };
   }
 
@@ -461,7 +422,7 @@ export class AnalyticsService {
         averageUtilization:
           performance.length > 0
             ? performance.reduce((sum, b) => sum + b.utilization, 0) /
-              performance.length
+            performance.length
             : 0,
         onTrackCount: performance.filter((b) => b.status === 'on_track').length,
         warningCount: performance.filter((b) => b.status === 'warning').length,
