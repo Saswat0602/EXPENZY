@@ -21,7 +21,7 @@ import {
 
 @Injectable()
 export class LoansService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(createLoanDto: CreateLoanDto) {
     // Validation: Both lender and borrower user IDs must be provided
@@ -98,13 +98,33 @@ export class LoansService {
     }
 
     if (query.search) {
-      const searchFilter = QueryBuilder.buildTextSearchFilter(query.search, [
-        'description',
-      ]);
-      if (searchFilter) {
-        Object.assign(where, searchFilter);
-      }
+      // Search in description, lender name, and borrower name
+      where.OR = [
+        {
+          description: {
+            contains: query.search,
+            mode: 'insensitive' as Prisma.QueryMode,
+          },
+        },
+        {
+          lender: {
+            username: {
+              contains: query.search,
+              mode: 'insensitive' as Prisma.QueryMode,
+            },
+          },
+        },
+        {
+          borrower: {
+            username: {
+              contains: query.search,
+              mode: 'insensitive' as Prisma.QueryMode,
+            },
+          },
+        },
+      ];
     }
+
 
     // Build orderBy clause
     const allowedSortFields = [
@@ -172,10 +192,11 @@ export class LoansService {
     return new PaginatedResponseDto(
       data,
       query.page || 1,
-      query.limit || 20,
+      query.limit || 50,
       total,
     );
   }
+
 
   async findOne(id: string, userId: string) {
     const loan = await this.prisma.loan.findUnique({
@@ -625,6 +646,104 @@ export class LoansService {
     return groupLoans;
   }
 
+  /**
+   * Get all transactions between two users (loans, adjustments, payments)
+   */
+  async getTransactionsBetweenUsers(userId: string, otherUserId: string) {
+    // Get all loans between these two users (in both directions)
+    const loans = await this.prisma.loan.findMany({
+      where: {
+        OR: [
+          { lenderUserId: userId, borrowerUserId: otherUserId },
+          { lenderUserId: otherUserId, borrowerUserId: userId },
+        ],
+        isDeleted: false,
+      },
+      include: {
+        lender: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            avatar: true,
+            avatarUrl: true,
+          },
+        },
+        borrower: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            avatar: true,
+            avatarUrl: true,
+          },
+        },
+        adjustments: {
+          include: {
+            creator: {
+              select: {
+                id: true,
+                username: true,
+                email: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+        payments: {
+          orderBy: {
+            paymentDate: 'desc',
+          },
+        },
+        group: {
+          select: {
+            id: true,
+            name: true,
+            icon: true,
+            color: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    // Calculate summary statistics
+    const summary = {
+      totalLoans: loans.length,
+      activeLoans: loans.filter((l) => l.status === 'active').length,
+      paidLoans: loans.filter((l) => l.status === 'paid').length,
+      youOwe: 0,
+      theyOwe: 0,
+      netBalance: 0,
+    };
+
+    loans.forEach((loan) => {
+      if (loan.lenderUserId === userId) {
+        // You lent money
+        summary.theyOwe += Number(loan.amountRemaining);
+      } else {
+        // You borrowed money
+        summary.youOwe += Number(loan.amountRemaining);
+      }
+    });
+
+    summary.netBalance = summary.theyOwe - summary.youOwe;
+
+    return {
+      loans,
+      summary,
+      otherUser: loans[0]
+        ? loans[0].lenderUserId === userId
+          ? loans[0].borrower
+          : loans[0].lender
+        : null,
+    };
+  }
+
   // Note: Invite functionality removed due to schema limitations
   // To re-enable, add inviteToken, inviteStatus, lenderEmail, borrowerEmail fields to Loan model
 
@@ -633,3 +752,4 @@ export class LoansService {
     return loan.lenderUserId === userId || loan.borrowerUserId === userId;
   }
 }
+
