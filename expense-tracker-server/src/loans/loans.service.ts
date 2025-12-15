@@ -17,7 +17,6 @@ import {
   GroupLoanDto,
   LoanStatisticsDto,
   LoanWithRelations,
-  PersonLoanSummaryDto,
 } from './dto/consolidated-loan-response.dto';
 
 @Injectable()
@@ -401,12 +400,20 @@ export class LoansService {
     })) as LoanWithRelations[];
 
     // Group loans by person
-    const personMap = new Map<string, {
-      person: { id: string; username: string; avatar?: string | null; avatarUrl?: string | null };
-      loans: LoanWithRelations[];
-      totalLent: number;
-      totalBorrowed: number;
-    }>();
+    const personMap = new Map<
+      string,
+      {
+        person: {
+          id: string;
+          username: string;
+          avatar?: string | null;
+          avatarUrl?: string | null;
+        };
+        loans: LoanWithRelations[];
+        totalLent: number;
+        totalBorrowed: number;
+      }
+    >();
 
     for (const loan of directLoans) {
       const isLender = loan.lenderUserId === userId;
@@ -436,24 +443,27 @@ export class LoansService {
     }
 
     // Convert to PersonLoanSummaryDto
-    const personSummaries = Array.from(personMap.values()).map((data) => {
-      const netAmount = data.totalLent - data.totalBorrowed;
-      const loanType: 'lent' | 'borrowed' = netAmount >= 0 ? 'lent' : 'borrowed';
-      const totalAmount = Math.abs(netAmount);
+    const personSummaries = Array.from(personMap.values())
+      .map((data) => {
+        const netAmount = data.totalLent - data.totalBorrowed;
+        const loanType: 'lent' | 'borrowed' =
+          netAmount >= 0 ? 'lent' : 'borrowed';
+        const totalAmount = Math.abs(netAmount);
 
-      return {
-        personId: data.person.id,
-        personName: data.person.username,
-        personAvatar: data.person.avatarUrl || data.person.avatar,
-        totalAmount,
-        currency: data.loans[0]?.currency || 'INR',
-        loanType,
-        loanIds: data.loans.map((l) => l.id),
-        activeCount: data.loans.filter((l) => l.status === 'active').length,
-        paidCount: data.loans.filter((l) => l.status === 'paid').length,
-        lastLoanDate: data.loans[0]?.loanDate || new Date(),
-      };
-    }).filter((summary) => summary.totalAmount > 0); // Only show if there's an outstanding balance
+        return {
+          personId: data.person.id,
+          personName: data.person.username,
+          personAvatar: data.person.avatarUrl || data.person.avatar,
+          totalAmount,
+          currency: data.loans[0]?.currency || 'INR',
+          loanType,
+          loanIds: data.loans.map((l) => l.id),
+          activeCount: data.loans.filter((l) => l.status === 'active').length,
+          paidCount: data.loans.filter((l) => l.status === 'paid').length,
+          lastLoanDate: data.loans[0]?.loanDate || new Date(),
+        };
+      })
+      .filter((summary) => summary.totalAmount > 0); // Only show if there's an outstanding balance
 
     // Get group-derived loans
     const groupLoans = await this.getGroupDerivedLoans(userId);

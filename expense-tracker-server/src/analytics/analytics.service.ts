@@ -4,7 +4,7 @@ import { AnalyticsQueryDto, AnalyticsPeriod } from './dto/analytics-query.dto';
 
 @Injectable()
 export class AnalyticsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   private getDateRange(
     period: AnalyticsPeriod,
@@ -422,7 +422,7 @@ export class AnalyticsService {
         averageUtilization:
           performance.length > 0
             ? performance.reduce((sum, b) => sum + b.utilization, 0) /
-            performance.length
+              performance.length
             : 0,
         onTrackCount: performance.filter((b) => b.status === 'on_track').length,
         warningCount: performance.filter((b) => b.status === 'warning').length,

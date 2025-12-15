@@ -35,14 +35,14 @@ export class GroupsService {
     private cacheService: GroupCacheService,
     private expenseService: GroupExpenseService,
     private statisticsService: GroupStatisticsService,
-  ) { }
+  ) {}
 
   async create(createGroupDto: CreateGroupDto, userId: string) {
     // Generate icon data
     const iconSeed = createGroupDto.iconSeed || generateRandomSeed();
     const iconProvider =
       createGroupDto.iconProvider &&
-        validateGroupIconProvider(createGroupDto.iconProvider)
+      validateGroupIconProvider(createGroupDto.iconProvider)
         ? (createGroupDto.iconProvider as 'jdenticon')
         : 'jdenticon';
 
@@ -470,20 +470,20 @@ export class GroupsService {
       data: expenses,
       pagination: cursor
         ? {
-          // Cursor-based response
-          limit,
-          nextCursor,
-          hasMore: nextCursor !== null,
-        }
+            // Cursor-based response
+            limit,
+            nextCursor,
+            hasMore: nextCursor !== null,
+          }
         : {
-          // Offset-based response (backward compatibility)
-          page,
-          limit,
-          total: total!,
-          totalPages: Math.ceil(total! / limit),
-          hasMore: page * limit < total!,
-          nextCursor, // Include cursor for migration
-        },
+            // Offset-based response (backward compatibility)
+            page,
+            limit,
+            total: total!,
+            totalPages: Math.ceil(total! / limit),
+            hasMore: page * limit < total!,
+            nextCursor, // Include cursor for migration
+          },
     };
   }
 
@@ -534,7 +534,7 @@ export class GroupsService {
     if (userBalance < -0.01) {
       throw new BadRequestException(
         `You cannot leave the group with outstanding debts. ` +
-        `You owe ₹${Math.abs(userBalance).toFixed(2)}. Please settle your debts first.`,
+          `You owe ₹${Math.abs(userBalance).toFixed(2)}. Please settle your debts first.`,
       );
     }
 

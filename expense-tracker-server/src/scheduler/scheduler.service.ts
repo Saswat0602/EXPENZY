@@ -10,7 +10,7 @@ export class SchedulerService {
   constructor(
     private prisma: PrismaService,
     private recurringExpensesService: RecurringExpensesService,
-  ) { }
+  ) {}
 
   /**
    * Process recurring expenses - runs daily at 1:00 AM
@@ -136,7 +136,7 @@ export class SchedulerService {
         const daysUntilDue = Math.ceil(
           (expense.recurringPattern.nextOccurrence.getTime() -
             today.getTime()) /
-          (1000 * 60 * 60 * 24),
+            (1000 * 60 * 60 * 24),
         );
 
         // Create notification
@@ -163,8 +163,6 @@ export class SchedulerService {
       this.logger.error('Error sending recurring expense reminders:', error);
     }
   }
-
-
 
   /**
    * Check budget alerts - runs every 6 hours
@@ -277,6 +275,4 @@ export class SchedulerService {
         return false;
     }
   }
-
-
 }

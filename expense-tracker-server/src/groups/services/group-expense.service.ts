@@ -17,7 +17,7 @@ export class GroupExpenseService {
     private prisma: PrismaService,
     private splitCalculationService: SplitCalculationService,
     private cacheService: GroupCacheService,
-  ) { }
+  ) {}
 
   /**
    * Create a group expense
