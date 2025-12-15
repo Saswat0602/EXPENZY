@@ -17,11 +17,12 @@ import {
   GroupLoanDto,
   LoanStatisticsDto,
   LoanWithRelations,
+  PersonLoanSummaryDto,
 } from './dto/consolidated-loan-response.dto';
 
 @Injectable()
 export class LoansService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(createLoanDto: CreateLoanDto) {
     // Validation: Both lender and borrower user IDs must be provided
@@ -398,6 +399,61 @@ export class LoansService {
       },
     })) as LoanWithRelations[];
 
+    // Group loans by person
+    const personMap = new Map<string, {
+      person: { id: string; username: string; avatar?: string | null; avatarUrl?: string | null };
+      loans: LoanWithRelations[];
+      totalLent: number;
+      totalBorrowed: number;
+    }>();
+
+    for (const loan of directLoans) {
+      const isLender = loan.lenderUserId === userId;
+      const otherPerson = isLender ? loan.borrower : loan.lender;
+      const personId = otherPerson.id;
+
+      if (!personMap.has(personId)) {
+        personMap.set(personId, {
+          person: otherPerson,
+          loans: [],
+          totalLent: 0,
+          totalBorrowed: 0,
+        });
+      }
+
+      const personData = personMap.get(personId)!;
+      personData.loans.push(loan);
+
+      // Only count active and paid loans for totals
+      if (loan.status === 'active' || loan.status === 'paid') {
+        if (isLender) {
+          personData.totalLent += Number(loan.amountRemaining);
+        } else {
+          personData.totalBorrowed += Number(loan.amountRemaining);
+        }
+      }
+    }
+
+    // Convert to PersonLoanSummaryDto
+    const personSummaries = Array.from(personMap.values()).map((data) => {
+      const netAmount = data.totalLent - data.totalBorrowed;
+      const loanType: 'lent' | 'borrowed' = netAmount >= 0 ? 'lent' : 'borrowed';
+      const totalAmount = Math.abs(netAmount);
+
+      return {
+        personId: data.person.id,
+        personName: data.person.username,
+        personAvatar: data.person.avatarUrl || data.person.avatar,
+        totalAmount,
+        currency: data.loans[0]?.currency || 'INR',
+        loanType,
+        loanIds: data.loans.map((l) => l.id),
+        activeCount: data.loans.filter((l) => l.status === 'active').length,
+        paidCount: data.loans.filter((l) => l.status === 'paid').length,
+        lastLoanDate: data.loans[0]?.loanDate || new Date(),
+      };
+    }).filter((summary) => summary.totalAmount > 0); // Only show if there's an outstanding balance
+
     // Get group-derived loans
     const groupLoans = await this.getGroupDerivedLoans(userId);
 
@@ -407,6 +463,7 @@ export class LoansService {
     const response = new ConsolidatedLoanResponseDto();
     response.directLoans = directLoans;
     response.groupLoans = groupLoans;
+    response.personSummaries = personSummaries;
     response.statistics = statistics;
 
     return response;
@@ -520,7 +577,6 @@ export class LoansService {
         (sum, loan) => sum + Number(loan.amountRemaining),
         0,
       ),
-      overdueAmount: 0,
       activeLoansCount: [...loansLent, ...loansBorrowed].filter(
         (loan) => loan.status === 'active',
       ).length,
@@ -529,15 +585,6 @@ export class LoansService {
 
     stats.netPosition =
       stats.totalLentOutstanding - stats.totalBorrowedOutstanding;
-
-    // Calculate overdue amount
-    const now = new Date();
-    stats.overdueAmount = [...loansLent, ...loansBorrowed]
-      .filter(
-        (loan) =>
-          loan.status === 'active' && loan.dueDate && loan.dueDate < now,
-      )
-      .reduce((sum, loan) => sum + Number(loan.amountRemaining), 0);
 
     return stats;
   }

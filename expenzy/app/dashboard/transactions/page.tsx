@@ -14,7 +14,6 @@ import { PageHeader } from '@/components/layout/page-header';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { TransactionExportButton } from '@/components/features/transaction-export-button';
 import { TransactionFiltersComponent, type TransactionFilters } from '@/components/features/transactions/transaction-filters';
-import { TransactionStats } from '@/components/features/transactions/transaction-stats';
 import { useCategories } from '@/lib/hooks/use-categories';
 import { useExpenses } from '@/lib/hooks/use-expenses';
 import { useIncome } from '@/lib/hooks/use-income';
@@ -305,12 +304,7 @@ export default function TransactionsPage() {
                     )}
                 </ConfirmationModal>
 
-                {/* Stats Widget */}
-                <TransactionStats
-                    expenses={allExpenses}
-                    incomes={allIncomes}
-                    currency="INR"
-                />
+
 
                 {/* Filters */}
                 <div className="flex flex-col sm:flex-row gap-4">

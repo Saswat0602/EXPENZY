@@ -11,12 +11,12 @@ import { PageWrapper } from '@/components/layout/page-wrapper';
 import { LoadingSkeleton } from '@/components/shared/loading-skeleton';
 import { EmptyState } from '@/components/shared/empty-state';
 import { VirtualList } from '@/components/shared/virtual-list';
-import { LoanCard } from '@/components/features/loans/loan-card';
+import { PersonLoanCard } from '@/components/features/loans/person-loan-card';
 import { LoanStatisticsCards } from '@/components/features/loans/loan-statistics';
 import { GroupLoanCard } from '@/components/features/loans/group-loan-card';
 import { AddLoanModal } from '@/components/modals/add-loan-modal';
 import { Plus, Search, HandCoins } from 'lucide-react';
-import type { Loan, GroupLoan } from '@/types/loan';
+import type { PersonLoanSummary, GroupLoan } from '@/types/loan';
 
 export default function LoansPage() {
     const router = useRouter();
@@ -26,38 +26,34 @@ export default function LoansPage() {
 
     const { data, isLoading } = useConsolidatedLoans();
 
-    // Filter loans based on tab and search
-    const filteredLoans = useMemo(() => {
-        const directLoans = data?.directLoans || [];
-        const currentUserId = typeof window !== 'undefined' ? localStorage.getItem('userId') || '' : '';
-        let loans = directLoans;
+    // Filter person summaries based on tab and search
+    const filteredPersons = useMemo(() => {
+        const personSummaries = data?.personSummaries || [];
+        let persons = personSummaries;
 
         // Filter by tab
         if (activeTab === 'lent') {
-            loans = loans.filter((loan) => loan.lenderUserId === currentUserId);
+            persons = persons.filter((person) => person.loanType === 'lent');
         } else if (activeTab === 'borrowed') {
-            loans = loans.filter((loan) => loan.borrowerUserId === currentUserId);
+            persons = persons.filter((person) => person.loanType === 'borrowed');
         }
 
         // Filter by search
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
-            loans = loans.filter(
-                (loan) =>
-                    loan.description?.toLowerCase().includes(query) ||
-                    loan.lender.username.toLowerCase().includes(query) ||
-                    loan.borrower.username.toLowerCase().includes(query)
+            persons = persons.filter((person) =>
+                person.personName.toLowerCase().includes(query)
             );
         }
 
-        return loans;
+        return persons;
     }, [data, activeTab, searchQuery]);
 
     const groupLoans = data?.groupLoans || [];
     const statistics = data?.statistics;
 
-    const handleLoanClick = (loanId: string) => {
-        router.push(`/dashboard/loans/${loanId}`);
+    const handlePersonClick = (personId: string) => {
+        router.push(`/dashboard/loans/person/${personId}`);
     };
 
     if (isLoading) {
@@ -71,15 +67,15 @@ export default function LoansPage() {
 
     return (
         <PageWrapper>
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
                 {/* Header */}
                 <PageHeader
                     title="Loans"
                     description="Track money you've lent and borrowed"
                     action={
-                        <Button onClick={() => setIsModalOpen(true)}>
-                            <Plus className="w-4 h-4 mr-2" />
-                            Add Loan
+                        <Button onClick={() => setIsModalOpen(true)} size="sm" className="md:size-default">
+                            <Plus className="w-4 h-4 md:mr-2" />
+                            <span className="hidden md:inline">Add Loan</span>
                         </Button>
                     }
                 />
@@ -91,7 +87,7 @@ export default function LoansPage() {
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search loans by description or person..."
+                        placeholder="Search loans by person..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-10"
@@ -102,14 +98,14 @@ export default function LoansPage() {
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                     <TabsList className="grid w-full grid-cols-4">
                         <TabsTrigger value="all">All</TabsTrigger>
-                        <TabsTrigger value="lent">Owe Me</TabsTrigger>
-                        <TabsTrigger value="borrowed">I Owe</TabsTrigger>
+                        <TabsTrigger value="lent">Lent</TabsTrigger>
+                        <TabsTrigger value="borrowed">Borrowed</TabsTrigger>
                         <TabsTrigger value="groups">Groups</TabsTrigger>
                     </TabsList>
 
                     {/* All Loans */}
                     <TabsContent value="all" className="space-y-4 mt-4">
-                        {filteredLoans.length === 0 ? (
+                        {filteredPersons.length === 0 ? (
                             <EmptyState
                                 icon={HandCoins}
                                 title="No loans found"
@@ -122,19 +118,18 @@ export default function LoansPage() {
                         ) : (
                             <VirtualList
                                 fetchData={async (page) => ({
-                                    data: filteredLoans.slice((page - 1) * 50, page * 50),
-                                    hasMore: page * 50 < filteredLoans.length,
-                                    total: filteredLoans.length,
+                                    data: filteredPersons.slice((page - 1) * 50, page * 50),
+                                    hasMore: page * 50 < filteredPersons.length,
+                                    total: filteredPersons.length,
                                 })}
-                                renderItem={(loan: Loan) => (
-                                    <LoanCard
-                                        loan={loan}
-                                        
-                                        onClick={() => handleLoanClick(loan.id)}
+                                renderItem={(person: PersonLoanSummary) => (
+                                    <PersonLoanCard
+                                        person={person}
+                                        onClick={() => handlePersonClick(person.personId)}
                                     />
                                 )}
-                                getItemKey={(loan: Loan) => loan.id}
-                                dependencies={[filteredLoans]}
+                                getItemKey={(person: PersonLoanSummary) => person.personId}
+                                dependencies={[filteredPersons]}
                                 itemsPerPage={50}
                             />
                         )}
@@ -142,7 +137,7 @@ export default function LoansPage() {
 
                     {/* Lent Loans */}
                     <TabsContent value="lent" className="space-y-4 mt-4">
-                        {filteredLoans.length === 0 ? (
+                        {filteredPersons.length === 0 ? (
                             <EmptyState
                                 icon={HandCoins}
                                 title="No loans lent"
@@ -151,19 +146,18 @@ export default function LoansPage() {
                         ) : (
                             <VirtualList
                                 fetchData={async (page) => ({
-                                    data: filteredLoans.slice((page - 1) * 50, page * 50),
-                                    hasMore: page * 50 < filteredLoans.length,
-                                    total: filteredLoans.length,
+                                    data: filteredPersons.slice((page - 1) * 50, page * 50),
+                                    hasMore: page * 50 < filteredPersons.length,
+                                    total: filteredPersons.length,
                                 })}
-                                renderItem={(loan: Loan) => (
-                                    <LoanCard
-                                        loan={loan}
-                                        
-                                        onClick={() => handleLoanClick(loan.id)}
+                                renderItem={(person: PersonLoanSummary) => (
+                                    <PersonLoanCard
+                                        person={person}
+                                        onClick={() => handlePersonClick(person.personId)}
                                     />
                                 )}
-                                getItemKey={(loan: Loan) => loan.id}
-                                dependencies={[filteredLoans]}
+                                getItemKey={(person: PersonLoanSummary) => person.personId}
+                                dependencies={[filteredPersons]}
                                 itemsPerPage={50}
                             />
                         )}
@@ -171,7 +165,7 @@ export default function LoansPage() {
 
                     {/* Borrowed Loans */}
                     <TabsContent value="borrowed" className="space-y-4 mt-4">
-                        {filteredLoans.length === 0 ? (
+                        {filteredPersons.length === 0 ? (
                             <EmptyState
                                 icon={HandCoins}
                                 title="No loans borrowed"
@@ -180,19 +174,18 @@ export default function LoansPage() {
                         ) : (
                             <VirtualList
                                 fetchData={async (page) => ({
-                                    data: filteredLoans.slice((page - 1) * 50, page * 50),
-                                    hasMore: page * 50 < filteredLoans.length,
-                                    total: filteredLoans.length,
+                                    data: filteredPersons.slice((page - 1) * 50, page * 50),
+                                    hasMore: page * 50 < filteredPersons.length,
+                                    total: filteredPersons.length,
                                 })}
-                                renderItem={(loan: Loan) => (
-                                    <LoanCard
-                                        loan={loan}
-                                        
-                                        onClick={() => handleLoanClick(loan.id)}
+                                renderItem={(person: PersonLoanSummary) => (
+                                    <PersonLoanCard
+                                        person={person}
+                                        onClick={() => handlePersonClick(person.personId)}
                                     />
                                 )}
-                                getItemKey={(loan: Loan) => loan.id}
-                                dependencies={[filteredLoans]}
+                                getItemKey={(person: PersonLoanSummary) => person.personId}
+                                dependencies={[filteredPersons]}
                                 itemsPerPage={50}
                             />
                         )}

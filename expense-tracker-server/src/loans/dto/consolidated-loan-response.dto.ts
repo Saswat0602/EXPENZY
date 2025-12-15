@@ -15,13 +15,25 @@ export interface GroupLoanDto {
   lastExpenseDate?: Date;
 }
 
+export interface PersonLoanSummaryDto {
+  personId: string;
+  personName: string;
+  personAvatar?: string | null;
+  totalAmount: number;
+  currency: string;
+  loanType: 'lent' | 'borrowed';
+  loanIds: string[];
+  activeCount: number;
+  paidCount: number;
+  lastLoanDate: Date;
+}
+
 export interface LoanStatisticsDto {
   totalLent: number;
   totalBorrowed: number;
   netPosition: number;
   totalLentOutstanding: number;
   totalBorrowedOutstanding: number;
-  overdueAmount: number;
   activeLoansCount: number;
   groupDebtsCount: number;
 }
@@ -56,5 +68,6 @@ export interface LoanWithRelations extends Loan {
 export class ConsolidatedLoanResponseDto {
   directLoans: LoanWithRelations[];
   groupLoans: GroupLoanDto[];
+  personSummaries: PersonLoanSummaryDto[];
   statistics: LoanStatisticsDto;
 }

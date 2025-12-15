@@ -75,13 +75,25 @@ export interface GroupLoan {
     lastExpenseDate?: string;
 }
 
+export interface PersonLoanSummary {
+    personId: string;
+    personName: string;
+    personAvatar?: string | null;
+    totalAmount: number;
+    currency: string;
+    loanType: 'lent' | 'borrowed';
+    loanIds: string[];
+    activeCount: number;
+    paidCount: number;
+    lastLoanDate: string;
+}
+
 export interface LoanStatistics {
     totalLent: number;
     totalBorrowed: number;
     netPosition: number;
     totalLentOutstanding: number;
     totalBorrowedOutstanding: number;
-    overdueAmount: number;
     activeLoansCount: number;
     groupDebtsCount: number;
 }
@@ -89,6 +101,7 @@ export interface LoanStatistics {
 export interface ConsolidatedLoans {
     directLoans: Loan[];
     groupLoans: GroupLoan[];
+    personSummaries: PersonLoanSummary[];
     statistics: LoanStatistics;
 }
 
