@@ -21,7 +21,7 @@ import {
 
 @Injectable()
 export class LoansService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(createLoanDto: CreateLoanDto) {
     // Validation: Both lender and borrower user IDs must be provided
@@ -125,7 +125,6 @@ export class LoansService {
       ];
     }
 
-
     // Build orderBy clause
     const allowedSortFields = [
       'dueDate',
@@ -196,7 +195,6 @@ export class LoansService {
       total,
     );
   }
-
 
   async findOne(id: string, userId: string) {
     const loan = await this.prisma.loan.findUnique({
@@ -752,4 +750,3 @@ export class LoansService {
     return loan.lenderUserId === userId || loan.borrowerUserId === userId;
   }
 }
-

@@ -1,119 +1,73 @@
 'use client';
 
-import { useState } from 'react';
-import { useLentLoans, useBorrowedLoans, useDeleteLoan } from '@/lib/hooks/use-loans';
+import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { useConsolidatedLoans } from '@/lib/hooks/use-loans';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { LoadingSkeleton } from '@/components/shared/loading-skeleton';
-import { EmptyState } from '@/components/shared/empty-state';
-import { formatCurrency, formatDate } from '@/lib/utils/format';
-import { HandCoins, Plus, Trash2, DollarSign } from 'lucide-react';
-import { AddLoanModal } from '@/components/modals/add-loan-modal';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageWrapper } from '@/components/layout/page-wrapper';
-
-interface LoanCardProps {
-    id: string;
-    borrower?: { username: string };
-    lender?: { username: string };
-    description?: string;
-    amount: number;
-    status: string;
-    amountPaid: number;
-    amountRemaining: number;
-    dueDate?: string;
-}
+import { LoadingSkeleton } from '@/components/shared/loading-skeleton';
+import { EmptyState } from '@/components/shared/empty-state';
+import { VirtualList } from '@/components/shared/virtual-list';
+import { LoanCard } from '@/components/features/loans/loan-card';
+import { LoanStatisticsCards } from '@/components/features/loans/loan-statistics';
+import { GroupLoanCard } from '@/components/features/loans/group-loan-card';
+import { AddLoanModal } from '@/components/modals/add-loan-modal';
+import { Plus, Search, HandCoins } from 'lucide-react';
+import type { Loan, GroupLoan } from '@/types/loan';
 
 export default function LoansPage() {
-    const [activeTab, setActiveTab] = useState('lent');
+    const router = useRouter();
+    const [activeTab, setActiveTab] = useState('all');
+    const [searchQuery, setSearchQuery] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const { data: lentLoans = [], isLoading: lentLoading } = useLentLoans();
-    const { data: borrowedLoans = [], isLoading: borrowedLoading } = useBorrowedLoans();
-    const deleteLoan = useDeleteLoan();
 
-    const handleDelete = async (id: string) => {
-        if (confirm('Are you sure you want to delete this loan?')) {
-            await deleteLoan.mutateAsync(id);
+    const { data, isLoading } = useConsolidatedLoans();
+
+    // Filter loans based on tab and search
+    const filteredLoans = useMemo(() => {
+        const directLoans = data?.directLoans || [];
+        const currentUserId = typeof window !== 'undefined' ? localStorage.getItem('userId') || '' : '';
+        let loans = directLoans;
+
+        // Filter by tab
+        if (activeTab === 'lent') {
+            loans = loans.filter((loan) => loan.lenderUserId === currentUserId);
+        } else if (activeTab === 'borrowed') {
+            loans = loans.filter((loan) => loan.borrowerUserId === currentUserId);
         }
+
+        // Filter by search
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            loans = loans.filter(
+                (loan) =>
+                    loan.description?.toLowerCase().includes(query) ||
+                    loan.lender.username.toLowerCase().includes(query) ||
+                    loan.borrower.username.toLowerCase().includes(query)
+            );
+        }
+
+        return loans;
+    }, [data, activeTab, searchQuery]);
+
+    const groupLoans = data?.groupLoans || [];
+    const statistics = data?.statistics;
+
+    const handleLoanClick = (loanId: string) => {
+        router.push(`/dashboard/loans/${loanId}`);
     };
 
-    const renderLoanCard = (loan: LoanCardProps) => {
-        const progress = (Number(loan.amountPaid) / Number(loan.amount)) * 100;
-        const statusColor: Record<string, string> = {
-            active: 'bg-yellow-500',
-            paid: 'bg-green-500',
-            cancelled: 'bg-gray-500',
-        };
-
+    if (isLoading) {
         return (
-            <Card key={loan.id} className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                    <div>
-                        <h3 className="font-semibold text-lg">
-                            {activeTab === 'lent' ? loan.borrower?.username : loan.lender?.username}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                            {loan.description || 'No description'}
-                        </p>
-                    </div>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(loan.id)}
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </Button>
-                </div>
-
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <span className="text-2xl font-bold">
-                            {formatCurrency(Number(loan.amount))}
-                        </span>
-                        <Badge className={statusColor[loan.status] || 'bg-gray-500'}>
-                            {loan.status}
-                        </Badge>
-                    </div>
-
-                    {loan.status !== 'paid' && (
-                        <>
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Paid</span>
-                                    <span className="font-medium">
-                                        {formatCurrency(Number(loan.amountPaid))} / {formatCurrency(Number(loan.amount))}
-                                    </span>
-                                </div>
-                                <Progress value={progress} className="h-2" />
-                            </div>
-
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Remaining</span>
-                                <span className="font-semibold text-destructive">
-                                    {formatCurrency(Number(loan.amountRemaining))}
-                                </span>
-                            </div>
-                        </>
-                    )}
-
-                    <div className="flex items-center justify-between pt-4 border-t">
-                        <span className="text-sm text-muted-foreground">
-                            {loan.dueDate ? `Due ${formatDate(loan.dueDate)}` : 'No due date'}
-                        </span>
-                        {loan.status !== 'paid' && (
-                            <Button size="sm">
-                                <DollarSign className="w-4 h-4 mr-1" />
-                                Record Payment
-                            </Button>
-                        )}
-                    </div>
-                </div>
-            </Card>
+            <PageWrapper>
+                <PageHeader title="Loans" description="Track money you've lent and borrowed" />
+                <LoadingSkeleton count={5} />
+            </PageWrapper>
         );
-    };
+    }
 
     return (
         <PageWrapper>
@@ -130,55 +84,147 @@ export default function LoansPage() {
                     }
                 />
 
-                <AddLoanModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
+                {/* Statistics */}
+                {statistics && <LoanStatisticsCards statistics={statistics} />}
+
+                {/* Search */}
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search loans by description or person..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10"
+                    />
+                </div>
 
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="grid w-full max-w-md grid-cols-2">
-                        <TabsTrigger value="lent">Money I Lent</TabsTrigger>
-                        <TabsTrigger value="borrowed">Money I Borrowed</TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-4">
+                        <TabsTrigger value="all">All</TabsTrigger>
+                        <TabsTrigger value="lent">Owe Me</TabsTrigger>
+                        <TabsTrigger value="borrowed">I Owe</TabsTrigger>
+                        <TabsTrigger value="groups">Groups</TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="lent" className="space-y-4">
-                        {lentLoading ? (
-                            <LoadingSkeleton count={3} />
-                        ) : lentLoans.length === 0 ? (
+                    {/* All Loans */}
+                    <TabsContent value="all" className="space-y-4 mt-4">
+                        {filteredLoans.length === 0 ? (
+                            <EmptyState
+                                icon={HandCoins}
+                                title="No loans found"
+                                description="Create your first loan to get started"
+                                action={{
+                                    label: 'Add Loan',
+                                    onClick: () => setIsModalOpen(true),
+                                }}
+                            />
+                        ) : (
+                            <VirtualList
+                                fetchData={async (page) => ({
+                                    data: filteredLoans.slice((page - 1) * 50, page * 50),
+                                    hasMore: page * 50 < filteredLoans.length,
+                                    total: filteredLoans.length,
+                                })}
+                                renderItem={(loan: Loan) => (
+                                    <LoanCard
+                                        loan={loan}
+                                        
+                                        onClick={() => handleLoanClick(loan.id)}
+                                    />
+                                )}
+                                getItemKey={(loan: Loan) => loan.id}
+                                dependencies={[filteredLoans]}
+                                itemsPerPage={50}
+                            />
+                        )}
+                    </TabsContent>
+
+                    {/* Lent Loans */}
+                    <TabsContent value="lent" className="space-y-4 mt-4">
+                        {filteredLoans.length === 0 ? (
                             <EmptyState
                                 icon={HandCoins}
                                 title="No loans lent"
                                 description="Track money you've lent to others"
-                                action={{
-                                    label: 'Add Loan',
-                                    onClick: () => { },
-                                }}
                             />
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {lentLoans.map(renderLoanCard)}
-                            </div>
+                            <VirtualList
+                                fetchData={async (page) => ({
+                                    data: filteredLoans.slice((page - 1) * 50, page * 50),
+                                    hasMore: page * 50 < filteredLoans.length,
+                                    total: filteredLoans.length,
+                                })}
+                                renderItem={(loan: Loan) => (
+                                    <LoanCard
+                                        loan={loan}
+                                        
+                                        onClick={() => handleLoanClick(loan.id)}
+                                    />
+                                )}
+                                getItemKey={(loan: Loan) => loan.id}
+                                dependencies={[filteredLoans]}
+                                itemsPerPage={50}
+                            />
                         )}
                     </TabsContent>
 
-                    <TabsContent value="borrowed" className="space-y-4">
-                        {borrowedLoading ? (
-                            <LoadingSkeleton count={3} />
-                        ) : borrowedLoans.length === 0 ? (
+                    {/* Borrowed Loans */}
+                    <TabsContent value="borrowed" className="space-y-4 mt-4">
+                        {filteredLoans.length === 0 ? (
                             <EmptyState
                                 icon={HandCoins}
                                 title="No loans borrowed"
                                 description="Track money you've borrowed from others"
-                                action={{
-                                    label: 'Add Loan',
-                                    onClick: () => { },
-                                }}
                             />
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {borrowedLoans.map(renderLoanCard)}
+                            <VirtualList
+                                fetchData={async (page) => ({
+                                    data: filteredLoans.slice((page - 1) * 50, page * 50),
+                                    hasMore: page * 50 < filteredLoans.length,
+                                    total: filteredLoans.length,
+                                })}
+                                renderItem={(loan: Loan) => (
+                                    <LoanCard
+                                        loan={loan}
+                                        
+                                        onClick={() => handleLoanClick(loan.id)}
+                                    />
+                                )}
+                                getItemKey={(loan: Loan) => loan.id}
+                                dependencies={[filteredLoans]}
+                                itemsPerPage={50}
+                            />
+                        )}
+                    </TabsContent>
+
+                    {/* Group Loans */}
+                    <TabsContent value="groups" className="space-y-4 mt-4">
+                        {groupLoans.length === 0 ? (
+                            <EmptyState
+                                icon={HandCoins}
+                                title="No group debts"
+                                description="Group expenses will show here as potential loans"
+                            />
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {groupLoans.map((groupLoan: GroupLoan) => (
+                                    <GroupLoanCard
+                                        key={`${groupLoan.groupId}-${groupLoan.otherUserId}`}
+                                        groupLoan={groupLoan}
+                                        onConvert={() => {
+                                            // TODO: Open convert modal
+                                            console.log('Convert group loan:', groupLoan);
+                                        }}
+                                    />
+                                ))}
                             </div>
                         )}
                     </TabsContent>
                 </Tabs>
+
+                {/* Add Loan Modal */}
+                <AddLoanModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
             </div>
         </PageWrapper>
     );

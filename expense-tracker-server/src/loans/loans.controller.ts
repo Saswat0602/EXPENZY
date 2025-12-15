@@ -29,7 +29,7 @@ export class LoansController {
   constructor(
     private readonly loansService: LoansService,
     private readonly loanAdjustmentService: LoanAdjustmentService,
-  ) { }
+  ) {}
 
   @Get('consolidated')
   @ApiOperation({
@@ -52,16 +52,20 @@ export class LoansController {
   }
 
   @Get('transactions/:otherUserId')
-  @ApiOperation({ summary: 'Get all transactions between current user and another user' })
+  @ApiOperation({
+    summary: 'Get all transactions between current user and another user',
+  })
   getTransactionsBetweenUsers(
     @Param('otherUserId') otherUserId: string,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.loansService.getTransactionsBetweenUsers(user.userId, otherUserId);
+    return this.loansService.getTransactionsBetweenUsers(
+      user.userId,
+      otherUserId,
+    );
   }
 
   @Post()
-
   @ApiOperation({ summary: 'Create a new loan' })
   create(@Body() createLoanDto: CreateLoanDto) {
     return this.loansService.create(createLoanDto);

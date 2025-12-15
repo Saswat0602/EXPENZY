@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { GroupHeader } from '@/components/features/groups/group-header';
 import { SimplifiedDebtsCard } from '@/components/features/groups/simplified-debts-card';
-import { SettleUpBar } from '@/components/features/groups/settle-up-bar';
 import { GroupStatisticsModal } from '@/components/features/groups/group-statistics-modal';
 import { ExpenseDetailModal } from '@/components/features/groups/expense-detail-modal';
 import { SettleUpModal } from '@/components/features/groups/settle-up-modal';

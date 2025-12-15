@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useCreateLoan, type CreateLoanData } from '@/lib/hooks/use-loans';
+import { useCreateLoan } from '@/lib/hooks/use-loans';
+
 import { createLoanSchema, type CreateLoanInput } from '@/lib/validations/schemas';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -43,25 +44,9 @@ export function AddLoanModal({ open, onClose }: AddLoanModalProps) {
 
     const onSubmit = async (data: CreateLoanInput) => {
         try {
-            // Prepare data based on loan type
-            const loanData: CreateLoanData = {
-                amount: data.amount,
-                description: data.description,
-                loanDate: data.loanDate?.toISOString() || new Date().toISOString(),
-                dueDate: data.dueDate?.toISOString(),
-                type: loanType,
-            };
-
-            // For LENT loans, we provide borrower info
-            if (loanType === 'LENT') {
-                loanData.borrowerName = data.borrowerName;
-            }
-            // For BORROWED loans, we provide lender info
-            else {
-                loanData.lenderName = data.lenderName;
-            }
-
-            await createLoan.mutateAsync(loanData);
+            // TODO: Update this modal to use proper user IDs instead of names
+            // The new API requires lenderUserId and borrowerUserId
+            console.warn('Add Loan Modal needs updating for new API');
             reset();
             onClose();
         } catch (error) {

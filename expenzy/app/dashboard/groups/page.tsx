@@ -11,17 +11,12 @@ import { PageWrapper } from '@/components/layout/page-wrapper';
 import { GroupCard } from '@/components/features/groups/group-card';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { calculateMemberBalances, getUserBalance } from '@/lib/utils/balance-utils';
+import { formatCurrency } from '@/lib/utils/format';
 
 export default function GroupsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { data: groups = [], isLoading } = useGroups();
     const router = useRouter();
-
-    // Get current user ID from localStorage (set during login)
-    const currentUserId = typeof window !== 'undefined'
-        ? localStorage.getItem('userId') || ''
-        : '';
 
     // Calculate balances for each group
     // Note: groupExpenses is no longer returned from the API for performance

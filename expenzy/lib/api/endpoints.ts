@@ -113,6 +113,12 @@ export const API_ENDPOINTS = {
         LIST: '/loans',
         BY_ID: (id: string) => `/loans/${id}`,
         PAYMENTS: (id: string) => `/loans/${id}/payments`,
+        CONSOLIDATED: '/loans/consolidated',
+        STATISTICS: '/loans/statistics',
+        GROUP_BALANCES: '/loans/group-balances',
+        FROM_GROUP: '/loans/from-group',
+        ADJUSTMENTS: (id: string) => `/loans/${id}/adjustments`,
+        TRANSACTIONS: (otherUserId: string) => `/loans/transactions/${otherUserId}`,
     },
 
     // Accounts
