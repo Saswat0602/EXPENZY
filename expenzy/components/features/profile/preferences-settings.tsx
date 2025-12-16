@@ -1,6 +1,6 @@
 'use client';
 
-import { Settings, IndianRupee, Type } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import {
     Select,
     SelectContent,
@@ -21,29 +21,24 @@ interface PreferencesSettingsProps {
 
 export function PreferencesSettings({ user, userSettings, onCurrencyChange, onTextSizeChange }: PreferencesSettingsProps) {
     return (
-        <div className="rounded-xl bg-card border border-border overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-            <div className="bg-muted/50 p-5 border-b border-border">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                        <Settings className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-semibold">Preferences</h3>
-                        <p className="text-sm text-muted-foreground">Default settings</p>
-                    </div>
-                </div>
+        <div className="pt-2">
+            <div className="flex items-center gap-2 mb-3">
+                <Settings className="w-4 h-4 text-primary" />
+                <h3 className="font-semibold text-base">Preferences</h3>
             </div>
-            <div className="p-6 space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+
+            <div className="space-y-1 pl-1">
+                <div className="flex items-center justify-between py-2">
                     <div className="flex items-center gap-3">
-                        <IndianRupee className="w-4 h-4 text-muted-foreground" />
-                        <p className="font-medium text-sm">Currency</p>
+                        <div>
+                            <p className="font-medium text-sm">Currency</p>
+                        </div>
                     </div>
                     <Select
                         value={user?.defaultCurrency || 'USD'}
                         onValueChange={onCurrencyChange}
                     >
-                        <SelectTrigger className="w-[180px] h-8">
+                        <SelectTrigger className="w-[120px] h-8 text-xs bg-muted/30 border-none shadow-none">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -55,16 +50,17 @@ export function PreferencesSettings({ user, userSettings, onCurrencyChange, onTe
                         </SelectContent>
                     </Select>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                <div className="flex items-center justify-between py-2">
                     <div className="flex items-center gap-3">
-                        <Type className="w-4 h-4 text-muted-foreground" />
-                        <p className="font-medium text-sm">Text Size</p>
+                        <div>
+                            <p className="font-medium text-sm">Text Size</p>
+                        </div>
                     </div>
                     <Select
                         value={userSettings?.textSize || 'medium'}
                         onValueChange={(value) => onTextSizeChange(value as 'small' | 'medium' | 'large')}
                     >
-                        <SelectTrigger className="w-[180px] h-8">
+                        <SelectTrigger className="w-[120px] h-8 text-xs bg-muted/30 border-none shadow-none">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

@@ -38,7 +38,7 @@ export * from './group';
 export * from './split';
 export * from './loan';
 export * from './savings-goal';
-export * from './subscription';
+
 export * from './tag';
 export * from './payment-method';
 export * from './account';

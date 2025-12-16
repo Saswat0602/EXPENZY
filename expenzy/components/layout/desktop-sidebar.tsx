@@ -8,12 +8,10 @@ import {
     LayoutDashboard,
     Receipt,
     Repeat,
-    BarChart3,
     Wallet,
     ChevronLeft,
     ChevronRight,
     PiggyBank,
-    Calendar,
     Users,
     HandCoins
 } from 'lucide-react';

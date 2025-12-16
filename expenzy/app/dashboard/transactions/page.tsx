@@ -44,8 +44,7 @@ export default function TransactionsPage() {
     // For stats widget - fetch all data
     const { data: expensesData } = useExpenses();
     const { data: incomesData } = useIncome();
-    const allExpenses = Array.isArray(expensesData) ? expensesData : (expensesData?.data || []);
-    const allIncomes = Array.isArray(incomesData) ? incomesData : [];
+
 
     const deleteExpense = useDeleteExpense();
     const deleteIncome = useDeleteIncome();

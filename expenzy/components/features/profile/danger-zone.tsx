@@ -10,24 +10,18 @@ interface DangerZoneProps {
 
 export function DangerZone({ onLogout, onDeleteAccount }: DangerZoneProps) {
     return (
-        <div className="rounded-xl bg-card border-2 border-destructive/30 overflow-hidden">
-            <div className="bg-destructive/5 p-5 border-b border-destructive/30">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-destructive/10">
-                        <AlertTriangle className="w-4 h-4 text-destructive" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-semibold text-destructive">Danger Zone</h3>
-                        <p className="text-sm text-destructive/70">Irreversible actions</p>
-                    </div>
-                </div>
+        <div className="pt-2">
+            <div className="flex items-center gap-2 mb-3">
+                <AlertTriangle className="w-4 h-4 text-destructive" />
+                <h3 className="font-semibold text-base text-destructive">Danger Zone</h3>
             </div>
-            <div className="p-6 flex flex-wrap gap-3">
-                <Button variant="outline" onClick={onLogout}>
-                    <LogOut className="w-4 h-4 mr-2" />
+
+            <div className="flex flex-wrap gap-2.5 pl-1">
+                <Button variant="outline" size="sm" onClick={onLogout} className="border-destructive/30 hover:bg-destructive/5 text-destructive hover:text-destructive h-8">
+                    <LogOut className="w-3.5 h-3.5 mr-2" />
                     Logout
                 </Button>
-                <Button variant="destructive" onClick={onDeleteAccount}>
+                <Button variant="destructive" size="sm" onClick={onDeleteAccount} className="h-8">
                     Delete Account
                 </Button>
             </div>

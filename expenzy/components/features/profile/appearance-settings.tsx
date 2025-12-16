@@ -1,6 +1,6 @@
 'use client';
 
-import { Palette, Clock } from 'lucide-react';
+import { Palette } from 'lucide-react';
 import {
     Select,
     SelectContent,
@@ -17,32 +17,23 @@ interface AppearanceSettingsProps {
 
 export function AppearanceSettings({ settings, onSettingChange }: AppearanceSettingsProps) {
     return (
-        <div className="rounded-xl bg-card border border-border overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-            <div className="bg-muted/50 p-5 border-b border-border">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                        <Palette className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-semibold">Appearance</h3>
-                        <p className="text-sm text-muted-foreground">Customize visual preferences</p>
-                    </div>
-                </div>
+        <div className="pt-2">
+            <div className="flex items-center gap-2 mb-3">
+                <Palette className="w-4 h-4 text-primary" />
+                <h3 className="font-semibold text-base">Appearance</h3>
             </div>
-            <div className="p-6 space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-3">
-                        <Palette className="w-4 h-4 text-muted-foreground" />
-                        <div>
-                            <p className="font-medium text-sm">Theme</p>
-                            <p className="text-xs text-muted-foreground">Color scheme</p>
-                        </div>
+
+            <div className="space-y-1 pl-1">
+                <div className="flex items-center justify-between py-2">
+                    <div>
+                        <p className="font-medium text-sm">Theme</p>
+                        <p className="text-[11px] text-muted-foreground">Color scheme</p>
                     </div>
                     <Select
                         value={settings?.theme || 'light'}
                         onValueChange={(value) => onSettingChange('theme', value)}
                     >
-                        <SelectTrigger className="w-[140px] h-8">
+                        <SelectTrigger className="w-[120px] h-8 text-xs bg-muted/30 border-none shadow-none">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -53,19 +44,16 @@ export function AppearanceSettings({ settings, onSettingChange }: AppearanceSett
                     </Select>
                 </div>
 
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-3">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                        <div>
-                            <p className="font-medium text-sm">Time Format</p>
-                            <p className="text-xs text-muted-foreground">12 or 24 hour</p>
-                        </div>
+                <div className="flex items-center justify-between py-2">
+                    <div>
+                        <p className="font-medium text-sm">Time Format</p>
+                        <p className="text-[11px] text-muted-foreground">12 or 24 hour</p>
                     </div>
                     <Select
                         value={settings?.timeFormat || '24h'}
                         onValueChange={(value) => onSettingChange('timeFormat', value)}
                     >
-                        <SelectTrigger className="w-[140px] h-8">
+                        <SelectTrigger className="w-[120px] h-8 text-xs bg-muted/30 border-none shadow-none">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

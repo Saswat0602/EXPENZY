@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useProfile, useChangePassword, useUpdateProfile } from '@/lib/hooks/use-profile';
 import { useSettings, useUpdateSettings } from '@/lib/hooks/use-settings';
 import { useAuth } from '@/contexts/auth-context';
-import { Button } from '@/components/ui/button';
 import { EditProfileModal } from '@/components/modals/edit-profile-modal';
 import { DeleteAccountModal } from '@/components/modals/delete-account-modal';
 import { ConfirmationModal } from '@/components/modals/confirmation-modal';
@@ -67,18 +66,20 @@ export default function ProfilePage() {
 
     return (
         <PageWrapper>
-            <div className="space-y-6">
+            <div className="space-y-8 max-w-4xl mx-auto">
                 {/* Responsive Header */}
-                <div className="mb-6">
-                    <h1 className="text-2xl md:text-4xl font-bold">Profile & Settings</h1>
-                    <p className="text-sm md:text-base text-muted-foreground mt-1">Manage your account and preferences</p>
+                <div className="mb-8">
+                    <h1 className="text-2xl md:text-3xl font-bold">Profile & Settings</h1>
+                    <p className="text-sm text-muted-foreground mt-0.5">Manage your account and preferences</p>
                 </div>
 
                 {/* Profile Header */}
                 <ProfileHeader user={user} onEditProfile={() => setIsEditProfileOpen(true)} />
 
+                <div className="border-t border-border/40" />
+
                 {/* Settings Grid */}
-                <div className="grid lg:grid-cols-2 gap-6">
+                <div className="grid lg:grid-cols-2 gap-x-12 gap-y-10">
                     <AppearanceSettings settings={settings} onSettingChange={handleSettingChange} />
                     <PreferencesSettings
                         user={user}
@@ -94,12 +95,16 @@ export default function ProfilePage() {
                     />
                 </div>
 
+                <div className="border-t border-border/40" />
+
                 {/* Security - Full Width */}
                 <SecuritySettings
                     user={user}
                     onPasswordChange={handlePasswordChange}
                     isChangingPassword={changePassword.isPending}
                 />
+
+                <div className="border-t border-border/40" />
 
                 {/* Danger Zone */}
                 <DangerZone

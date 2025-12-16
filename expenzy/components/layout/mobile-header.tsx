@@ -1,18 +1,13 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
 import { useTheme } from '@/contexts/theme-context';
-import { Bell, Moon, Sun, User } from 'lucide-react';
-import { ROUTES } from '@/lib/routes';
+import { Bell, Moon, Sun } from 'lucide-react';
 
 interface MobileHeaderProps {
     visible?: boolean;
 }
 
 export function MobileHeader({ visible = true }: MobileHeaderProps) {
-    const router = useRouter();
-    const { user } = useAuth();
     const { theme, toggleTheme } = useTheme();
 
     if (!visible) return null;

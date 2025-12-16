@@ -2,11 +2,11 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils/cn';
-import { LayoutDashboard, Receipt, BarChart3, HandCoins, Users, User } from 'lucide-react';
+import { Home, Receipt, Users, User, HandCoins } from 'lucide-react';
 import { ROUTES } from '@/lib/routes';
 
 const tabs = [
-    { name: 'Home', route: ROUTES.DASHBOARD, icon: LayoutDashboard },
+    { name: 'Home', route: ROUTES.DASHBOARD, icon: Home },
     { name: 'Transactions', route: ROUTES.TRANSACTIONS, icon: Receipt },
     { name: 'Groups', route: ROUTES.GROUPS, icon: Users },
     { name: 'Loans', route: ROUTES.LOANS, icon: HandCoins },

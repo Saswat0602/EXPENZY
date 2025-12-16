@@ -1,6 +1,6 @@
 'use client';
 
-import { Download, FileText, HardDrive } from 'lucide-react';
+import { Download } from 'lucide-react';
 import {
     Select,
     SelectContent,
@@ -19,32 +19,25 @@ interface DataPrivacySettingsProps {
 
 export function DataPrivacySettings({ settings, onSettingChange, onToggle }: DataPrivacySettingsProps) {
     return (
-        <div className="rounded-xl bg-card border border-border overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-            <div className="bg-muted/50 p-5 border-b border-border">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                        <Download className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-semibold">Data & Privacy</h3>
-                        <p className="text-sm text-muted-foreground">Export and backup</p>
-                    </div>
-                </div>
+        <div className="pt-2">
+            <div className="flex items-center gap-2 mb-3">
+                <Download className="w-4 h-4 text-primary" />
+                <h3 className="font-semibold text-base">Data & Privacy</h3>
             </div>
-            <div className="p-6 space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+
+            <div className="space-y-1 pl-1">
+                <div className="flex items-center justify-between py-2">
                     <div className="flex items-center gap-3">
-                        <FileText className="w-4 h-4 text-muted-foreground" />
                         <div>
                             <p className="font-medium text-sm">Export Format</p>
-                            <p className="text-xs text-muted-foreground">File type</p>
+                            <p className="text-[11px] text-muted-foreground">File type</p>
                         </div>
                     </div>
                     <Select
                         value={settings?.exportFormat || 'pdf'}
                         onValueChange={(value) => onSettingChange('exportFormat', value)}
                     >
-                        <SelectTrigger className="w-[120px] h-8">
+                        <SelectTrigger className="w-[100px] h-8 text-xs bg-muted/30 border-none shadow-none">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -55,15 +48,15 @@ export function DataPrivacySettings({ settings, onSettingChange, onToggle }: Dat
                     </Select>
                 </div>
 
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                <div className="flex items-center justify-between py-2">
                     <div className="flex items-center gap-3">
-                        <HardDrive className="w-4 h-4 text-muted-foreground" />
                         <div>
                             <p className="font-medium text-sm">Auto Backup</p>
-                            <p className="text-xs text-muted-foreground">Automatic backup</p>
+                            <p className="text-[11px] text-muted-foreground">Automatic backup</p>
                         </div>
                     </div>
                     <Switch
+                        className="scale-90"
                         checked={settings?.autoBackup ?? false}
                         onCheckedChange={(checked) => onToggle('autoBackup', checked)}
                     />

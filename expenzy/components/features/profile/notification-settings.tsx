@@ -19,29 +19,24 @@ const NOTIFICATION_OPTIONS = [
 
 export function NotificationSettings({ settings, onToggle }: NotificationSettingsProps) {
     return (
-        <div className="rounded-xl bg-card border border-border overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-            <div className="bg-muted/50 p-5 border-b border-border">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                        <Bell className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-semibold">Notifications</h3>
-                        <p className="text-sm text-muted-foreground">Alert preferences</p>
-                    </div>
-                </div>
+        <div className="pt-2">
+            <div className="flex items-center gap-2 mb-3">
+                <Bell className="w-4 h-4 text-primary" />
+                <h3 className="font-semibold text-base">Notifications</h3>
             </div>
-            <div className="p-6 space-y-3">
+
+            <div className="space-y-1 pl-1">
                 {NOTIFICATION_OPTIONS.map(({ key, label, desc }) => (
                     <div
                         key={key}
-                        className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/30 transition-colors"
+                        className="flex items-center justify-between py-2"
                     >
                         <div>
                             <p className="font-medium text-sm">{label}</p>
-                            <p className="text-xs text-muted-foreground">{desc}</p>
+                            <p className="text-[11px] text-muted-foreground">{desc}</p>
                         </div>
                         <Switch
+                            className="scale-90"
                             checked={settings?.[key as keyof UserSettings] as boolean ?? true}
                             onCheckedChange={(checked) => onToggle(key, checked)}
                         />

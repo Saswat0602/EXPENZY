@@ -1,12 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 import { useConsolidatedLoans } from '@/lib/hooks/use-loans';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { PageHeader } from '@/components/layout/page-header';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { LoadingSkeleton } from '@/components/shared/loading-skeleton';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -15,7 +13,6 @@ import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils/format';
 import { ArrowLeft, Calendar, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Loan } from '@/types/loan';
 
 export default function PersonLoansPage() {
     const router = useRouter();
