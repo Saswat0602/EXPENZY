@@ -19,25 +19,25 @@ interface DataPrivacySettingsProps {
 
 export function DataPrivacySettings({ settings, onSettingChange, onToggle }: DataPrivacySettingsProps) {
     return (
-        <div className="pt-2">
-            <div className="flex items-center gap-2 mb-3">
-                <Download className="w-4 h-4 text-primary" />
-                <h3 className="font-semibold text-base">Data & Privacy</h3>
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-5 lg:p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-2.5 sm:gap-3 mb-4 sm:mb-5 lg:mb-6">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                    <Download className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="font-semibold text-lg">Data & Privacy</h3>
             </div>
 
-            <div className="space-y-1 pl-1">
-                <div className="flex items-center justify-between py-2">
-                    <div className="flex items-center gap-3">
-                        <div>
-                            <p className="font-medium text-sm">Export Format</p>
-                            <p className="text-[11px] text-muted-foreground">File type</p>
-                        </div>
+            <div className="space-y-4 sm:space-y-5">
+                <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                        <p className="font-medium text-sm">Export Format</p>
+                        <p className="text-xs text-muted-foreground">Choose file type for exports</p>
                     </div>
                     <Select
                         value={settings?.exportFormat || 'pdf'}
                         onValueChange={(value) => onSettingChange('exportFormat', value)}
                     >
-                        <SelectTrigger className="w-[100px] h-8 text-xs bg-muted/30 border-none shadow-none">
+                        <SelectTrigger className="w-[120px] h-9 text-sm">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -48,15 +48,14 @@ export function DataPrivacySettings({ settings, onSettingChange, onToggle }: Dat
                     </Select>
                 </div>
 
-                <div className="flex items-center justify-between py-2">
-                    <div className="flex items-center gap-3">
-                        <div>
-                            <p className="font-medium text-sm">Auto Backup</p>
-                            <p className="text-[11px] text-muted-foreground">Automatic backup</p>
-                        </div>
+                <div className="h-px bg-border" />
+
+                <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                        <p className="font-medium text-sm">Auto Backup</p>
+                        <p className="text-xs text-muted-foreground">Automatic data backup</p>
                     </div>
                     <Switch
-                        className="scale-90"
                         checked={settings?.autoBackup ?? false}
                         onCheckedChange={(checked) => onToggle('autoBackup', checked)}
                     />

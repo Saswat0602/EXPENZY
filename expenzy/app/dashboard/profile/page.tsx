@@ -66,51 +66,54 @@ export default function ProfilePage() {
 
     return (
         <PageWrapper>
-            <div className="space-y-8 max-w-4xl mx-auto">
-                {/* Responsive Header */}
-                <div className="mb-8">
-                    <h1 className="text-2xl md:text-3xl font-bold">Profile & Settings</h1>
-                    <p className="text-sm text-muted-foreground mt-0.5">Manage your account and preferences</p>
+            <div className="max-w-5xl mx-auto py-4 sm:py-6 lg:py-8">
+                {/* Page Header */}
+                <div className="mb-6 sm:mb-8 lg:mb-10">
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Profile & Settings</h1>
+                    <p className="text-sm sm:text-base text-muted-foreground mt-1.5 sm:mt-2">Manage your account and preferences</p>
                 </div>
 
-                {/* Profile Header */}
-                <ProfileHeader user={user} onEditProfile={() => setIsEditProfileOpen(true)} />
+                {/* Profile Header Card */}
+                <div className="mb-5 sm:mb-6 lg:mb-8">
+                    <ProfileHeader user={user} onEditProfile={() => setIsEditProfileOpen(true)} />
+                </div>
 
-                <div className="border-t border-border/40" />
+                {/* Settings Sections */}
+                <div className="space-y-4 sm:space-y-5 lg:space-y-8">
+                    {/* Appearance & Preferences Row */}
+                    <div className="grid lg:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
+                        <AppearanceSettings settings={settings} onSettingChange={handleSettingChange} />
+                        <PreferencesSettings
+                            user={user}
+                            userSettings={settings}
+                            onCurrencyChange={handleCurrencyChange}
+                            onTextSizeChange={handleTextSizeChange}
+                        />
+                    </div>
 
-                {/* Settings Grid */}
-                <div className="grid lg:grid-cols-2 gap-x-12 gap-y-10">
-                    <AppearanceSettings settings={settings} onSettingChange={handleSettingChange} />
-                    <PreferencesSettings
+                    {/* Notifications & Data Privacy Row */}
+                    <div className="grid lg:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
+                        <NotificationSettings settings={settings} onToggle={handleToggle} />
+                        <DataPrivacySettings
+                            settings={settings}
+                            onSettingChange={handleSettingChange}
+                            onToggle={handleToggle}
+                        />
+                    </div>
+
+                    {/* Security - Full Width */}
+                    <SecuritySettings
                         user={user}
-                        userSettings={settings}
-                        onCurrencyChange={handleCurrencyChange}
-                        onTextSizeChange={handleTextSizeChange}
+                        onPasswordChange={handlePasswordChange}
+                        isChangingPassword={changePassword.isPending}
                     />
-                    <NotificationSettings settings={settings} onToggle={handleToggle} />
-                    <DataPrivacySettings
-                        settings={settings}
-                        onSettingChange={handleSettingChange}
-                        onToggle={handleToggle}
+
+                    {/* Danger Zone - Full Width */}
+                    <DangerZone
+                        onLogout={() => setIsLogoutConfirmOpen(true)}
+                        onDeleteAccount={() => setIsDeleteAccountOpen(true)}
                     />
                 </div>
-
-                <div className="border-t border-border/40" />
-
-                {/* Security - Full Width */}
-                <SecuritySettings
-                    user={user}
-                    onPasswordChange={handlePasswordChange}
-                    isChangingPassword={changePassword.isPending}
-                />
-
-                <div className="border-t border-border/40" />
-
-                {/* Danger Zone */}
-                <DangerZone
-                    onLogout={() => setIsLogoutConfirmOpen(true)}
-                    onDeleteAccount={() => setIsDeleteAccountOpen(true)}
-                />
 
                 {/* Modals */}
                 <EditProfileModal

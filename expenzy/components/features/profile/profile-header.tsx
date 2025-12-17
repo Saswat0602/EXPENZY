@@ -16,31 +16,38 @@ export function ProfileHeader({ user, onEditProfile }: ProfileHeaderProps) {
         : user?.username || 'User';
 
     return (
-        <div className="py-2">
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-5">
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-6 lg:p-8 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6">
                 <UserAvatar
                     seed={user?.avatarSeed}
                     style={user?.avatarStyle as string | undefined}
                     fallbackUrl={user?.avatar}
                     fallbackName={displayName}
-                    size={80}
-                    className="ring-2 ring-primary/20"
+                    size={96}
+                    className="ring-4 ring-primary/10 shadow-lg"
                 />
-                <div className="flex-1 text-center md:text-left">
-                    <h2 className="text-xl font-bold mb-1">{displayName}</h2>
-                    <div className="space-y-0.5 text-muted-foreground text-sm">
-                        <p className="flex items-center gap-2 justify-center md:justify-start">
-                            <Mail className="w-3.5 h-3.5" />
-                            {user?.email}
-                        </p>
-                        {user?.phone && (
-                            <p className="flex items-center gap-2 justify-center md:justify-start">
-                                <Smartphone className="w-3.5 h-3.5" />
-                                {user.phone}
+                <div className="flex-1 text-center sm:text-left space-y-4">
+                    <div>
+                        <h2 className="text-2xl font-bold mb-2">{displayName}</h2>
+                        <div className="space-y-1.5 text-muted-foreground">
+                            <p className="flex items-center gap-2.5 justify-center sm:justify-start text-sm">
+                                <Mail className="w-4 h-4 text-primary/70" />
+                                <span>{user?.email}</span>
                             </p>
-                        )}
+                            {user?.phone && (
+                                <p className="flex items-center gap-2.5 justify-center sm:justify-start text-sm">
+                                    <Smartphone className="w-4 h-4 text-primary/70" />
+                                    <span>{user.phone}</span>
+                                </p>
+                            )}
+                        </div>
                     </div>
-                    <Button variant="outline" size="sm" className="mt-3 h-8" onClick={onEditProfile}>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 px-6 font-medium"
+                        onClick={onEditProfile}
+                    >
                         Edit Profile
                     </Button>
                 </div>

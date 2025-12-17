@@ -19,27 +19,30 @@ const NOTIFICATION_OPTIONS = [
 
 export function NotificationSettings({ settings, onToggle }: NotificationSettingsProps) {
     return (
-        <div className="pt-2">
-            <div className="flex items-center gap-2 mb-3">
-                <Bell className="w-4 h-4 text-primary" />
-                <h3 className="font-semibold text-base">Notifications</h3>
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-5 lg:p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-2.5 sm:gap-3 mb-4 sm:mb-5 lg:mb-6">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                    <Bell className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="font-semibold text-lg">Notifications</h3>
             </div>
 
-            <div className="space-y-1 pl-1">
-                {NOTIFICATION_OPTIONS.map(({ key, label, desc }) => (
-                    <div
-                        key={key}
-                        className="flex items-center justify-between py-2"
-                    >
-                        <div>
-                            <p className="font-medium text-sm">{label}</p>
-                            <p className="text-[11px] text-muted-foreground">{desc}</p>
+            <div className="space-y-4 sm:space-y-5">
+                {NOTIFICATION_OPTIONS.map(({ key, label, desc }, index) => (
+                    <div key={key}>
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                                <p className="font-medium text-sm">{label}</p>
+                                <p className="text-xs text-muted-foreground">{desc}</p>
+                            </div>
+                            <Switch
+                                checked={settings?.[key as keyof UserSettings] as boolean ?? true}
+                                onCheckedChange={(checked) => onToggle(key, checked)}
+                            />
                         </div>
-                        <Switch
-                            className="scale-90"
-                            checked={settings?.[key as keyof UserSettings] as boolean ?? true}
-                            onCheckedChange={(checked) => onToggle(key, checked)}
-                        />
+                        {index < NOTIFICATION_OPTIONS.length - 1 && (
+                            <div className="h-px bg-border mt-4 sm:mt-5" />
+                        )}
                     </div>
                 ))}
             </div>
