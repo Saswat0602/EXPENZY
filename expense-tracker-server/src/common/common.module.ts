@@ -1,7 +1,7 @@
 import { Module, Global } from '@nestjs/common';
 import { MulterModule } from '@nestjs/platform-express';
-import { AttachmentService } from './attachment.service';
-import { AttachmentController } from './attachment.controller';
+// import { AttachmentService } from './attachment.service'; // Disabled - Attachment model deleted
+// import { AttachmentController } from './attachment.controller'; // Disabled - Attachment model deleted
 import { ReminderService } from './reminder.service';
 import { ReminderController } from './reminder.controller';
 import { EmailService } from './email.service';
@@ -13,8 +13,19 @@ import { EmailService } from './email.service';
       dest: './uploads/temp',
     }),
   ],
-  controllers: [AttachmentController, ReminderController],
-  providers: [AttachmentService, ReminderService, EmailService],
-  exports: [AttachmentService, ReminderService, EmailService],
+  controllers: [
+    // AttachmentController, // Disabled - Attachment model deleted
+    ReminderController,
+  ],
+  providers: [
+    // AttachmentService, // Disabled - Attachment model deleted
+    ReminderService,
+    EmailService,
+  ],
+  exports: [
+    // AttachmentService, // Disabled - Attachment model deleted
+    ReminderService,
+    EmailService,
+  ],
 })
 export class CommonModule {}

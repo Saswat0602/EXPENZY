@@ -42,7 +42,7 @@ export function AddLoanModal({ open, onClose }: AddLoanModalProps) {
 
     const dueDate = useWatch({ control, name: 'dueDate' });
 
-    const onSubmit = async (data: CreateLoanInput) => {
+    const onSubmit = async () => {
         try {
             // TODO: Update this modal to use proper user IDs instead of names
             // The new API requires lenderUserId and borrowerUserId

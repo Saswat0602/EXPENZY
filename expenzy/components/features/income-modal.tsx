@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileUpload } from '@/components/shared/file-upload';
 import { useCreateIncome, useUpdateIncome } from '@/lib/hooks/use-income';
 import { useCategories } from '@/lib/hooks/use-categories';
 import type { Income, CreateIncomeDto } from '@/types';
@@ -125,17 +124,6 @@ export function IncomeModal({ open, onClose, income }: IncomeModalProps) {
                         />
                     </div>
 
-                    {/* File Attachments - Only show in edit mode */}
-                    {income && (
-                        <div className="space-y-2 pt-4 border-t">
-                            <Label className="text-sm font-medium">Attachments</Label>
-                            <FileUpload
-                                entityType="income"
-                                entityId={income.id}
-                                maxSize={10}
-                            />
-                        </div>
-                    )}
 
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={onClose}>

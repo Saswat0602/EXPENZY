@@ -97,105 +97,70 @@ export class SchedulerService {
   }
 
   /**
-   * Update subscription billing dates - runs daily at 2:00 AM
-   * Updates next billing date for subscriptions that have been billed
+   * Send recurring expense reminders - runs daily at 2:00 AM
+   * Creates notifications for upcoming recurring expenses
    */
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
-  async updateSubscriptionBillingDates() {
-    this.logger.log('Updating subscription billing dates...');
+  async sendRecurringExpenseReminders() {
+    this.logger.log('Sending recurring expense reminders...');
 
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // Find subscriptions with billing date today or in the past
-      const dueSubscriptions = await this.prisma.subscription.findMany({
+      // Find recurring expenses due in the next 3 days
+      const upcomingRecurringExpenses = await this.prisma.expense.findMany({
         where: {
-          isActive: true,
-          nextBillingDate: { lte: today },
-        },
-      });
-
-      let updatedCount = 0;
-
-      for (const subscription of dueSubscriptions) {
-        const nextBillingDate = this.calculateNextBillingDate(
-          subscription.nextBillingDate,
-          subscription.billingCycle,
-        );
-
-        await this.prisma.subscription.update({
-          where: { id: subscription.id },
-          data: { nextBillingDate },
-        });
-
-        updatedCount++;
-      }
-
-      this.logger.log(`Updated ${updatedCount} subscription billing dates`);
-    } catch (error) {
-      this.logger.error('Error updating subscription billing dates:', error);
-    }
-  }
-
-  /**
-   * Send subscription reminders - runs daily at 9:00 AM
-   * Creates notifications for upcoming subscription renewals
-   */
-  @Cron(CronExpression.EVERY_DAY_AT_9AM)
-  async sendSubscriptionReminders() {
-    this.logger.log('Sending subscription reminders...');
-
-    try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      // Find subscriptions due in the next 3 days
-      const upcomingSubscriptions = await this.prisma.subscription.findMany({
-        where: {
-          isActive: true,
-          nextBillingDate: {
-            gte: today,
-            lte: new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000),
+          isRecurring: true,
+          deletedAt: null,
+          recurringPattern: {
+            isActive: true,
+            nextOccurrence: {
+              gte: today,
+              lte: new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000),
+            },
           },
-          reminderDays: { gte: 0 },
         },
-        include: { category: true },
+        include: {
+          recurringPattern: true,
+          category: true,
+          user: true,
+        },
       });
 
       let notificationCount = 0;
 
-      for (const subscription of upcomingSubscriptions) {
-        const daysUntilBilling = Math.ceil(
-          (subscription.nextBillingDate.getTime() - today.getTime()) /
+      for (const expense of upcomingRecurringExpenses) {
+        if (!expense.recurringPattern) continue;
+
+        const daysUntilDue = Math.ceil(
+          (expense.recurringPattern.nextOccurrence.getTime() -
+            today.getTime()) /
             (1000 * 60 * 60 * 24),
         );
 
-        if (
-          subscription.reminderDays &&
-          daysUntilBilling <= subscription.reminderDays
-        ) {
-          // Create notification
-          await this.prisma.notification.create({
-            data: {
-              userId: subscription.userId,
-              type: 'subscription_reminder',
-              title: 'Upcoming Subscription Renewal',
-              message: `Your ${subscription.name} subscription will renew in ${daysUntilBilling} day(s) for ${subscription.currency} ${Number(subscription.amount)}`,
-              relatedEntityType: 'subscription',
-              relatedEntityId: subscription.id,
-              priority: 'normal',
-              category: 'subscription',
-            },
-          });
+        // Create notification
+        await this.prisma.notification.create({
+          data: {
+            userId: expense.userId,
+            type: 'recurring_expense_reminder',
+            title: 'Upcoming Recurring Expense',
+            message: `Your recurring expense "${expense.description}" is due in ${daysUntilDue} day(s) for ${expense.currency} ${Number(expense.amount)}`,
+            relatedEntityType: 'expense',
+            relatedEntityId: expense.id,
+            priority: 'normal',
+            category: 'expense',
+          },
+        });
 
-          notificationCount++;
-        }
+        notificationCount++;
       }
 
-      this.logger.log(`Created ${notificationCount} subscription reminders`);
+      this.logger.log(
+        `Created ${notificationCount} recurring expense reminders`,
+      );
     } catch (error) {
-      this.logger.error('Error sending subscription reminders:', error);
+      this.logger.error('Error sending recurring expense reminders:', error);
     }
   }
 
@@ -309,32 +274,5 @@ export class SchedulerService {
       default:
         return false;
     }
-  }
-
-  /**
-   * Helper method to calculate next billing date
-   */
-  private calculateNextBillingDate(
-    currentDate: Date,
-    billingCycle: string,
-  ): Date {
-    const nextDate = new Date(currentDate);
-
-    switch (billingCycle) {
-      case 'weekly':
-        nextDate.setDate(nextDate.getDate() + 7);
-        break;
-      case 'monthly':
-        nextDate.setMonth(nextDate.getMonth() + 1);
-        break;
-      case 'quarterly':
-        nextDate.setMonth(nextDate.getMonth() + 3);
-        break;
-      case 'yearly':
-        nextDate.setFullYear(nextDate.getFullYear() + 1);
-        break;
-    }
-
-    return nextDate;
   }
 }

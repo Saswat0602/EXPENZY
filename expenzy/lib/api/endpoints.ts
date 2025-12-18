@@ -69,13 +69,13 @@ export const API_ENDPOINTS = {
         PROGRESS: '/savings/goals/progress',
     },
 
-    // Subscriptions
-    SUBSCRIPTIONS: {
-        BASE: '/subscriptions',
-        BY_ID: (id: string) => `/subscriptions/${id}`,
-        UPCOMING: '/subscriptions/upcoming',
-        SUMMARY: '/subscriptions/summary',
-    },
+    // Subscriptions - REMOVED
+    // SUBSCRIPTIONS: {
+    //     BASE: '/subscriptions',
+    //     BY_ID: (id: string) => `/subscriptions/${id}`,
+    //     UPCOMING: '/subscriptions/upcoming',
+    //     SUMMARY: '/subscriptions/summary',
+    // },
 
     // Tags
     TAGS: {
@@ -160,14 +160,6 @@ export const API_ENDPOINTS = {
     RECURRING_EXPENSES: {
         BASE: '/expenses/recurring',
         BY_ID: (id: string) => `/expenses/recurring/${id}`,
-    },
-
-    // Attachments
-    ATTACHMENTS: {
-        UPLOAD: '/attachments/upload',
-        BY_ENTITY: (entityType: string, entityId: string) => `/attachments/${entityType}/${entityId}`,
-        DOWNLOAD: (id: string) => `/attachments/file/${id}`,
-        DELETE: (id: string) => `/attachments/${id}`,
     },
 
     // Reminders

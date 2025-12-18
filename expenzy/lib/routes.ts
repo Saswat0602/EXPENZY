@@ -15,7 +15,7 @@ export const ROUTES = {
     ANALYTICS: '/dashboard/analytics',
     BUDGET: '/dashboard/budget',
     SAVINGS: '/dashboard/savings',
-    SUBSCRIPTIONS: '/dashboard/subscriptions',
+    // SUBSCRIPTIONS: '/dashboard/subscriptions', // Removed
     GROUPS: '/dashboard/groups',
     LOANS: '/dashboard/loans',
     PROFILE: '/dashboard/profile',

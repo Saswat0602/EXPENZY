@@ -8,12 +8,10 @@ import {
     LayoutDashboard,
     Receipt,
     Repeat,
-    BarChart3,
     Wallet,
     ChevronLeft,
     ChevronRight,
     PiggyBank,
-    Calendar,
     Users,
     HandCoins
 } from 'lucide-react';
@@ -25,10 +23,10 @@ const navigation = [
     { name: 'Dashboard', route: ROUTES.DASHBOARD, icon: LayoutDashboard },
     { name: 'Transactions', route: ROUTES.TRANSACTIONS, icon: Receipt },
     { name: 'Recurring', route: ROUTES.RECURRING_EXPENSES, icon: Repeat },
-    { name: 'Analytics', route: ROUTES.ANALYTICS, icon: BarChart3 },
+    // { name: 'Analytics', route: ROUTES.ANALYTICS, icon: BarChart3 }, // Removed as per request
     { name: 'Budget', route: ROUTES.BUDGET, icon: Wallet },
     { name: 'Savings', route: ROUTES.SAVINGS, icon: PiggyBank },
-    { name: 'Subscriptions', route: ROUTES.SUBSCRIPTIONS, icon: Calendar },
+    // { name: 'Subscriptions', route: ROUTES.SUBSCRIPTIONS, icon: Calendar }, // Removed as per request
     { name: 'Groups', route: ROUTES.GROUPS, icon: Users },
     { name: 'Loans', route: ROUTES.LOANS, icon: HandCoins },
 ];

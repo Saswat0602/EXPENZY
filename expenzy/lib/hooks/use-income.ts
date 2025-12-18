@@ -82,6 +82,13 @@ interface CursorResponse<T> {
     };
 }
 
+interface OffsetResponse<T> {
+    data: T[];
+    total: number;
+    page: number;
+    limit: number;
+}
+
 /**
  * Cursor-based infinite query for income
  * Uses cursor pagination with 50 items per page
@@ -93,9 +100,9 @@ export function useInfiniteIncome(filters?: IncomeFilters) {
         queryFn: async ({ pageParam }) => {
             const params = new URLSearchParams();
 
-            // Add cursor if available
+            // Add page if available (offset pagination)
             if (pageParam) {
-                params.append('cursor', pageParam);
+                params.append('page', pageParam.toString());
             }
 
             // Set limit to 50
@@ -118,12 +125,27 @@ export function useInfiniteIncome(filters?: IncomeFilters) {
             }
 
             const url = `${API_ENDPOINTS.INCOME.BASE}?${params.toString()}`;
-            const response = await apiClient.getRaw<CursorResponse<Income>>(url);
+            const response = await apiClient.getRaw<{ data: OffsetResponse<Income> }>(url);
+            const actualData = response.data;
 
-            return response;
+            // Convert offset response to cursor format for consistency
+            const hasMore = actualData.data.length === actualData.limit &&
+                (actualData.page * actualData.limit) < actualData.total;
+
+            return {
+                data: actualData.data,
+                meta: {
+                    nextCursor: hasMore ? (actualData.page + 1).toString() : null,
+                    hasMore,
+                    limit: actualData.limit,
+                },
+            };
         },
-        getNextPageParam: (lastPage) => lastPage?.meta?.nextCursor ?? null,
-        initialPageParam: undefined as string | undefined,
+        getNextPageParam: (lastPage) => {
+            const nextCursor = lastPage?.meta?.nextCursor;
+            return nextCursor ? parseInt(nextCursor, 10) : null;
+        },
+        initialPageParam: 1 as number,
         staleTime: 1000 * 60, // 1 minute
     });
 }

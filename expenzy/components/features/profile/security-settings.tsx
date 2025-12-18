@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Shield, Lock, Eye, EyeOff, ChevronDown, ChevronUp } from 'lucide-react';
+import { Shield, Eye, EyeOff, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,44 +42,37 @@ export function SecuritySettings({ user, onPasswordChange, isChangingPassword }:
     };
 
     return (
-        <div className="rounded-xl bg-card border border-border overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-            <div className="bg-muted/50 p-5 border-b border-border">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                        <Shield className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-semibold">Security</h3>
-                        <p className="text-sm text-muted-foreground">Account security settings</p>
-                    </div>
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-5 lg:p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-2.5 sm:gap-3 mb-4 sm:mb-5 lg:mb-6">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                    <Shield className="w-5 h-5 text-primary" />
                 </div>
+                <h3 className="font-semibold text-lg">Security</h3>
             </div>
-            <div className="p-6">
+
+            <div>
                 <Button
-                    variant="outline"
-                    className="w-full justify-between h-auto p-4 hover:bg-muted/50 transition-colors"
+                    variant="ghost"
+                    className="w-full justify-between h-auto py-3 px-4 hover:bg-muted/50 rounded-lg"
                     onClick={() => setShowPasswordSection(!showPasswordSection)}
                 >
-                    <div className="flex items-center gap-3">
-                        <Lock className="w-4 h-4" />
-                        <div className="text-left">
-                            <p className="font-medium text-sm">Change Password</p>
-                            {user?.lastPasswordChange && (
-                                <p className="text-xs text-muted-foreground">
-                                    Last changed: {formatDate(user.lastPasswordChange)}
-                                </p>
-                            )}
-                        </div>
+                    <div className="text-left space-y-0.5">
+                        <p className="font-medium text-sm">Change Password</p>
+                        {user?.lastPasswordChange && (
+                            <p className="text-xs text-muted-foreground">
+                                Last changed: {formatDate(user.lastPasswordChange)}
+                            </p>
+                        )}
                     </div>
                     {showPasswordSection ? (
-                        <ChevronUp className="w-4 h-4" />
+                        <ChevronUp className="w-4 h-4 text-muted-foreground" />
                     ) : (
-                        <ChevronDown className="w-4 h-4" />
+                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
                     )}
                 </Button>
 
                 {showPasswordSection && (
-                    <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-4 p-5 border border-border rounded-lg bg-muted/20">
+                    <form onSubmit={handleSubmit(onSubmit)} className="mt-4 sm:mt-5 lg:mt-6 space-y-4 sm:space-y-5 px-2 sm:px-3 lg:px-4">
                         <div>
                             <Label htmlFor="currentPassword" className="text-sm font-medium">
                                 Current Password
@@ -90,7 +83,7 @@ export function SecuritySettings({ user, onPasswordChange, isChangingPassword }:
                                     type={showCurrentPassword ? 'text' : 'password'}
                                     {...register('currentPassword')}
                                     placeholder="Enter current password"
-                                    className="pr-10"
+                                    className="pr-10 h-10"
                                 />
                                 <button
                                     type="button"
@@ -100,8 +93,8 @@ export function SecuritySettings({ user, onPasswordChange, isChangingPassword }:
                                     {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
                             </div>
-                            {errors.currentPassword && (
-                                <p className="text-sm text-destructive mt-1">{errors.currentPassword.message}</p>
+                            {errors?.currentPassword && (
+                                <p className="text-xs text-destructive mt-1.5">{errors.currentPassword.message}</p>
                             )}
                         </div>
 
@@ -115,7 +108,7 @@ export function SecuritySettings({ user, onPasswordChange, isChangingPassword }:
                                     type={showNewPassword ? 'text' : 'password'}
                                     {...register('newPassword')}
                                     placeholder="Enter new password"
-                                    className="pr-10"
+                                    className="pr-10 h-10"
                                 />
                                 <button
                                     type="button"
@@ -125,8 +118,8 @@ export function SecuritySettings({ user, onPasswordChange, isChangingPassword }:
                                     {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
                             </div>
-                            {errors.newPassword && (
-                                <p className="text-sm text-destructive mt-1">{errors.newPassword.message}</p>
+                            {errors?.newPassword && (
+                                <p className="text-xs text-destructive mt-1.5">{errors.newPassword.message}</p>
                             )}
                         </div>
 
@@ -140,7 +133,7 @@ export function SecuritySettings({ user, onPasswordChange, isChangingPassword }:
                                     type={showConfirmPassword ? 'text' : 'password'}
                                     {...register('confirmPassword')}
                                     placeholder="Confirm new password"
-                                    className="pr-10"
+                                    className="pr-10 h-10"
                                 />
                                 <button
                                     type="button"
@@ -150,15 +143,16 @@ export function SecuritySettings({ user, onPasswordChange, isChangingPassword }:
                                     {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
                             </div>
-                            {errors.confirmPassword && (
-                                <p className="text-sm text-destructive mt-1">{errors.confirmPassword.message}</p>
+                            {errors?.confirmPassword && (
+                                <p className="text-xs text-destructive mt-1.5">{errors.confirmPassword.message}</p>
                             )}
                         </div>
 
                         <div className="flex justify-end gap-3 pt-2">
                             <Button
                                 type="button"
-                                variant="outline"
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => {
                                     reset();
                                     setShowPasswordSection(false);
@@ -166,8 +160,8 @@ export function SecuritySettings({ user, onPasswordChange, isChangingPassword }:
                             >
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={isChangingPassword}>
-                                {isChangingPassword ? 'Changing...' : 'Update Password'}
+                            <Button type="submit" size="sm" disabled={isChangingPassword}>
+                                {isChangingPassword ? 'Updating...' : 'Update Password'}
                             </Button>
                         </div>
                     </form>

@@ -238,9 +238,9 @@ export class GroupsService {
       data: {
         groupId,
         userId: addMemberDto.userId,
-        memberName: addMemberDto.memberName,
-        memberEmail: addMemberDto.memberEmail,
-        memberPhone: addMemberDto.memberPhone,
+        // memberName removed - use contactId instead
+        // memberEmail removed - use contactId instead
+        // memberPhone removed - use contactId instead
         role: addMemberDto.role || 'member',
         inviteToken,
         inviteStatus: addMemberDto.userId ? 'accepted' : 'pending',
@@ -317,7 +317,7 @@ export class GroupsService {
         userId,
         inviteStatus: 'accepted',
         joinedAt: new Date(),
-        memberName: null, // Clear non-registered fields
+        // memberName removed from schema
       },
       include: {
         user: true,
@@ -611,7 +611,7 @@ export class GroupsService {
             user: true,
           },
         },
-        splitCalculations: true,
+        // splitCalculations removed - model deleted
       },
     });
 

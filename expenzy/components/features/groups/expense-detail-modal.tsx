@@ -20,8 +20,7 @@ import { formatCurrency } from '@/lib/utils/currency';
 import { calculateUserExpenseBalance } from '@/lib/utils/balance-utils';
 import { CategoryIcon } from '@/lib/categorization/category-icons';
 import { useDeleteGroupExpense } from '@/lib/hooks/use-group-expenses';
-import { useAttachments, type Attachment } from '@/lib/hooks/use-attachments';
-import { Pencil, Trash2, FileText, Image as ImageIcon, File, Download } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -46,7 +45,7 @@ export function ExpenseDetailModal({
     const router = useRouter();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const deleteExpense = useDeleteGroupExpense();
-    const { data: attachments = [] } = useAttachments('group_expense', expense?.id || '');
+
 
     if (!expense) return null;
 
@@ -157,45 +156,7 @@ export function ExpenseDetailModal({
                 </div>
             </div>
 
-            {/* Attachments - Read-only */}
-            {attachments.length > 0 && (
-                <div>
-                    <p className="text-xs font-bold text-muted-foreground mb-2 uppercase">Attachments</p>
-                    <div className="space-y-1.5">
-                        {attachments.map((attachment: Attachment) => {
-                            const getFileIcon = () => {
-                                const type = (attachment.mimeType || '').toLowerCase();
-                                if (type.includes('image')) return ImageIcon;
-                                if (type.includes('pdf')) return FileText;
-                                return File;
-                            };
-                            const FileIcon = getFileIcon();
 
-                            return (
-                                <a
-                                    key={attachment.id}
-                                    href={attachment.fileUrl}
-                                    download={attachment.fileName}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center justify-between py-2 px-3 bg-muted/20 rounded-lg hover:bg-muted/40 transition-colors group"
-                                >
-                                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                                        <FileIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                        <span className="text-sm font-medium truncate">
-                                            {attachment.fileName}
-                                        </span>
-                                        <span className="text-xs text-muted-foreground flex-shrink-0">
-                                            ({((attachment.fileSize || 0) / 1024).toFixed(1)} KB)
-                                        </span>
-                                    </div>
-                                    <Download className="h-4 w-4 text-muted-foreground group-hover:text-foreground flex-shrink-0" />
-                                </a>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
 
             {/* Actions - Compact */}
             <div className="flex gap-2 pt-1">

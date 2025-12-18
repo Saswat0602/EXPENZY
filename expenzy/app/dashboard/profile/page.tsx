@@ -1,12 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useProfile, useChangePassword, useUpdateProfile } from '@/lib/hooks/use-profile';
 import { useSettings, useUpdateSettings } from '@/lib/hooks/use-settings';
 import { useAuth } from '@/contexts/auth-context';
-import { useLayout } from '@/contexts/layout-context';
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { EditProfileModal } from '@/components/modals/edit-profile-modal';
 import { DeleteAccountModal } from '@/components/modals/delete-account-modal';
 import { ConfirmationModal } from '@/components/modals/confirmation-modal';
@@ -24,7 +21,7 @@ import { PageWrapper } from '@/components/layout/page-wrapper';
 
 export default function ProfilePage() {
     const { logout } = useAuth();
-    const { setLayoutVisibility } = useLayout();
+    // const { setLayoutVisibility } = useLayout(); // Removed
     const { data: user, isLoading: userLoading } = useProfile();
     const { data: settings, isLoading: settingsLoading } = useSettings();
     const updateSettings = useUpdateSettings();
@@ -35,14 +32,6 @@ export default function ProfilePage() {
     const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
-    // Hide mobile navigation on mount, restore on unmount
-    useEffect(() => {
-        setLayoutVisibility({ showMobileHeader: false, showBottomNav: false });
-        return () => {
-            setLayoutVisibility({ showMobileHeader: true, showBottomNav: true });
-        };
-    }, [setLayoutVisibility]);
-
     const handleSettingChange = async (key: string, value: string) => {
         await updateSettings.mutateAsync({ [key]: value });
     };
@@ -50,6 +39,7 @@ export default function ProfilePage() {
     const handleToggle = async (key: string, value: boolean) => {
         await updateSettings.mutateAsync({ [key]: value });
     };
+    // ... (rest of handlers unchanged)
 
     const handleCurrencyChange = (currency: string) => {
         updateProfile.mutate({ defaultCurrency: currency as 'USD' | 'EUR' | 'INR' });
@@ -76,60 +66,54 @@ export default function ProfilePage() {
 
     return (
         <PageWrapper>
-            <div className="space-y-6">
-                {/* Mobile Header with Back Button */}
-                <div className="md:hidden sticky top-0 z-10 bg-background border-b px-4 -mx-4">
-                    <div className="flex items-center gap-3 py-4">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => window.history.back()}
-                            className="h-10 w-10"
-                        >
-                            <ArrowLeft className="h-5 w-5" />
-                        </Button>
-                        <h1 className="text-lg font-semibold">Profile & Settings</h1>
+            <div className="max-w-5xl mx-auto py-4 sm:py-6 lg:py-8">
+                {/* Page Header */}
+                <div className="mb-6 sm:mb-8 lg:mb-10">
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Profile & Settings</h1>
+                    <p className="text-sm sm:text-base text-muted-foreground mt-1.5 sm:mt-2">Manage your account and preferences</p>
+                </div>
+
+                {/* Profile Header Card */}
+                <div className="mb-5 sm:mb-6 lg:mb-8">
+                    <ProfileHeader user={user} onEditProfile={() => setIsEditProfileOpen(true)} />
+                </div>
+
+                {/* Settings Sections */}
+                <div className="space-y-4 sm:space-y-5 lg:space-y-8">
+                    {/* Appearance & Preferences Row */}
+                    <div className="grid lg:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
+                        <AppearanceSettings settings={settings} onSettingChange={handleSettingChange} />
+                        <PreferencesSettings
+                            user={user}
+                            userSettings={settings}
+                            onCurrencyChange={handleCurrencyChange}
+                            onTextSizeChange={handleTextSizeChange}
+                        />
                     </div>
-                </div>
 
-                {/* Desktop Header */}
-                <div className="hidden md:block mb-6">
-                    <h1 className="text-3xl md:text-4xl font-bold">Profile & Settings</h1>
-                    <p className="text-muted-foreground mt-1">Manage your account and preferences</p>
-                </div>
+                    {/* Notifications & Data Privacy Row */}
+                    <div className="grid lg:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
+                        <NotificationSettings settings={settings} onToggle={handleToggle} />
+                        <DataPrivacySettings
+                            settings={settings}
+                            onSettingChange={handleSettingChange}
+                            onToggle={handleToggle}
+                        />
+                    </div>
 
-                {/* Profile Header */}
-                <ProfileHeader user={user} onEditProfile={() => setIsEditProfileOpen(true)} />
-
-                {/* Settings Grid */}
-                <div className="grid lg:grid-cols-2 gap-6">
-                    <AppearanceSettings settings={settings} onSettingChange={handleSettingChange} />
-                    <PreferencesSettings
+                    {/* Security - Full Width */}
+                    <SecuritySettings
                         user={user}
-                        userSettings={settings}
-                        onCurrencyChange={handleCurrencyChange}
-                        onTextSizeChange={handleTextSizeChange}
+                        onPasswordChange={handlePasswordChange}
+                        isChangingPassword={changePassword.isPending}
                     />
-                    <NotificationSettings settings={settings} onToggle={handleToggle} />
-                    <DataPrivacySettings
-                        settings={settings}
-                        onSettingChange={handleSettingChange}
-                        onToggle={handleToggle}
+
+                    {/* Danger Zone - Full Width */}
+                    <DangerZone
+                        onLogout={() => setIsLogoutConfirmOpen(true)}
+                        onDeleteAccount={() => setIsDeleteAccountOpen(true)}
                     />
                 </div>
-
-                {/* Security - Full Width */}
-                <SecuritySettings
-                    user={user}
-                    onPasswordChange={handlePasswordChange}
-                    isChangingPassword={changePassword.isPending}
-                />
-
-                {/* Danger Zone */}
-                <DangerZone
-                    onLogout={() => setIsLogoutConfirmOpen(true)}
-                    onDeleteAccount={() => setIsDeleteAccountOpen(true)}
-                />
 
                 {/* Modals */}
                 <EditProfileModal

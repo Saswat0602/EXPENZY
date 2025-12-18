@@ -1,18 +1,13 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
 import { useTheme } from '@/contexts/theme-context';
-import { Bell, Moon, Sun, User } from 'lucide-react';
-import { ROUTES } from '@/lib/routes';
+import { Bell, Moon, Sun } from 'lucide-react';
 
 interface MobileHeaderProps {
     visible?: boolean;
 }
 
 export function MobileHeader({ visible = true }: MobileHeaderProps) {
-    const router = useRouter();
-    const { user } = useAuth();
     const { theme, toggleTheme } = useTheme();
 
     if (!visible) return null;
@@ -58,16 +53,6 @@ export function MobileHeader({ visible = true }: MobileHeaderProps) {
                         <Bell className="w-5 h-5" />
                         <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full" />
                     </button>
-
-                    {user && (
-                        <button
-                            onClick={() => router.push(ROUTES.PROFILE)}
-                            className="p-2 rounded-lg hover:bg-muted transition-colors"
-                            aria-label="Profile"
-                        >
-                            <User className="w-5 h-5" />
-                        </button>
-                    )}
                 </div>
             </div>
         </header>

@@ -33,7 +33,6 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { MemberAvatar } from '@/components/features/groups/member-avatar';
-import { FileUpload } from '@/components/shared/file-upload';
 
 const SPLIT_TYPES: { value: SplitType; label: string; description: string }[] = [
     { value: 'equal', label: 'Equally', description: 'Split the total amount equally' },
@@ -474,18 +473,6 @@ export default function AddExpensePage() {
                     </div>
                 </div>
 
-                {/* File Attachments - Only in edit mode */}
-                {isEditMode && expenseId && (
-                    <div className="space-y-2">
-                        <h3 className="text-sm font-medium text-muted-foreground">
-                            Attachments
-                        </h3>
-                        <FileUpload
-                            entityType="group_expense"
-                            entityId={expenseId}
-                        />
-                    </div>
-                )}
 
                 {/* Paid by & Split type */}
                 <div className="flex items-center gap-2 text-sm flex-wrap">

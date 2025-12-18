@@ -11,7 +11,6 @@ import { PageWrapper } from '@/components/layout/page-wrapper';
 import { GroupCard } from '@/components/features/groups/group-card';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatCurrency } from '@/lib/utils/format';
 
 export default function GroupsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
