@@ -5,9 +5,280 @@ import { generateRandomSeed } from '../src/common/utils/avatar-utils';
 const prisma = new PrismaClient();
 
 const AVATAR_STYLES = ['adventurer', 'adventurer_neutral', 'thumbs', 'fun_emoji'];
+const ROOMMATE_EXPENSE_TEMPLATES = [
+    {
+        description: 'Monthly rent',
+        categoryKey: 'GROUP:rent',
+        baseAmount: 3600,
+        variance: 250,
+        splitType: 'equal' as const,
+    },
+    {
+        description: 'Electricity bill',
+        categoryKey: 'GROUP:utilities',
+        baseAmount: 1250,
+        variance: 180,
+        splitType: 'percentage' as const,
+        percentageOptions: [
+            [40, 35, 25],
+            [45, 30, 25],
+            [50, 30, 20],
+        ],
+    },
+    {
+        description: 'Weekly groceries',
+        categoryKey: 'GROUP:groceries',
+        baseAmount: 950,
+        variance: 220,
+        splitType: 'exact' as const,
+        weightOptions: [
+            [3, 2, 1],
+            [2, 2, 1],
+            [4, 3, 2],
+        ],
+    },
+    {
+        description: 'Household supplies',
+        categoryKey: 'GROUP:household',
+        baseAmount: 720,
+        variance: 140,
+        splitType: 'equal' as const,
+    },
+    {
+        description: 'Internet & cable',
+        categoryKey: 'GROUP:internet_cable',
+        baseAmount: 1450,
+        variance: 120,
+        splitType: 'equal' as const,
+    },
+    {
+        description: 'Cleaning service',
+        categoryKey: 'GROUP:cleaning',
+        baseAmount: 650,
+        variance: 150,
+        splitType: 'percentage' as const,
+        percentageOptions: [
+            [34, 33, 33],
+            [40, 30, 30],
+            [45, 30, 25],
+        ],
+    },
+    {
+        description: 'Furniture upgrade',
+        categoryKey: 'GROUP:furniture',
+        baseAmount: 2100,
+        variance: 420,
+        splitType: 'percentage' as const,
+        percentageOptions: [
+            [45, 35, 20],
+            [50, 25, 25],
+            [40, 40, 20],
+        ],
+    },
+    {
+        description: 'Repairs & maintenance',
+        categoryKey: 'GROUP:repairs',
+        baseAmount: 1150,
+        variance: 260,
+        splitType: 'exact' as const,
+        weightOptions: [
+            [2, 1, 1],
+            [3, 2, 1],
+            [4, 2, 2],
+        ],
+    },
+    {
+        description: 'Dinner out',
+        categoryKey: 'GROUP:dining',
+        baseAmount: 1650,
+        variance: 480,
+        splitType: 'exact' as const,
+        weightOptions: [
+            [1, 1, 1],
+            [3, 2, 1],
+            [4, 3, 2],
+        ],
+    },
+    {
+        description: 'Movie or game night',
+        categoryKey: 'GROUP:entertainment',
+        baseAmount: 780,
+        variance: 190,
+        splitType: 'percentage' as const,
+        percentageOptions: [
+            [33, 33, 34],
+            [50, 25, 25],
+            [40, 35, 25],
+        ],
+    },
+    {
+        description: 'Shared transport',
+        categoryKey: 'GROUP:transportation',
+        baseAmount: 480,
+        variance: 140,
+        splitType: 'equal' as const,
+        participantCount: 2,
+    },
+];
 
 function getRandomStyle() {
     return AVATAR_STYLES[Math.floor(Math.random() * AVATAR_STYLES.length)];
+}
+
+type SeedUser = { id: string };
+
+function randomItem<T>(items: T[]): T {
+    return items[Math.floor(Math.random() * items.length)];
+}
+
+function randomAmount(base: number, variance: number) {
+    const swing = Math.floor(Math.random() * (variance * 2 + 1)) - variance;
+    const candidate = base + swing;
+    return Math.max(candidate, Math.max(250, Math.floor(base * 0.6)));
+}
+
+function randomDateBetween(start: Date, end: Date) {
+    const startTime = start.getTime();
+    const endTime = end.getTime();
+    const time = startTime + Math.random() * (endTime - startTime);
+    const date = new Date(time);
+    date.setHours(0, 0, 0, 0);
+    return date;
+}
+
+function pickParticipants(members: SeedUser[], count: number) {
+    const shuffled = [...members].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.max(1, Math.min(count, members.length)));
+}
+
+function distributeEqual(totalAmount: number, count: number) {
+    const totalCents = Math.round(totalAmount * 100);
+    const baseShare = Math.floor(totalCents / count);
+    let remainder = totalCents - baseShare * count;
+
+    return Array.from({ length: count }, () => {
+        const extra = remainder > 0 ? 1 : 0;
+        if (remainder > 0) {
+            remainder -= 1;
+        }
+        return (baseShare + extra) / 100;
+    });
+}
+
+function distributeByWeights(totalAmount: number, weights: number[]) {
+    const totalCents = Math.round(totalAmount * 100);
+    const weightSum = weights.reduce((acc, weight) => acc + weight, 0);
+    let allocated = 0;
+
+    return weights.map((weight, index) => {
+        if (index === weights.length - 1) {
+            return (totalCents - allocated) / 100;
+        }
+        const shareCents = Math.round((totalCents * weight) / weightSum);
+        allocated += shareCents;
+        return shareCents / 100;
+    });
+}
+
+function buildSplitRows(params: {
+    totalAmount: number;
+    splitType: 'equal' | 'percentage' | 'exact';
+    participants: SeedUser[];
+    payer: SeedUser;
+    weightOptions?: number[][];
+    percentageOptions?: number[][];
+}) {
+    const { totalAmount, splitType, participants, payer, percentageOptions, weightOptions } = params;
+    const participantCount = participants.length;
+    let amounts: number[] = [];
+
+    if (splitType === 'equal') {
+        amounts = distributeEqual(totalAmount, participantCount);
+    } else if (splitType === 'percentage') {
+        const percentages =
+            percentageOptions && percentageOptions.length > 0
+                ? randomItem(percentageOptions)
+                : Array(participantCount).fill(100 / participantCount);
+        amounts = distributeByWeights(totalAmount, percentages);
+    } else {
+        const weights =
+            weightOptions && weightOptions.length > 0 ? randomItem(weightOptions) : Array(participantCount).fill(1);
+        amounts = distributeByWeights(totalAmount, weights);
+    }
+
+    const isSettled = Math.random() < 0.35;
+
+    const splits = participants.map((participant, index) => {
+        const amountOwed = amounts[index];
+        const hasPaid = isSettled ? true : participant.id === payer.id;
+        const amountPaid = isSettled ? amountOwed : participant.id === payer.id ? totalAmount : 0;
+
+        return {
+            userId: participant.id,
+            amountOwed,
+            amountPaid,
+            isPaid: hasPaid,
+        };
+    });
+
+    return { splits, isSettled };
+}
+
+async function seedRoommateGroupExpenses(params: {
+    count: number;
+    groupId: string;
+    members: SeedUser[];
+    categoryLookup: Record<string, { id: string }>;
+}) {
+    const { count, groupId, members, categoryLookup } = params;
+    const startDate = new Date('2024-01-01');
+    const endDate = new Date('2025-12-28');
+    const createdExpenses: any[] = [];
+
+    for (let i = 0; i < count; i++) {
+        const template = ROOMMATE_EXPENSE_TEMPLATES[i % ROOMMATE_EXPENSE_TEMPLATES.length];
+        const category = categoryLookup[template.categoryKey];
+
+        if (!category) {
+            throw new Error(`Missing category mapping for ${template.categoryKey}`);
+        }
+
+        const participants = pickParticipants(members, template.participantCount ?? members.length);
+        const payer = randomItem(participants);
+        const amount = randomAmount(template.baseAmount, template.variance);
+        const { splits, isSettled } = buildSplitRows({
+            totalAmount: amount,
+            splitType: template.splitType,
+            participants,
+            payer,
+            weightOptions: template.weightOptions,
+            percentageOptions: template.percentageOptions,
+        });
+
+        const expenseDate = randomDateBetween(startDate, endDate);
+
+        const created = await prisma.groupExpense.create({
+            data: {
+                groupId,
+                paidByUserId: payer.id,
+                categoryId: category.id,
+                amount,
+                currency: 'INR',
+                description: `${template.description} #${String(i + 1).padStart(3, '0')}`,
+                expenseDate,
+                splitType: template.splitType,
+                isSettled,
+                splitValidationStatus: 'valid',
+                splits: {
+                    create: splits,
+                },
+            },
+        });
+
+        createdExpenses.push(created);
+    }
+
+    return createdExpenses;
 }
 
 async function main() {
@@ -170,6 +441,18 @@ async function main() {
     );
 
     console.log(`✅ Created ${createdSystemCategories.length} system categories`);
+
+    const categoryLookup = createdSystemCategories.reduce<Record<string, { id: string; name: string; type: string }>>(
+        (acc, category) => {
+            acc[`${category.type}:${category.name}`] = {
+                id: category.id,
+                name: category.name,
+                type: category.type,
+            };
+            return acc;
+        },
+        {},
+    );
 
     // Create Recurring Patterns
     console.log('🔄 Creating recurring patterns...');

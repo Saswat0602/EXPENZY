@@ -4,7 +4,7 @@ import { AnalyticsQueryDto, AnalyticsPeriod } from './dto/analytics-query.dto';
 
 @Injectable()
 export class AnalyticsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   private getDateRange(
     period: AnalyticsPeriod,
@@ -55,6 +55,7 @@ export class AnalyticsService {
       savingsGoals,
       recentTransactions,
       topCategories,
+      loanSummary,
     ] = await Promise.all([
       // Total Income
       this.prisma.income.aggregate({
@@ -123,6 +124,9 @@ export class AnalyticsService {
         orderBy: { _sum: { amount: 'desc' } },
         take: 5,
       }),
+
+      // Loan Summary
+      this.getLoanSummaryForDashboard(userId),
     ]);
 
     const income = Number(totalIncome._sum.amount || 0);
@@ -179,6 +183,7 @@ export class AnalyticsService {
         totalExpenses: expenses,
         netSavings,
         savingsRate: income > 0 ? (netSavings / income) * 100 : 0,
+        loanSummary,
       },
       budgets: budgetUtilization,
       savingsGoals: savingsProgress,
@@ -423,13 +428,118 @@ export class AnalyticsService {
         averageUtilization:
           performance.length > 0
             ? performance.reduce((sum, b) => sum + b.utilization, 0) /
-            performance.length
+              performance.length
             : 0,
         onTrackCount: performance.filter((b) => b.status === 'on_track').length,
         warningCount: performance.filter((b) => b.status === 'warning').length,
         exceededCount: performance.filter((b) => b.status === 'exceeded')
           .length,
       },
+    };
+  }
+
+  /**
+   * Get loan summary for dashboard (direct loans + group balances)
+   */
+  async getLoanSummaryForDashboard(userId: string) {
+    // Get direct loans
+    const [loansLent, loansBorrowed] = await Promise.all([
+      this.prisma.loan.findMany({
+        where: {
+          lenderUserId: userId,
+          isDeleted: false,
+          status: { in: ['active', 'paid'] },
+        },
+      }),
+      this.prisma.loan.findMany({
+        where: {
+          borrowerUserId: userId,
+          isDeleted: false,
+          status: { in: ['active', 'paid'] },
+        },
+      }),
+    ]);
+
+    // Calculate direct loan totals (only outstanding amounts)
+    let totalLent = loansLent.reduce(
+      (sum, loan) => sum + Number(loan.amountRemaining),
+      0,
+    );
+    let totalBorrowed = loansBorrowed.reduce(
+      (sum, loan) => sum + Number(loan.amountRemaining),
+      0,
+    );
+
+    // Get group-derived balances
+    const groupMemberships = await this.prisma.groupMember.findMany({
+      where: {
+        userId,
+        inviteStatus: 'accepted',
+      },
+      include: {
+        group: {
+          include: {
+            groupExpenses: {
+              where: {
+                isSettled: false,
+              },
+              include: {
+                splits: {
+                  include: {
+                    user: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Calculate group balances
+    for (const membership of groupMemberships) {
+      const group = membership.group;
+      const balances = new Map<string, number>();
+
+      for (const expense of group.groupExpenses) {
+        for (const split of expense.splits) {
+          if (!split.userId) continue;
+
+          const owedAmount =
+            Number(split.amountOwed) - Number(split.amountPaid);
+
+          if (split.userId === userId) {
+            // This user owes money
+            if (expense.paidByUserId && expense.paidByUserId !== userId) {
+              const currentBalance = balances.get(expense.paidByUserId) || 0;
+              balances.set(expense.paidByUserId, currentBalance - owedAmount);
+            }
+          } else if (expense.paidByUserId === userId) {
+            // This user is owed money
+            const currentBalance = balances.get(split.userId) || 0;
+            balances.set(split.userId, currentBalance + owedAmount);
+          }
+        }
+      }
+
+      // Add group balances to totals
+      for (const balance of balances.values()) {
+        if (balance > 0) {
+          totalLent += balance;
+        } else if (balance < 0) {
+          totalBorrowed += Math.abs(balance);
+        }
+      }
+    }
+
+    const netPosition = totalLent - totalBorrowed;
+
+    return {
+      totalLent,
+      totalBorrowed,
+      netPosition,
+      type: netPosition >= 0 ? 'lent' : 'borrowed',
+      amount: Math.abs(netPosition),
     };
   }
 }

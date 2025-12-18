@@ -47,7 +47,8 @@ export function PersonLoanCard({ person, onClick, className }: PersonLoanCardPro
                     <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm md:text-base truncate">{person.personName}</p>
                         <p className="text-xs text-muted-foreground">
-                            Last updated {lastUpdated}
+                            Direct: {formatCurrency(Math.abs(person.directLoanAmount), person.currency as 'INR' | 'USD' | 'EUR')} •
+                            Groups: {formatCurrency(Math.abs(person.groupBalanceAmount), person.currency as 'INR' | 'USD' | 'EUR')}
                         </p>
                     </div>
                 </div>

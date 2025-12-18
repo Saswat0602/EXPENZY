@@ -82,6 +82,17 @@ export interface PersonLoanSummary {
     totalAmount: number;
     currency: string;
     loanType: 'lent' | 'borrowed';
+
+    // Breakdown
+    directLoanAmount: number;
+    groupBalanceAmount: number;
+    groupDetails: Array<{
+        groupId: string;
+        groupName: string;
+        amount: number;
+    }>;
+
+    // Existing fields
     loanIds: string[];
     activeCount: number;
     paidCount: number;
