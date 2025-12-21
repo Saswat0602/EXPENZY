@@ -16,6 +16,7 @@ import { GroupLoanCard } from '@/components/features/loans/group-loan-card';
 import { AddLoanModal } from '@/components/modals/add-loan-modal';
 import { Plus, Search, HandCoins } from 'lucide-react';
 import type { PersonLoanSummary, GroupLoan } from '@/types/loan';
+import { Button } from '@/components/ui/button';
 
 export default function LoansPage() {
     const router = useRouter();
@@ -71,6 +72,15 @@ export default function LoansPage() {
                 <PageHeader
                     title="Loans"
                     description="Track money you've lent and borrowed"
+                    action={
+                        <Button
+                            onClick={() => setIsModalOpen(true)}
+                            className="hidden md:flex gap-2"
+                        >
+                            <Plus className="h-4 w-4" />
+                            Add Loan
+                        </Button>
+                    }
                 />
 
                 {/* Statistics */}

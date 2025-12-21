@@ -188,6 +188,20 @@ export default function PersonLoansPage() {
                             )}
                         </div>
                     )}
+
+                    {/* Desktop Add Transaction Button */}
+                    <div className="hidden md:block">
+                        <Button
+                            onClick={() => {
+                                setModalLoanType('LENT');
+                                setShowLoanModal(true);
+                            }}
+                            className="w-full gap-2"
+                        >
+                            <Plus className="h-4 w-4" />
+                            Add Transaction
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Transactions List */}
@@ -259,8 +273,8 @@ export default function PersonLoansPage() {
                         )}
                     </div>
 
-                    {/* Action Button */}
-                    <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50">
+                    {/* Action Button - Mobile Only */}
+                    <div className="md:hidden fixed bottom-20 right-4 z-50">
                         <Button
                             size="lg"
                             onClick={() => {

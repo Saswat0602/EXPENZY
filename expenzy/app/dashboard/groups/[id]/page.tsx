@@ -292,15 +292,23 @@ export default function GroupDetailPage() {
                     memberCount={acceptedMembers.length}
                 />
 
-                {/* Action Bar - Both Mobile and Desktop at top */}
-                <div className="flex gap-2 py-3 border-b border-border">
+                {/* Action Bar - Desktop */}
+                <div className="hidden md:flex gap-2 py-3 border-b border-border">
                     <Button
-                        onClick={() => setIsSettleUpModalOpen(true)}
+                        onClick={() => router.push(`/dashboard/groups/${groupId}/add-expense`)}
                         size="sm"
                         variant="default"
                         className="h-9"
                     >
                         <Plus className="h-4 w-4 mr-1.5" />
+                        Add Expense
+                    </Button>
+                    <Button
+                        onClick={() => setIsSettleUpModalOpen(true)}
+                        size="sm"
+                        variant="outline"
+                        className="h-9"
+                    >
                         Settle up
                     </Button>
                     <Button
@@ -311,6 +319,32 @@ export default function GroupDetailPage() {
                     >
                         <Receipt className="h-4 w-4 mr-1.5" />
                         Statistics
+                    </Button>
+                    <GroupExportButton
+                        groupId={groupId}
+                        variant="outline"
+                        size="sm"
+                    />
+                </div>
+
+                {/* Action Bar - Mobile */}
+                <div className="md:hidden flex gap-2 py-3 border-b border-border">
+                    <Button
+                        onClick={() => setIsSettleUpModalOpen(true)}
+                        size="sm"
+                        variant="outline"
+                        className="h-9 flex-1"
+                    >
+                        Settle up
+                    </Button>
+                    <Button
+                        onClick={() => setIsStatisticsModalOpen(true)}
+                        variant="outline"
+                        size="sm"
+                        className="h-9 flex-1"
+                    >
+                        <Receipt className="h-4 w-4 mr-1.5" />
+                        Stats
                     </Button>
                     <GroupExportButton
                         groupId={groupId}
@@ -382,17 +416,7 @@ export default function GroupDetailPage() {
                     </Button>
                 </div>
 
-                {/* Desktop Add Expense Button */}
-                <div className="hidden lg:block">
-                    <Button
-                        size="lg"
-                        className="w-full"
-                        onClick={() => router.push(`/dashboard/groups/${groupId}/add-expense`)}
-                    >
-                        <Plus className="h-5 w-5 mr-2" />
-                        Add Expense
-                    </Button>
-                </div>
+
 
                 {/* Expense Detail Modal */}
                 <ExpenseDetailModal
