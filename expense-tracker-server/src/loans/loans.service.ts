@@ -457,56 +457,13 @@ export class LoansService {
 
   /**
    * Get consolidated view of all loans (direct + group-derived)
+   * Optimized to return only person summaries and statistics for the loans landing page
    */
   async getConsolidatedLoans(userId: string) {
-    // 1. Get direct loans
-    const directLoans = (await this.prisma.loan.findMany({
-      where: {
-        OR: [{ lenderUserId: userId }, { borrowerUserId: userId }],
-        isDeleted: false,
-      },
-      include: {
-        lender: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
-            avatar: true,
-            avatarUrl: true,
-          },
-        },
-        borrower: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
-            avatar: true,
-            avatarUrl: true,
-          },
-        },
-        group: {
-          select: {
-            id: true,
-            name: true,
-            icon: true,
-            color: true,
-          },
-        },
-        _count: {
-          select: {
-            adjustments: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })) as LoanWithRelations[];
-
-    // 2. Get group balances across all groups
+    // 1. Get group balances across all groups
     const groupBalances = await this.getAllGroupBalancesForUser(userId);
 
-    // 3. Build person map from direct loans
+    // 2. Build person map - calculate totals without fetching full loan details
     const personMap = new Map<
       string,
       {
@@ -515,8 +472,9 @@ export class LoansService {
           username: string;
           avatar?: string | null;
           avatarUrl?: string | null;
+          avatarSeed?: string | null;
+          avatarStyle?: string | null;
         };
-        loans: LoanWithRelations[];
         totalLent: number;
         totalBorrowed: number;
         groupBalance: number;
@@ -525,39 +483,101 @@ export class LoansService {
           groupName: string;
           amount: number;
         }>;
+        loanIds: string[];
+        lastLoanDate: Date;
       }
     >();
 
-    for (const loan of directLoans) {
-      const isLender = loan.lenderUserId === userId;
-      const otherPerson = isLender ? loan.borrower : loan.lender;
-      const personId = otherPerson.id;
+    // 3. Aggregate loan data efficiently using groupBy
+    const loanAggregates = await this.prisma.loan.groupBy({
+      by: ['lenderUserId', 'borrowerUserId'],
+      where: {
+        OR: [{ lenderUserId: userId }, { borrowerUserId: userId }],
+        isDeleted: false,
+        status: { in: ['active', 'paid'] },
+      },
+      _sum: {
+        amountRemaining: true,
+      },
+      _count: {
+        id: true,
+      },
+    });
 
-      if (!personMap.has(personId)) {
-        personMap.set(personId, {
-          person: otherPerson,
-          loans: [],
+    // 4. Get unique user IDs from loans
+    const userIds = new Set<string>();
+    loanAggregates.forEach((agg) => {
+      const otherUserId =
+        agg.lenderUserId === userId ? agg.borrowerUserId : agg.lenderUserId;
+      userIds.add(otherUserId);
+    });
+
+    // 5. Fetch user details for all involved users
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: Array.from(userIds) } },
+      select: {
+        id: true,
+        username: true,
+        avatar: true,
+        avatarUrl: true,
+        avatarSeed: true,
+        avatarStyle: true,
+      },
+    });
+
+    const userMap = new Map(users.map((u) => [u.id, u]));
+
+    // 6. Process aggregates to build person map
+    for (const agg of loanAggregates) {
+      const isLender = agg.lenderUserId === userId;
+      const otherUserId = isLender ? agg.borrowerUserId : agg.lenderUserId;
+      const otherUser = userMap.get(otherUserId);
+
+      if (!otherUser) continue;
+
+      if (!personMap.has(otherUserId)) {
+        personMap.set(otherUserId, {
+          person: otherUser,
           totalLent: 0,
           totalBorrowed: 0,
           groupBalance: 0,
           groupDetails: [],
+          loanIds: [],
+          lastLoanDate: new Date(),
         });
       }
 
-      const personData = personMap.get(personId)!;
-      personData.loans.push(loan);
+      const personData = personMap.get(otherUserId)!;
+      const amount = Number(agg._sum.amountRemaining || 0);
 
-      // Only count active and paid loans for totals
-      if (loan.status === 'active' || loan.status === 'paid') {
-        if (isLender) {
-          personData.totalLent += Number(loan.amountRemaining);
-        } else {
-          personData.totalBorrowed += Number(loan.amountRemaining);
-        }
+      if (isLender) {
+        personData.totalLent += amount;
+      } else {
+        personData.totalBorrowed += amount;
       }
     }
 
-    // 4. Merge group balances into person map
+    // 7. Get last loan date for each person
+    for (const [otherUserId] of personMap.entries()) {
+      const lastLoan = await this.prisma.loan.findFirst({
+        where: {
+          OR: [
+            { lenderUserId: userId, borrowerUserId: otherUserId },
+            { lenderUserId: otherUserId, borrowerUserId: userId },
+          ],
+          isDeleted: false,
+        },
+        orderBy: { loanDate: 'desc' },
+        select: { loanDate: true, id: true },
+      });
+
+      if (lastLoan) {
+        const personData = personMap.get(otherUserId)!;
+        personData.lastLoanDate = lastLoan.loanDate;
+      }
+    }
+
+    // 8. Merge group balances into person map
     for (const [otherUserId, groupData] of groupBalances.entries()) {
       if (!personMap.has(otherUserId)) {
         // Fetch user info for people only in groups
@@ -568,29 +588,30 @@ export class LoansService {
             username: true,
             avatar: true,
             avatarUrl: true,
+            avatarSeed: true,
+            avatarStyle: true,
           },
         });
 
-        if (!user) continue; // Skip if user not found
+        if (!user) continue;
 
         personMap.set(otherUserId, {
           person: user,
-          loans: [],
           totalLent: 0,
           totalBorrowed: 0,
           groupBalance: 0,
           groupDetails: [],
+          loanIds: [],
+          lastLoanDate: new Date(),
         });
       }
 
       const personData = personMap.get(otherUserId)!;
-
-      // Add group balance (positive = they owe you, negative = you owe them)
       personData.groupBalance = groupData.amount;
       personData.groupDetails = groupData.groups;
     }
 
-    // 5. Convert to PersonLoanSummary with breakdown
+    // 9. Convert to PersonLoanSummary with breakdown
     const personSummaries = Array.from(personMap.values())
       .map((data) => {
         const directLoanNet = data.totalLent - data.totalBorrowed;
@@ -600,9 +621,11 @@ export class LoansService {
           personId: data.person.id,
           personName: data.person.username,
           personAvatar: data.person.avatarUrl || data.person.avatar,
+          personAvatarSeed: data.person.avatarSeed,
+          personAvatarStyle: data.person.avatarStyle,
           totalAmount: Math.abs(totalNet),
           loanType: totalNet >= 0 ? ('lent' as const) : ('borrowed' as const),
-          currency: data.loans[0]?.currency || 'INR',
+          currency: 'INR', // Default currency
 
           // Breakdown
           directLoanAmount: directLoanNet,
@@ -610,25 +633,20 @@ export class LoansService {
           groupDetails: data.groupDetails,
 
           // Existing fields
-          loanIds: data.loans.map((l) => l.id),
-          lastLoanDate: data.loans[0]?.loanDate || new Date(),
+          loanIds: data.loanIds,
+          lastLoanDate: data.lastLoanDate,
         };
       })
       .filter((summary) => summary.totalAmount > 0.01); // Filter out near-zero balances
 
-    // Get group-derived loans (deprecated, kept for backward compatibility)
-    const groupLoans = await this.getGroupDerivedLoans(userId);
-
-    // Calculate statistics
+    // 10. Calculate statistics
     const statistics = await this.getLoanStatistics(userId);
 
-    const response = new ConsolidatedLoanResponseDto();
-    response.directLoans = directLoans;
-    response.groupLoans = groupLoans;
-    response.personSummaries = personSummaries;
-    response.statistics = statistics;
-
-    return response;
+    // Return only essential data
+    return {
+      personSummaries,
+      statistics,
+    };
   }
 
   /**
@@ -894,6 +912,8 @@ export class LoansService {
             email: true,
             avatar: true,
             avatarUrl: true,
+            avatarSeed: true,
+            avatarStyle: true,
           },
         },
         borrower: {
@@ -903,6 +923,8 @@ export class LoansService {
             email: true,
             avatar: true,
             avatarUrl: true,
+            avatarSeed: true,
+            avatarStyle: true,
           },
         },
         group: {

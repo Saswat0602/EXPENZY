@@ -1,8 +1,8 @@
 'use client';
 
-import { Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/format';
+import { UserAvatar } from '@/components/ui/user-avatar';
 
 interface LoanTransactionItemProps {
     date: Date;
@@ -10,6 +10,13 @@ interface LoanTransactionItemProps {
     amount: number;
     currency: 'INR' | 'USD' | 'EUR';
     isLent: boolean;
+    user?: {
+        username: string;
+        avatarUrl?: string | null;
+        avatar?: string | null;
+        avatarSeed?: string | null;
+        avatarStyle?: string | null;
+    };
 }
 
 export function LoanTransactionItem({
@@ -18,6 +25,7 @@ export function LoanTransactionItem({
     amount,
     currency,
     isLent,
+    user,
 }: LoanTransactionItemProps) {
     const loanDate = new Date(date);
     const dayMonth = loanDate.toLocaleDateString('en-US', {
@@ -26,7 +34,7 @@ export function LoanTransactionItem({
     });
 
     return (
-        <div className="flex items-center gap-3 py-3 px-4 hover:bg-muted/30 transition-colors border-b border-border/40 last:border-0">
+        <div className="flex items-center gap-3 py-4 px-4 hover:bg-muted/30 transition-colors border-b border-border/40 last:border-0">
             {/* Date */}
             <div className="flex flex-col items-center w-12 flex-shrink-0">
                 <span className="text-xs text-muted-foreground font-medium">
@@ -37,11 +45,15 @@ export function LoanTransactionItem({
                 </span>
             </div>
 
-            {/* Icon */}
+            {/* User Avatar */}
             <div className="flex-shrink-0">
-                <div className="h-10 w-10 rounded-lg bg-muted/50 flex items-center justify-center">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                </div>
+                <UserAvatar
+                    seed={user?.avatarSeed || undefined}
+                    style={user?.avatarStyle || undefined}
+                    fallbackUrl={user?.avatarUrl || user?.avatar}
+                    fallbackName={user?.username || 'User'}
+                    size={40}
+                />
             </div>
 
             {/* Description & Amount */}

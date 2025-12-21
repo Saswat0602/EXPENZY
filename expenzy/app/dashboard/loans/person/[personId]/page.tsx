@@ -218,6 +218,7 @@ export default function PersonLoansPage() {
                                 }
 
                                 // Add transaction
+                                const otherUser = isLender ? loan.borrower : loan.lender;
                                 acc.push(
                                     <LoanTransactionItem
                                         key={loan.id}
@@ -226,6 +227,13 @@ export default function PersonLoansPage() {
                                         amount={amount}
                                         currency={loan.currency as 'INR' | 'USD' | 'EUR'}
                                         isLent={isLender}
+                                        user={{
+                                            username: otherUser.username,
+                                            avatarUrl: otherUser.avatarUrl,
+                                            avatar: otherUser.avatar,
+                                            avatarSeed: otherUser.avatarSeed,
+                                            avatarStyle: otherUser.avatarStyle,
+                                        }}
                                     />
                                 );
 

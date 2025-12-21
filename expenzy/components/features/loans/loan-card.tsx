@@ -3,7 +3,7 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { formatCurrency } from '@/lib/utils/format';
 import type { Loan } from '@/types/loan';
 import { cn } from '@/lib/utils';
@@ -45,15 +45,13 @@ export function LoanCard({ loan, onClick, className }: LoanCardProps) {
             {/* Header */}
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <Avatar className="h-10 w-10">
-                        <AvatarImage
-                            src={otherUser.avatarUrl || otherUser.avatar || undefined}
-                            alt={otherUser.username}
-                        />
-                        <AvatarFallback>
-                            {otherUser.username.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar
+                        seed={otherUser.avatarSeed || undefined}
+                        style={otherUser.avatarStyle || undefined}
+                        fallbackUrl={otherUser.avatarUrl || otherUser.avatar}
+                        fallbackName={otherUser.username}
+                        size={40}
+                    />
                     <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm truncate">{otherUser.username}</p>
                         {loan.description && (

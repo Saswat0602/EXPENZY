@@ -1,7 +1,7 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { formatCurrency } from '@/lib/utils/format';
 import type { PersonLoanSummary } from '@/types/loan';
 import { cn } from '@/lib/utils';
@@ -35,15 +35,14 @@ export function PersonLoanCard({ person, onClick, className }: PersonLoanCardPro
             <div className="flex items-center justify-between gap-3">
                 {/* Left side - Avatar and Info */}
                 <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-                    <Avatar className="h-10 w-10 md:h-12 md:w-12 flex-shrink-0">
-                        <AvatarImage
-                            src={person.personAvatar || undefined}
-                            alt={person.personName}
-                        />
-                        <AvatarFallback>
-                            {person.personName.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar
+                        seed={person.personAvatarSeed || undefined}
+                        style={person.personAvatarStyle || undefined}
+                        fallbackUrl={person.personAvatar}
+                        fallbackName={person.personName}
+                        size={48}
+                        className="flex-shrink-0"
+                    />
                     <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm md:text-base truncate">{person.personName}</p>
                         <p className="text-xs text-muted-foreground">
