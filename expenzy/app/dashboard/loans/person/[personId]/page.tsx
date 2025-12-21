@@ -12,7 +12,7 @@ import { Card } from '@/components/ui/card';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { LoadingSkeleton } from '@/components/shared/loading-skeleton';
 import { EmptyState } from '@/components/shared/empty-state';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { LoanTransactionItem } from '@/components/features/loans/loan-transaction-item';
 import { AddLoanModal } from '@/components/modals/add-loan-modal';
 import { formatCurrency } from '@/lib/utils/format';
@@ -130,12 +130,14 @@ export default function PersonLoansPage() {
                 {/* Person Header - Mobile Optimized */}
                 <div className="px-4 md:px-0 py-4 space-y-4">
                     <div className="flex items-start gap-3">
-                        <Avatar className="h-14 w-14 flex-shrink-0">
-                            <AvatarImage src={person.avatarUrl || undefined} />
-                            <AvatarFallback className="text-lg">
-                                {person.username?.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                        </Avatar>
+                        <UserAvatar
+                            seed={personSummary?.personAvatarSeed || undefined}
+                            style={personSummary?.personAvatarStyle || undefined}
+                            fallbackUrl={personSummary?.personAvatar}
+                            fallbackName={person.username}
+                            size={56}
+                            className="flex-shrink-0"
+                        />
                         <div className="flex-1 min-w-0">
                             <h1 className="text-xl font-bold truncate">{person.username}</h1>
                             <div className="mt-2">
@@ -168,13 +170,13 @@ export default function PersonLoansPage() {
                                 </div>
                             </div>
 
-                            {/* Group Details - Compact */}
+                            {/* Group Details */}
                             {personSummary.groupDetails && personSummary.groupDetails.length > 0 && (
-                                <div className="pt-2 space-y-1.5">
+                                <div className="mt-2 space-y-1">
                                     {personSummary.groupDetails.map((group) => (
-                                        <div key={group.groupId} className="flex items-center justify-between text-sm py-1">
-                                            <span className="text-muted-foreground text-xs">{group.groupName}</span>
-                                            <span className="font-medium text-sm">
+                                        <div key={group.groupId} className="flex items-center justify-between text-xs">
+                                            <span className="text-muted-foreground">{group.groupName}</span>
+                                            <span className="font-medium">
                                                 {formatCurrency(Math.abs(group.amount), 'INR')}
                                             </span>
                                         </div>
@@ -185,99 +187,98 @@ export default function PersonLoansPage() {
                     )}
                 </div>
 
-                {/* All Transactions */}
-                <div className="mt-2">
-                    <h3 className="text-sm font-semibold mb-2 px-4 md:px-0 text-muted-foreground uppercase tracking-wide">All Transactions</h3>
+                {/* Transactions List */}
+                <div>
+                    <div className="flex items-center justify-between mb-3">
+                        <h2 className="text-base font-semibold">Transactions</h2>
+                    </div>
 
-                    {allLoans.length === 0 ? (
-                        <div className="text-center py-12 text-muted-foreground px-4">
-                            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                            <p className="font-medium">No transactions yet</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-0">
-                            {allLoans.reduce((acc: React.ReactElement[], loan, index) => {
-                                const isLender = loan.lenderUserId === currentUserId;
-                                const amount = parseFloat(loan.amount);
-                                const loanDate = new Date(loan.loanDate);
-                                const year = loanDate.getFullYear();
+                    <div className="space-y-0">
+                        {isLoading && !allLoans.length ? (
+                            <div className="p-8 text-center text-muted-foreground">
+                                Loading transactions...
+                            </div>
+                        ) : allLoans.length === 0 ? (
+                            <div className="p-8 text-center text-muted-foreground">
+                                No transactions found
+                            </div>
+                        ) : (
+                            <>
+                                {allLoans.reduce((acc: React.ReactElement[], loan, index) => {
+                                    const isLender = loan.lenderUserId === currentUserId;
+                                    const amount = parseFloat(loan.amount);
+                                    const loanDate = new Date(loan.loanDate);
+                                    const year = loanDate.getFullYear();
 
-                                // Check if we need to add a year header
-                                const prevLoan = index > 0 ? allLoans[index - 1] : null;
-                                const prevYear = prevLoan ? new Date(prevLoan.loanDate).getFullYear() : null;
+                                    // Check if we need to add a year header
+                                    const prevLoan = index > 0 ? allLoans[index - 1] : null;
+                                    const prevYear = prevLoan ? new Date(prevLoan.loanDate).getFullYear() : null;
 
-                                if (year !== prevYear) {
-                                    // Add year header
+                                    if (year !== prevYear) {
+                                        // Add year header
+                                        acc.push(
+                                            <div key={`year-${year}`} className="py-3 bg-muted/20 border-y border-border/40">
+                                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                                    {year}
+                                                </p>
+                                            </div>
+                                        );
+                                    }
+
+                                    // Add transaction
                                     acc.push(
-                                        <div key={`year-${year}`} className="px-4 py-3 bg-muted/20 border-y border-border/40">
-                                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                                {year}
-                                            </p>
-                                        </div>
+                                        <LoanTransactionItem
+                                            key={loan.id}
+                                            date={loanDate}
+                                            description={loan.description || ''}
+                                            amount={amount}
+                                            currency={loan.currency as 'INR' | 'USD' | 'EUR'}
+                                            isLent={isLender}
+                                        />
                                     );
-                                }
 
-                                // Add transaction
-                                const otherUser = isLender ? loan.borrower : loan.lender;
-                                acc.push(
-                                    <LoanTransactionItem
-                                        key={loan.id}
-                                        date={loanDate}
-                                        description={loan.description || ''}
-                                        amount={amount}
-                                        currency={loan.currency as 'INR' | 'USD' | 'EUR'}
-                                        isLent={isLender}
-                                        user={{
-                                            username: otherUser.username,
-                                            avatarUrl: otherUser.avatarUrl,
-                                            avatar: otherUser.avatar,
-                                            avatarSeed: otherUser.avatarSeed,
-                                            avatarStyle: otherUser.avatarStyle,
-                                        }}
-                                    />
-                                );
+                                    return acc;
+                                }, [])}
 
-                                return acc;
-                            }, [])}
+                                {/* Infinite scroll trigger */}
+                                <div ref={observerTarget} className="h-4" />
 
-                            {/* Infinite scroll trigger */}
-                            <div ref={observerTarget} className="h-4" />
+                                {/* Loading indicator */}
+                                {isFetchingNextPage && (
+                                    <div className="py-4 text-center">
+                                        <LoadingSkeleton count={3} />
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
 
-                            {/* Loading indicator */}
-                            {isFetchingNextPage && (
-                                <div className="py-4 text-center">
-                                    <LoadingSkeleton count={3} />
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
+                    {/* Action Button */}
+                    <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50">
+                        <Button
+                            size="lg"
+                            onClick={() => {
+                                setModalLoanType('LENT');
+                                setShowLoanModal(true);
+                            }}
+                            className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow"
+                        >
+                            <Plus className="h-6 w-6" />
+                        </Button>
+                    </div>
 
-                {/* Action Button */}
-                <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50">
-                    <Button
-                        size="lg"
-                        onClick={() => {
-                            setModalLoanType('LENT');
-                            setShowLoanModal(true);
+                    {/* Add Loan Modal */}
+                    <AddLoanModal
+                        open={showLoanModal}
+                        onClose={() => setShowLoanModal(false)}
+                        prefilledPerson={{
+                            id: personId,
+                            name: person.username,
                         }}
-                        className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow"
-                    >
-                        <Plus className="h-6 w-6" />
-                    </Button>
+                        defaultLoanType={modalLoanType}
+                        currentBalance={netAmount}
+                    />
                 </div>
-
-                {/* Add Loan Modal */}
-                <AddLoanModal
-                    open={showLoanModal}
-                    onClose={() => setShowLoanModal(false)}
-                    prefilledPerson={{
-                        id: personId,
-                        name: person.username,
-                    }}
-                    defaultLoanType={modalLoanType}
-                    currentBalance={netAmount}
-                />
             </div>
         </PageWrapper>
     );

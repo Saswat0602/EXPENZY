@@ -28,7 +28,7 @@ export class LoansService {
   constructor(
     private prisma: PrismaService,
     private balanceCalculationService: BalanceCalculationService,
-  ) { }
+  ) {}
 
   async create(createLoanDto: CreateLoanDto) {
     // Validation: Both lender and borrower user IDs must be provided
