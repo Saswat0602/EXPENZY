@@ -62,7 +62,7 @@ export default function SignupPage() {
                         </div>
                         <h1 className="text-5xl font-bold tracking-tight">Manage your finances with confidence.</h1>
                         <p className="text-xl text-primary-foreground/80 font-light leading-relaxed">
-                            Join thousands of users who are taking control of their financial future with Expenzy's powerful tracking tools.
+                            Join thousands of users who are taking control of their financial future with Expenzy&apos;s powerful tracking tools.
                         </p>
                     </div>
 

@@ -89,7 +89,7 @@ export default function AddExpensePage() {
     const [paidBy, setPaidBy] = useState('');
     const [splitType, setSplitType] = useState<SplitType>('equal');
     const [selectedParticipants, setSelectedParticipants] = useState<string[]>(
-        acceptedMembers.map((m) => m.userId)
+        acceptedMembers.map((m) => m.userId).filter((id): id is string => id !== null)
     );
     const [showSplitTypeModal, setShowSplitTypeModal] = useState(false);
     const [showPaidByModal, setShowPaidByModal] = useState(false);
@@ -513,13 +513,14 @@ export default function AddExpensePage() {
                     </p>
 
                     <div className="space-y-2">
-                        {acceptedMembers.map((member) => {
-                            const isSelected = selectedParticipants.includes(member.userId);
-                            const memberName = getMemberName(member.userId);
+                        {acceptedMembers.filter(m => m.userId !== null).map((member) => {
+                            const userId = member.userId!; // Non-null assertion is safe after filter
+                            const isSelected = selectedParticipants.includes(userId);
+                            const memberName = getMemberName(userId);
 
                             return (
                                 <div
-                                    key={member.userId}
+                                    key={userId}
                                     className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-muted transition-colors"
                                 >
                                     <div className="flex items-center gap-3 flex-1">
@@ -528,14 +529,14 @@ export default function AddExpensePage() {
                                             avatarSeed={member.user?.avatarSeed}
                                             avatarStyle={member.user?.avatarStyle}
                                             isSelected={isSelected}
-                                            onClick={() => toggleParticipant(member.userId)}
+                                            onClick={() => toggleParticipant(userId)}
                                             size="md"
                                         />
                                         <div className="flex flex-col">
                                             <span className="font-medium">{memberName}</span>
                                             {isSelected && splitType !== 'exact' && (
                                                 <span className="text-sm text-muted-foreground">
-                                                    ₹{getCalculatedAmount(member.userId)}
+                                                    ₹{getCalculatedAmount(userId)}
                                                 </span>
                                             )}
                                         </div>
@@ -548,11 +549,11 @@ export default function AddExpensePage() {
                                                     <Input
                                                         type="number"
                                                         placeholder="0"
-                                                        value={percentages[member.userId] || ''}
+                                                        value={percentages[userId] || ''}
                                                         onChange={(e) =>
                                                             setPercentages((prev) => ({
                                                                 ...prev,
-                                                                [member.userId]: e.target.value,
+                                                                [userId]: e.target.value,
                                                             }))
                                                         }
                                                         className="w-20 text-right"
@@ -566,11 +567,11 @@ export default function AddExpensePage() {
                                                 <Input
                                                     type="number"
                                                     placeholder="0.00"
-                                                    value={exactAmounts[member.userId] || ''}
+                                                    value={exactAmounts[userId] || ''}
                                                     onChange={(e) =>
                                                         setExactAmounts((prev) => ({
                                                             ...prev,
-                                                            [member.userId]: e.target.value,
+                                                            [userId]: e.target.value,
                                                         }))
                                                     }
                                                     className="w-24 text-right"
@@ -582,11 +583,11 @@ export default function AddExpensePage() {
                                                 <Input
                                                     type="number"
                                                     placeholder="1"
-                                                    value={shares[member.userId] || '1'}
+                                                    value={shares[userId] || '1'}
                                                     onChange={(e) =>
                                                         setShares((prev) => ({
                                                             ...prev,
-                                                            [member.userId]: e.target.value,
+                                                            [userId]: e.target.value,
                                                         }))
                                                     }
                                                     className="w-20 text-right"
@@ -732,26 +733,29 @@ export default function AddExpensePage() {
                         <DialogTitle>Who paid?</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-2">
-                        {acceptedMembers.map((member) => (
-                            <div
-                                key={member.userId}
-                                onClick={() => {
-                                    setPaidBy(member.userId);
-                                    setShowPaidByModal(false);
-                                }}
-                                className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted cursor-pointer transition-colors"
-                            >
-                                <MemberAvatar
-                                    name={getMemberName(member.userId)}
-                                    avatarSeed={member.user?.avatarSeed}
-                                    avatarStyle={member.user?.avatarStyle}
-                                    size="md"
-                                    showCheckmark={false}
-                                />
-                                <span className="font-medium">{getMemberName(member.userId)}</span>
-                                {paidBy === member.userId && <Check className="h-5 w-5 ml-auto text-primary" />}
-                            </div>
-                        ))}
+                        {acceptedMembers.filter(m => m.userId !== null).map((member) => {
+                            const userId = member.userId!; // Non-null assertion is safe after filter
+                            return (
+                                <div
+                                    key={userId}
+                                    onClick={() => {
+                                        setPaidBy(userId);
+                                        setShowPaidByModal(false);
+                                    }}
+                                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+                                >
+                                    <MemberAvatar
+                                        name={getMemberName(userId)}
+                                        avatarSeed={member.user?.avatarSeed}
+                                        avatarStyle={member.user?.avatarStyle}
+                                        size="md"
+                                        showCheckmark={false}
+                                    />
+                                    <span className="font-medium">{getMemberName(userId)}</span>
+                                    {paidBy === userId && <Check className="h-5 w-5 ml-auto text-primary" />}
+                                </div>
+                            );
+                        })}
                     </div>
                 </DialogContent>
             </Dialog>

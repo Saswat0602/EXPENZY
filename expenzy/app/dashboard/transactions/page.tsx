@@ -15,8 +15,6 @@ import { PageWrapper } from '@/components/layout/page-wrapper';
 import { TransactionExportButton } from '@/components/features/transaction-export-button';
 import { TransactionFiltersComponent, type TransactionFilters } from '@/components/features/transactions/transaction-filters';
 import { useCategories } from '@/lib/hooks/use-categories';
-import { useExpenses } from '@/lib/hooks/use-expenses';
-import { useIncome } from '@/lib/hooks/use-income';
 import { ROUTES } from '@/lib/routes';
 import type { Expense } from '@/types/expense';
 import type { Income } from '@/types/income';

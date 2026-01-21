@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { LetterAvatar } from './letter-avatar';
 import { useAvatar } from '@/lib/hooks/use-avatar';
 
@@ -45,7 +46,7 @@ export function UserAvatar({
 
     return (
         <div className={`rounded-full overflow-hidden ${className}`} style={{ width: size, height: size }}>
-            <img
+            <Image
                 src={String(displayUrl!)}
                 alt={`${fallbackName}'s avatar`}
                 width={size}

@@ -135,7 +135,7 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
                 setSelectedMatchCategory(transaction.category.name.toLowerCase());
             }
         }
-    }, [mode, transaction, open, setValue]);
+    }, [mode, transaction, open, setValue, calculatorInput]);
 
     const handleTypeChange = (type: 'income' | 'expense') => {
         setValue('type', type);

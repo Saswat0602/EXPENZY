@@ -9,10 +9,6 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
-import {
-  generateRandomSeed,
-  validateUserAvatarStyle,
-} from '../common/utils/avatar-utils';
 
 interface GoogleProfile {
   id: string;
@@ -24,18 +20,10 @@ interface GoogleProfile {
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(createUserDto: CreateUserDto) {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-
-    // Generate avatar data
-    const avatarSeed = createUserDto.avatarSeed || generateRandomSeed();
-    const avatarStyle =
-      createUserDto.avatarStyle &&
-      validateUserAvatarStyle(createUserDto.avatarStyle)
-        ? createUserDto.avatarStyle
-        : 'adventurer';
 
     return this.prisma.user.create({
       data: {
@@ -144,8 +132,6 @@ export class UsersService {
 
     // Create new user
     const username = email.split('@')[0] || 'user';
-    const avatarSeed = generateRandomSeed();
-    const avatarStyle = 'adventurer';
 
     return this.prisma.user.create({
       data: {

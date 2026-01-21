@@ -1,6 +1,5 @@
 import {
   IsOptional,
-  IsString,
   IsEmail,
   IsUUID,
   ValidateIf,

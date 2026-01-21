@@ -50,7 +50,6 @@ export function AddLoanModal({ open, onClose, prefilledPerson, defaultLoanType, 
     });
 
     const amount = watch('amount');
-    const personName = watch(loanType === 'LENT' ? 'borrowerName' : 'lenderName');
 
     // Update the person name field when loan type changes
     useEffect(() => {

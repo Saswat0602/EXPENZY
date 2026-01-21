@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useGroup, useDeleteGroup, useLeaveGroup } from '@/lib/hooks/use-groups';
 import { useSimplifiedDebts } from '@/lib/hooks/use-group-balances';
@@ -54,16 +54,19 @@ export default function GroupSettingsPage() {
     const isAdmin = group?.members?.some(m => m.userId === currentUserId && m.role?.toUpperCase() === 'ADMIN') || false;
 
     // Calculate member balances from simplified debts
-    const memberBalances = new Map<string, number>();
-    simplifiedDebts.forEach(debt => {
-        // Positive balance means they owe you (you lent to them)
-        // Negative balance means you owe them (you borrowed from them)
-        const currentBalance = memberBalances.get(debt.fromUserId) || 0;
-        memberBalances.set(debt.fromUserId, currentBalance - debt.amount);
+    const memberBalances = useMemo(() => {
+        const balances = new Map<string, number>();
+        simplifiedDebts.forEach(debt => {
+            // Positive balance means they owe you (you lent to them)
+            // Negative balance means you owe them (you borrowed from them)
+            const currentBalance = balances.get(debt.fromUserId) || 0;
+            balances.set(debt.fromUserId, currentBalance - debt.amount);
 
-        const otherBalance = memberBalances.get(debt.toUserId) || 0;
-        memberBalances.set(debt.toUserId, otherBalance + debt.amount);
-    });
+            const otherBalance = balances.get(debt.toUserId) || 0;
+            balances.set(debt.toUserId, otherBalance + debt.amount);
+        });
+        return balances;
+    }, [simplifiedDebts]);
 
     // Debug logging
     useEffect(() => {
