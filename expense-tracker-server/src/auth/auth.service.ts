@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
+import { PrismaService } from '../prisma/prisma.service';
 import type { JwtPayload } from './jwt-payload.interface';
 import * as bcrypt from 'bcrypt';
 
@@ -16,7 +17,8 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-  ) {}
+    private prisma: PrismaService,
+  ) { }
 
   async validateUser(
     email: string,
@@ -53,6 +55,21 @@ export class AuthService {
       username,
       password,
     });
+
+    // Auto-link any pending group invitations for this email
+    await this.prisma.groupMember.updateMany({
+      where: {
+        invitedEmail: email,
+        inviteStatus: 'pending',
+        userId: null,
+      },
+      data: {
+        userId: user.id,
+        inviteStatus: 'accepted',
+        joinedAt: new Date(),
+      },
+    });
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...result } = user;
     return this.login(result);
