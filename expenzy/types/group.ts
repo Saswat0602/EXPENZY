@@ -24,20 +24,23 @@ export interface Group {
 export interface GroupMember {
     id: string;
     groupId: string;
-    userId: string;
+    userId: string | null;
     role: 'ADMIN' | 'MEMBER';
-    joinedAt: string;
+    joinedAt: string | null;
     inviteStatus?: string;
+    inviteToken?: string | null;
+    invitedEmail?: string | null;
     user?: {
         id: string;
         firstName: string;
         lastName: string;
         email: string;
+        username: string;
         avatar?: string;
         avatarSeed?: string;
         avatarStyle?: string;
         avatarUrl?: string;
-    };
+    } | null;
 }
 
 // GroupExpense is now defined in split.ts with more comprehensive fields

@@ -9,7 +9,6 @@ type AvatarStyle = 'fun-emoji' | 'adventurer' | 'adventurer-neutral' | 'thumbs';
 
 @Injectable()
 export class AvatarService {
-
   private getStyleCollection(style: string): any {
     const styleMap: Record<string, any> = {
       'fun-emoji': funEmoji,

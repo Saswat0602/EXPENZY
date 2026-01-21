@@ -89,16 +89,17 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
 
             <div className="space-y-1">
                 {members.map((member) => {
+                    // For accepted members with user accounts, show name; for pending invites, show email
                     const fullName = member.user
-                        ? `${member.user.firstName} ${member.user.lastName}`.trim()
-                        : 'Unknown';
+                        ? `${member.user.firstName || ''} ${member.user.lastName || ''}`.trim() || member.user.username
+                        : member.invitedEmail || 'Unknown';
 
                     return (
                         <MemberListItem
                             key={member.id}
                             userId={member.userId}
                             name={fullName}
-                            email={member.user?.email || ''}
+                            email={member.user?.email || member.invitedEmail || ''}
                             role={member.role}
                             balance={memberBalances.get(member.userId) || 0}
                             currency={currency}

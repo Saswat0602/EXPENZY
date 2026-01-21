@@ -37,14 +37,14 @@ export class GroupsService {
     private expenseService: GroupExpenseService,
     private statisticsService: GroupStatisticsService,
     private emailService: EmailService,
-  ) { }
+  ) {}
 
   async create(createGroupDto: CreateGroupDto, userId: string) {
     // Generate icon data
     const iconSeed = createGroupDto.iconSeed || generateRandomSeed();
     const iconProvider =
       createGroupDto.iconProvider &&
-        validateGroupIconProvider(createGroupDto.iconProvider)
+      validateGroupIconProvider(createGroupDto.iconProvider)
         ? (createGroupDto.iconProvider as 'jdenticon')
         : 'jdenticon';
 
@@ -89,7 +89,19 @@ export class GroupsService {
       include: {
         members: {
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                username: true,
+                firstName: true,
+                lastName: true,
+                avatar: true,
+                avatarSeed: true,
+                avatarStyle: true,
+                avatarUrl: true,
+              },
+            },
           },
         },
         _count: {
@@ -109,15 +121,39 @@ export class GroupsService {
     const group = await this.prisma.group.findUnique({
       where: { id },
       include: {
-        createdBy: true,
+        createdBy: {
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+            avatar: true,
+            avatarSeed: true,
+            avatarStyle: true,
+            avatarUrl: true,
+          },
+        },
         members: {
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                username: true,
+                firstName: true,
+                lastName: true,
+                avatar: true,
+                avatarSeed: true,
+                avatarStyle: true,
+                avatarUrl: true,
+              },
+            },
           },
         },
         _count: {
           select: {
-            groupExpenses: true, // Keep total count for statistics
+            groupExpenses: true,
           },
         },
       },
@@ -265,6 +301,7 @@ export class GroupsService {
         role: addMemberDto.role || 'member',
         inviteToken,
         inviteStatus: addMemberDto.userId ? 'accepted' : 'pending',
+        invitedEmail: addMemberDto.memberEmail, // Store email for pending invites
         joinedAt: addMemberDto.userId ? new Date() : null,
       },
       include: {
@@ -400,7 +437,19 @@ export class GroupsService {
         groupId,
       },
       include: {
-        user: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+            avatar: true,
+            avatarSeed: true,
+            avatarStyle: true,
+            avatarUrl: true,
+          },
+        },
       },
       orderBy: {
         createdAt: 'asc',
@@ -515,20 +564,20 @@ export class GroupsService {
       data: expenses,
       pagination: cursor
         ? {
-          // Cursor-based response
-          limit,
-          nextCursor,
-          hasMore: nextCursor !== null,
-        }
+            // Cursor-based response
+            limit,
+            nextCursor,
+            hasMore: nextCursor !== null,
+          }
         : {
-          // Offset-based response (backward compatibility)
-          page,
-          limit,
-          total: total!,
-          totalPages: Math.ceil(total! / limit),
-          hasMore: page * limit < total!,
-          nextCursor, // Include cursor for migration
-        },
+            // Offset-based response (backward compatibility)
+            page,
+            limit,
+            total: total!,
+            totalPages: Math.ceil(total! / limit),
+            hasMore: page * limit < total!,
+            nextCursor, // Include cursor for migration
+          },
     };
   }
 
@@ -579,7 +628,7 @@ export class GroupsService {
     if (userBalance < -0.01) {
       throw new BadRequestException(
         `You cannot leave the group with outstanding debts. ` +
-        `You owe ₹${Math.abs(userBalance).toFixed(2)}. Please settle your debts first.`,
+          `You owe ₹${Math.abs(userBalance).toFixed(2)}. Please settle your debts first.`,
       );
     }
 

@@ -122,7 +122,8 @@ export class EmailService {
     inviterName: string,
     inviteToken: string,
   ): Promise<boolean> {
-    const appUrl = this.configService.get<string>('APP_URL') || 'http://localhost:3000';
+    const appUrl =
+      this.configService.get<string>('APP_URL') || 'http://localhost:3000';
     const inviteLink = `${appUrl}/invites/${inviteToken}`;
 
     const html = `

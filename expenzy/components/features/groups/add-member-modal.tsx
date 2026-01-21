@@ -71,7 +71,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="friend@example.com"
+                                placeholder=""
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required

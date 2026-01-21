@@ -24,7 +24,7 @@ interface GoogleProfile {
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto) {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
@@ -33,7 +33,7 @@ export class UsersService {
     const avatarSeed = createUserDto.avatarSeed || generateRandomSeed();
     const avatarStyle =
       createUserDto.avatarStyle &&
-        validateUserAvatarStyle(createUserDto.avatarStyle)
+      validateUserAvatarStyle(createUserDto.avatarStyle)
         ? createUserDto.avatarStyle
         : 'adventurer';
 
@@ -80,7 +80,7 @@ export class UsersService {
         phone: updateUserDto.phone,
         avatar: updateUserDto.avatar,
         // avatarSeed: updateUserDto.avatarSeed,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
         // avatarStyle: updateUserDto.avatarStyle as any,
         timezone: updateUserDto.timezone,
         defaultCurrency: updateUserDto.defaultCurrency,

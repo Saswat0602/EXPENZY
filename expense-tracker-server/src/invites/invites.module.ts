@@ -11,4 +11,4 @@ import { GroupsModule } from '../groups/groups.module';
   providers: [InvitesService],
   exports: [InvitesService],
 })
-export class InvitesModule { }
+export class InvitesModule {}

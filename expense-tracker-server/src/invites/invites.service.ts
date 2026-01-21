@@ -21,7 +21,7 @@ export class InvitesService {
     private prisma: PrismaService,
     private groupsService: GroupsService,
     private emailService: EmailService,
-  ) { }
+  ) {}
 
   async getInviteDetails(token: string): Promise<InviteDetails> {
     // Only check group members (loans and splits don't have invite functionality)
@@ -121,7 +121,11 @@ export class InvitesService {
     const groupMember = await this.prisma.groupMember.findUnique({
       where: { inviteToken: token },
       include: {
-        group: true,
+        group: {
+          include: {
+            createdBy: true,
+          },
+        },
       },
     });
 
@@ -129,14 +133,31 @@ export class InvitesService {
       throw new NotFoundException('Invite not found');
     }
 
-    // For now, we can't resend if we don't have the email stored
-    // In a production app, you'd want to store the invited email in the database
-    // TODO: Add invitedEmail field to GroupMember model
-
     const inviteLink = `${process.env.APP_URL || 'http://localhost:3000'}/invites/${token}`;
 
+    // Send email if we have the invited email stored
+    if (groupMember.invitedEmail) {
+      const inviterName =
+        groupMember.group.createdBy.firstName &&
+        groupMember.group.createdBy.lastName
+          ? `${groupMember.group.createdBy.firstName} ${groupMember.group.createdBy.lastName}`
+          : groupMember.group.createdBy.username;
+
+      await this.emailService.sendGroupInviteEmail(
+        groupMember.invitedEmail,
+        groupMember.group.name,
+        inviterName,
+        token,
+      );
+
+      return {
+        message: 'Invite email resent successfully',
+        inviteLink,
+      };
+    }
+
     return {
-      message: 'Invite link generated. Note: Automatic email resend requires storing the invited email address.',
+      message: 'Invite link generated (email not available for older invites)',
       inviteLink,
     };
   }

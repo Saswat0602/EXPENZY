@@ -70,4 +70,4 @@ import { GroupsModule } from './groups/groups.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}
