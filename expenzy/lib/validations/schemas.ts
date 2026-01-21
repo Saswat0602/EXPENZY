@@ -28,9 +28,20 @@ export type CreateBudgetInput = z.infer<typeof createBudgetSchema>;
 export const createGroupSchema = z.object({
     name: z.string().min(1, 'Group name is required').max(100),
     description: z.string().max(500).optional(),
+    groupType: z.enum(['home', 'office', 'trip', 'friends', 'other']).default('other'),
+    iconSeed: z.string().optional(),
+    iconProvider: z.enum(['jdenticon']).optional(),
 });
 
 export type CreateGroupInput = z.infer<typeof createGroupSchema>;
+
+export const updateGroupSchema = z.object({
+    name: z.string().min(1, 'Group name is required').max(100),
+    description: z.string().max(500).optional(),
+});
+
+export type UpdateGroupInput = z.infer<typeof updateGroupSchema>;
+
 
 // ============= LOAN VALIDATIONS =============
 export const createLoanSchema = z.object({
@@ -48,7 +59,7 @@ export type CreateLoanInput = z.infer<typeof createLoanSchema>;
 export const createCategorySchema = z.object({
     name: z.string().min(1, 'Category name is required').max(50),
     color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format'),
-    type: z.enum(['expense', 'income']),
+    type: z.enum(['EXPENSE', 'INCOME', 'GROUP']),
 });
 
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;

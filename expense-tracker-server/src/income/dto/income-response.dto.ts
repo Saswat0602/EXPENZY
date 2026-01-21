@@ -1,7 +1,7 @@
-import { Income, IncomeCategory, RecurringPattern } from '@prisma/client';
+import { Income, Category, RecurringPattern } from '@prisma/client';
 
 export type IncomeWithRelations = Income & {
-  category?: IncomeCategory | null;
+  category?: Category | null;
   recurringPattern?: RecurringPattern | null;
 };
 
@@ -21,7 +21,7 @@ export class IncomeResponseDto {
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
-  category?: IncomeCategory | null;
+  category?: Category | null;
   recurringPattern?: RecurringPattern | null;
 
   constructor(income: IncomeWithRelations) {

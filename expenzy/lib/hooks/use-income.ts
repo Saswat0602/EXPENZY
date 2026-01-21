@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { QUERY_KEYS } from '@/lib/config/query-client';
@@ -70,5 +70,73 @@ export function useDeleteIncome() {
         onError: (error: { message: string }) => {
             toast.error(error.message || 'Failed to delete income');
         },
+    });
+}
+
+interface OffsetResponse<T> {
+    data: T[];
+    total: number;
+    page: number;
+    limit: number;
+}
+
+/**
+ * Cursor-based infinite query for income
+ * Uses cursor pagination with 50 items per page
+ * Minimum 2 characters required for search
+ */
+export function useInfiniteIncome(filters?: IncomeFilters) {
+    return useInfiniteQuery({
+        queryKey: ['income', 'infinite', filters],
+        queryFn: async ({ pageParam }) => {
+            const params = new URLSearchParams();
+
+            // Add page if available (offset pagination)
+            if (pageParam) {
+                params.append('page', pageParam.toString());
+            }
+
+            // Set limit to 50
+            params.append('limit', '50');
+
+            // Only add search if >= 2 chars
+            if (filters?.search && filters.search.trim().length >= 2) {
+                params.append('search', filters.search.trim());
+            }
+
+            // Add other filters
+            if (filters?.categoryId) {
+                params.append('categoryId', filters.categoryId);
+            }
+            if (filters?.startDate) {
+                params.append('startDate', filters.startDate);
+            }
+            if (filters?.endDate) {
+                params.append('endDate', filters.endDate);
+            }
+
+            const url = `${API_ENDPOINTS.INCOME.BASE}?${params.toString()}`;
+            const response = await apiClient.getRaw<{ data: OffsetResponse<Income> }>(url);
+            const actualData = response.data;
+
+            // Convert offset response to cursor format for consistency
+            const hasMore = actualData.data.length === actualData.limit &&
+                (actualData.page * actualData.limit) < actualData.total;
+
+            return {
+                data: actualData.data,
+                meta: {
+                    nextCursor: hasMore ? (actualData.page + 1).toString() : null,
+                    hasMore,
+                    limit: actualData.limit,
+                },
+            };
+        },
+        getNextPageParam: (lastPage) => {
+            const nextCursor = lastPage?.meta?.nextCursor;
+            return nextCursor ? parseInt(nextCursor, 10) : null;
+        },
+        initialPageParam: 1 as number,
+        staleTime: 1000 * 60, // 1 minute
     });
 }

@@ -19,6 +19,9 @@ export interface User {
     isDeleted: boolean;
     deletedAt?: string;
     avatar?: string;
+    avatarSeed?: string;
+    avatarStyle?: string;
+    avatarUrl?: string;
     googleId?: string;
     monthlyIncomeTarget?: number;
     monthlyExpenseTarget?: number;
@@ -35,7 +38,7 @@ export * from './group';
 export * from './split';
 export * from './loan';
 export * from './savings-goal';
-export * from './subscription';
+
 export * from './tag';
 export * from './payment-method';
 export * from './account';

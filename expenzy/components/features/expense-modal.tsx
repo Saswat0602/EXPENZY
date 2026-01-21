@@ -18,7 +18,7 @@ interface ExpenseModalProps {
 }
 
 export function ExpenseModal({ open, onClose, expense }: ExpenseModalProps) {
-    const { data: categories = [] } = useCategories('expense');
+    const { data: categories = [] } = useCategories('EXPENSE');
     const createExpense = useCreateExpense();
     const updateExpense = useUpdateExpense();
 
@@ -112,6 +112,7 @@ export function ExpenseModal({ open, onClose, expense }: ExpenseModalProps) {
                             rows={3}
                         />
                     </div>
+
 
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={onClose}>

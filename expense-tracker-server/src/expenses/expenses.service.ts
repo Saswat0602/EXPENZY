@@ -23,7 +23,7 @@ export class ExpensesService {
           ? { connect: { id: createExpenseDto.categoryId } }
           : undefined,
         amount: createExpenseDto.amount,
-        currency: createExpenseDto.currency || Currency.USD,
+        currency: (createExpenseDto.currency as Currency) || Currency.USD,
         description: createExpenseDto.description,
         expenseDate: new Date(createExpenseDto.expenseDate),
         paymentMethod: createExpenseDto.paymentMethod,
@@ -37,11 +37,24 @@ export class ExpensesService {
   }
 
   async findAll(userId: string, query: ExpenseQueryDto) {
+    // Determine pagination mode: cursor or offset
+    const useCursor = !!query.cursor;
+    const limit = query.limit || (useCursor ? 50 : 20);
+
     // Build where clause
     const where: Prisma.ExpenseWhereInput = {
       userId,
       deletedAt: null,
     };
+
+    // Add cursor for cursor-based pagination
+    if (useCursor && query.cursor) {
+      // For descending order, use lt (less than)
+      // For ascending order, use gt (greater than)
+      const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
+      where.id =
+        sortOrder === 'desc' ? { lt: query.cursor } : { gt: query.cursor };
+    }
 
     // Add filters
     if (query.categoryId) {
@@ -73,9 +86,10 @@ export class ExpensesService {
     }
 
     if (query.currency) {
-      where.currency = query.currency;
+      where.currency = query.currency as Currency;
     }
 
+    // Search filter (minimum 2 characters validated by DTO)
     if (query.search) {
       const searchFilter = QueryBuilder.buildTextSearchFilter(query.search, [
         'description',
@@ -99,39 +113,64 @@ export class ExpensesService {
       [sortBy]: sortOrder,
     };
 
-    // Get total count
-    const total = await this.prisma.expense.count({ where });
-    console.log(
-      'Total expenses found:',
-      total,
-      'Where clause:',
-      JSON.stringify(where, null, 2),
-    );
+    if (useCursor) {
+      // Cursor-based pagination
+      // Fetch one extra item to determine if there are more pages
+      const data = await this.prisma.expense.findMany({
+        where,
+        include: {
+          category: true,
+        },
+        orderBy,
+        take: limit + 1,
+      });
 
-    // Build find options
-    const findOptions: Prisma.ExpenseFindManyArgs = {
-      where,
-      include: {
-        category: true,
-      },
-      orderBy,
-    };
+      const hasMore = data.length > limit;
+      const items = hasMore ? data.slice(0, limit) : data;
+      const nextCursor =
+        hasMore && items.length > 0 ? items[items.length - 1].id : null;
 
-    // Only apply pagination if page and limit are provided
-    if (query.page !== undefined && query.limit !== undefined) {
-      findOptions.skip = query.skip;
-      findOptions.take = query.take;
+      return {
+        data: items,
+        meta: {
+          nextCursor,
+          hasMore,
+          limit,
+        },
+      };
+    } else {
+      // Offset-based pagination (backward compatible)
+      const total = await this.prisma.expense.count({ where });
+      console.log(
+        'Total expenses found:',
+        total,
+        'Where clause:',
+        JSON.stringify(where, null, 2),
+      );
+
+      const findOptions: Prisma.ExpenseFindManyArgs = {
+        where,
+        include: {
+          category: true,
+        },
+        orderBy,
+      };
+
+      // Only apply pagination if page and limit are provided
+      if (query.page !== undefined && query.limit !== undefined) {
+        findOptions.skip = query.skip;
+        findOptions.take = query.take;
+      }
+
+      const data = await this.prisma.expense.findMany(findOptions);
+
+      return new PaginatedResponseDto(
+        data,
+        query.page || 1,
+        query.limit || total,
+        total,
+      );
     }
-
-    // Get data (paginated or all)
-    const data = await this.prisma.expense.findMany(findOptions);
-
-    return new PaginatedResponseDto(
-      data,
-      query.page || 1,
-      query.limit || total, // If no limit, use total count
-      total,
-    );
   }
 
   async findOne(id: string, userId: string) {
@@ -167,7 +206,7 @@ export class ExpensesService {
       where: { id },
       data: {
         amount: updateExpenseDto.amount,
-        currency: updateExpenseDto.currency,
+        currency: updateExpenseDto.currency as Currency,
         description: updateExpenseDto.description,
         expenseDate: updateExpenseDto.expenseDate
           ? new Date(updateExpenseDto.expenseDate)

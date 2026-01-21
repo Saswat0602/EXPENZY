@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useCreateLoan, type CreateLoanData } from '@/lib/hooks/use-loans';
+import { useCreateLoan } from '@/lib/hooks/use-loans';
+
 import { createLoanSchema, type CreateLoanInput } from '@/lib/validations/schemas';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -19,10 +20,16 @@ import { cn } from '@/lib/utils/cn';
 interface AddLoanModalProps {
     open: boolean;
     onClose: () => void;
+    prefilledPerson?: {
+        id: string;
+        name: string;
+    };
+    defaultLoanType?: 'LENT' | 'BORROWED';
+    currentBalance?: number; // Current balance with this person
 }
 
-export function AddLoanModal({ open, onClose }: AddLoanModalProps) {
-    const [loanType, setLoanType] = useState<'LENT' | 'BORROWED'>('LENT');
+export function AddLoanModal({ open, onClose, prefilledPerson, defaultLoanType, currentBalance = 0 }: AddLoanModalProps) {
+    const [loanType, setLoanType] = useState<'LENT' | 'BORROWED'>(defaultLoanType || 'LENT');
     const createLoan = useCreateLoan();
 
     const {
@@ -32,36 +39,40 @@ export function AddLoanModal({ open, onClose }: AddLoanModalProps) {
         setValue,
         control,
         reset,
+        watch,
     } = useForm<CreateLoanInput>({
         resolver: zodResolver(createLoanSchema),
         defaultValues: {
             loanDate: new Date(),
+            borrowerName: loanType === 'LENT' && prefilledPerson ? prefilledPerson.name : '',
+            lenderName: loanType === 'BORROWED' && prefilledPerson ? prefilledPerson.name : '',
+            amount: undefined,
         },
     });
 
-    const dueDate = useWatch({ control, name: 'dueDate' });
+    const amount = watch('amount');
 
-    const onSubmit = async (data: CreateLoanInput) => {
+    // Calculate new balance - fix NaN issue
+    const calculateNewBalance = () => {
+        const parsedAmount = parseFloat(String(amount || 0));
+        if (!parsedAmount || isNaN(parsedAmount) || parsedAmount <= 0) {
+            return currentBalance;
+        }
+
+        // If lent: positive (they owe you more)
+        // If borrowed: negative (you owe them more)
+        const change = loanType === 'LENT' ? parsedAmount : -parsedAmount;
+        return currentBalance + change;
+    };
+
+    const newBalance = calculateNewBalance();
+    const isLent = newBalance >= 0;
+
+    const onSubmit = async () => {
         try {
-            // Prepare data based on loan type
-            const loanData: CreateLoanData = {
-                amount: data.amount,
-                description: data.description,
-                loanDate: data.loanDate?.toISOString() || new Date().toISOString(),
-                dueDate: data.dueDate?.toISOString(),
-                type: loanType,
-            };
-
-            // For LENT loans, we provide borrower info
-            if (loanType === 'LENT') {
-                loanData.borrowerName = data.borrowerName;
-            }
-            // For BORROWED loans, we provide lender info
-            else {
-                loanData.lenderName = data.lenderName;
-            }
-
-            await createLoan.mutateAsync(loanData);
+            // TODO: Update this modal to use proper user IDs instead of names
+            // The new API requires lenderUserId and borrowerUserId
+            console.warn('Add Loan Modal needs updating for new API');
             reset();
             onClose();
         } catch (error) {
@@ -97,6 +108,7 @@ export function AddLoanModal({ open, onClose }: AddLoanModalProps) {
                                     type="text"
                                     placeholder="e.g., John Doe"
                                     {...register('borrowerName')}
+                                    disabled={!!prefilledPerson}
                                     className={errors.borrowerName ? 'border-destructive' : ''}
                                 />
                                 {errors.borrowerName && (
@@ -114,6 +126,7 @@ export function AddLoanModal({ open, onClose }: AddLoanModalProps) {
                                     type="text"
                                     placeholder="e.g., Jane Smith"
                                     {...register('lenderName')}
+                                    disabled={!!prefilledPerson}
                                     className={errors.lenderName ? 'border-destructive' : ''}
                                 />
                                 {errors.lenderName && (
@@ -152,30 +165,58 @@ export function AddLoanModal({ open, onClose }: AddLoanModalProps) {
                             )}
                         </div>
 
-                        {/* Due Date */}
+                        {/* Balance Calculator - Only show if person is prefilled and valid amount */}
+                        {prefilledPerson && amount && !isNaN(Number(amount)) && Number(amount) > 0 && (
+                            <div className="bg-muted/30 rounded-lg p-3 border border-border/40">
+                                <div className="flex justify-between items-center text-sm mb-1">
+                                    <span className="text-muted-foreground">Current Balance:</span>
+                                    <span className="font-semibold">
+                                        ₹{Math.abs(currentBalance).toFixed(2)}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-muted-foreground">After This:</span>
+                                    <span className={`font-bold ${isLent ? 'text-green-600' : 'text-red-600'}`}>
+                                        ₹{Math.abs(newBalance).toFixed(2)}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-2">
+                                    {isLent
+                                        ? `${prefilledPerson.name} will owe you`
+                                        : `You will owe ${prefilledPerson.name}`}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Loan Date */}
                         <div className="space-y-2">
-                            <Label>Due Date (Optional)</Label>
+                            <Label>Date</Label>
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button
                                         variant="outline"
                                         className={cn(
-                                            'w-full justify-start text-left font-normal',
-                                            !dueDate && 'text-muted-foreground'
+                                            'w-full justify-start text-left font-normal'
                                         )}
                                     >
                                         <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {dueDate ? format(dueDate, 'PPP') : <span>Pick a date</span>}
+                                        {watch('loanDate') && watch('loanDate') instanceof Date
+                                            ? format(watch('loanDate'), 'PPP')
+                                            : format(new Date(), 'PPP')}
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0">
                                     <Calendar
                                         mode="single"
-                                        selected={dueDate}
-                                        onSelect={(date) => setValue('dueDate', date)}
+                                        selected={watch('loanDate') || new Date()}
+                                        onSelect={(date) => setValue('loanDate', date || new Date())}
+                                        initialFocus
                                     />
                                 </PopoverContent>
                             </Popover>
+                            {errors.loanDate && (
+                                <p className="text-sm text-destructive">{errors.loanDate.message}</p>
+                            )}
                         </div>
 
                         {/* Actions */}

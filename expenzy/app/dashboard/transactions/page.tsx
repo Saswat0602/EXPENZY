@@ -1,88 +1,150 @@
 'use client';
 
-import { useState } from 'react';
-import { useDeleteExpense } from '@/lib/hooks/use-expenses';
-import { useDeleteIncome } from '@/lib/hooks/use-income';
+import { MobileActionMenu, createEditAction, createDeleteAction } from '@/components/shared/mobile-action-menu';
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useDeleteExpense, useInfiniteExpenses } from '@/lib/hooks/use-expenses';
+import { useDeleteIncome, useInfiniteIncome } from '@/lib/hooks/use-income';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
-import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Search, Repeat, Loader2 } from 'lucide-react';
+import { CategoryIcon, formatCategoryName } from '@/lib/categorization/category-icons';
 import { TransactionModal } from '@/components/modals/transaction-modal';
 import { ConfirmationModal } from '@/components/modals/confirmation-modal';
-import { VirtualList } from '@/components/shared/virtual-list';
 import { PageHeader } from '@/components/layout/page-header';
 import { PageWrapper } from '@/components/layout/page-wrapper';
-import { apiClient } from '@/lib/api/client';
-import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { TransactionExportButton } from '@/components/features/transaction-export-button';
+import { TransactionFiltersComponent, type TransactionFilters } from '@/components/features/transactions/transaction-filters';
+import { useCategories } from '@/lib/hooks/use-categories';
+import { useExpenses } from '@/lib/hooks/use-expenses';
+import { useIncome } from '@/lib/hooks/use-income';
+import { ROUTES } from '@/lib/routes';
 import type { Expense } from '@/types/expense';
 import type { Income } from '@/types/income';
 
 type TransactionType = 'expense' | 'income';
 type Transaction = (Expense | Income) & { type: TransactionType };
 
-const ITEMS_PER_PAGE = 20;
-
 export default function TransactionsPage() {
+    const router = useRouter();
     const [type, setType] = useState<TransactionType>('expense');
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editTransaction, setEditTransaction] = useState<Transaction | null>(null);
     const [deleteItem, setDeleteItem] = useState<Transaction | null>(null);
+    const [filters, setFilters] = useState<TransactionFilters>({
+        categories: [],
+        dateRange: { from: null, to: null },
+        amountRange: { min: 0, max: 10000 },
+        sortBy: 'date',
+        sortOrder: 'desc',
+    });
+
+    const { data: categories = [] } = useCategories();
 
     const deleteExpense = useDeleteExpense();
     const deleteIncome = useDeleteIncome();
 
-    // Get current year date range
-    const currentYear = new Date().getFullYear();
-    const startDate = `${currentYear}-01-01`;
-    const endDate = `${currentYear}-12-31`;
+    // Build filters for infinite query
+    const queryFilters = useMemo(() => {
+        const baseFilters: {
+            search?: string;
+            categoryId?: string;
+            startDate?: string;
+            endDate?: string;
+            minAmount?: number;
+            maxAmount?: number;
+            sortBy?: 'expenseDate' | 'amount' | 'createdAt' | 'updatedAt';
+            sortOrder?: 'asc' | 'desc';
+        } = {
+            search: search.trim().length >= 2 ? search.trim() : undefined,
+            sortBy: filters.sortBy === 'date' ? 'expenseDate' : (filters.sortBy as 'amount' | 'createdAt' | 'updatedAt'),
+            sortOrder: filters.sortOrder,
+        };
 
-    // Fetch function for VirtualList
-    const fetchTransactions = async (page: number) => {
-        const params = new URLSearchParams();
-        params.append('page', page.toString());
-        params.append('limit', ITEMS_PER_PAGE.toString());
-        params.append('startDate', startDate);
-        params.append('endDate', endDate);
-        if (search) params.append('search', search);
-
-        if (type === 'expense') {
-            const url = `${API_ENDPOINTS.EXPENSES.BASE}?${params.toString()}`;
-            const response = await apiClient.getRaw<{
-                data: Expense[];
-                meta: {
-                    total: number;
-                    page: number;
-                    limit: number;
-                    totalPages: number;
-                    hasNext: boolean;
-                    hasPrevious: boolean;
-                };
-            }>(url);
-
-            return {
-                data: response.data.map(item => ({ ...item, type: 'expense' as const })),
-                hasMore: response.meta.hasNext,
-                total: response.meta.total,
-            };
-        } else {
-            // Income - fetch all for now (backend doesn't have pagination)
-            const url = `${API_ENDPOINTS.INCOME.BASE}?${params.toString()}`;
-            const response = await apiClient.get<Income[]>(url);
-
-            // Ensure we have an array
-            const dataArray = Array.isArray(response) ? response : [];
-
-            // Client-side pagination for income
-            const startIdx = (page - 1) * ITEMS_PER_PAGE;
-            const endIdx = startIdx + ITEMS_PER_PAGE;
-            const paginatedData = dataArray.slice(startIdx, endIdx);
-
-            return {
-                data: paginatedData.map(item => ({ ...item, type: 'income' as const })),
-                hasMore: endIdx < dataArray.length,
-                total: dataArray.length,
-            };
+        // Add category filter (only first one for now)
+        if (filters.categories.length > 0) {
+            baseFilters.categoryId = filters.categories[0];
         }
-    };
+
+        // Add date range
+        if (filters.dateRange.from) {
+            baseFilters.startDate = filters.dateRange.from.toISOString().split('T')[0];
+        }
+        if (filters.dateRange.to) {
+            baseFilters.endDate = filters.dateRange.to.toISOString().split('T')[0];
+        }
+
+        // Add amount range
+        if (filters.amountRange.min > 0) {
+            baseFilters.minAmount = filters.amountRange.min;
+        }
+        if (filters.amountRange.max < 10000) {
+            baseFilters.maxAmount = filters.amountRange.max;
+        }
+
+        return baseFilters;
+    }, [search, filters]);
+
+    // Use infinite queries based on type with enabled option
+    const expensesQuery = useInfiniteExpenses(
+        type === 'expense' ? (queryFilters as Record<string, unknown>) : {},
+    );
+    const incomeQuery = useInfiniteIncome(
+        type === 'income' ? (queryFilters as Record<string, unknown>) : {},
+    );
+
+    const activeQuery = type === 'expense' ? expensesQuery : incomeQuery;
+
+    // Flatten pages into single array
+    const transactions = useMemo(() => {
+        if (!activeQuery.data?.pages) return [];
+
+        // Each page has structure: { data: [...], meta: { nextCursor, hasMore, limit } }
+        const items = activeQuery.data.pages.flatMap((page: { data?: unknown[]; meta?: unknown }) => {
+            // Safely extract data array, handle both cursor and offset response formats
+            const pageData = page?.data || page || [];
+            return Array.isArray(pageData) ? pageData : [];
+        });
+
+        return items.map((item: unknown) => ({ ...(item as object), type } as Transaction));
+    }, [activeQuery.data, type]);
+
+    // Debug infinite scroll
+    useEffect(() => {
+        const lastPage = activeQuery.data?.pages?.[activeQuery.data.pages.length - 1];
+        console.log('Infinite Scroll Debug:', {
+            hasNextPage: activeQuery.hasNextPage,
+            isFetchingNextPage: activeQuery.isFetchingNextPage,
+            pagesCount: activeQuery.data?.pages?.length,
+            lastPageMeta: lastPage?.meta,
+            totalItems: activeQuery.data?.pages?.reduce((sum: number, page: { data?: unknown[] }) => sum + (page?.data?.length || 0), 0),
+        });
+    }, [activeQuery.hasNextPage, activeQuery.isFetchingNextPage, activeQuery.data?.pages]);
+
+    // Intersection observer for infinite scroll
+    const loadMoreRef = useRef<HTMLDivElement>(null);
+
+    const handleObserver = useCallback(
+        (entries: IntersectionObserverEntry[]) => {
+            const [target] = entries;
+            if (target.isIntersecting && activeQuery.hasNextPage && !activeQuery.isFetchingNextPage) {
+                console.log('Loading more transactions...');
+                activeQuery.fetchNextPage();
+            }
+        },
+        [activeQuery]
+    );
+
+    useEffect(() => {
+        const element = loadMoreRef.current;
+        if (!element) return;
+
+        const option = { threshold: 0.1, rootMargin: '100px' };
+        const observer = new IntersectionObserver(handleObserver, option);
+        observer.observe(element);
+
+        return () => observer.disconnect();
+    }, [handleObserver]);
 
     // Event handlers
     const handleFilterChange = (newType: TransactionType) => {
@@ -118,7 +180,6 @@ export default function TransactionsPage() {
             : (deleteItem as Expense).description)
         : '';
 
-    // Render transaction card
     const renderTransactionCard = (transaction: Transaction) => {
         const date = transaction.type === 'expense'
             ? (transaction as Expense).expenseDate
@@ -126,16 +187,21 @@ export default function TransactionsPage() {
         const description = transaction.type === 'income'
             ? (transaction as Income).source
             : (transaction as Expense).description;
-        const categoryColor = transaction.category?.color || '#6B7280';
+
+        // Handle amount - convert to number if needed
+        const amount = Number(transaction.amount) || 0;
 
         return (
-            <div className="bg-card border border-border rounded-lg p-4 hover:bg-accent/5 transition-colors">
+            <div key={transaction.id} className="bg-card border border-border rounded-lg p-4 hover:bg-accent/5 transition-colors">
                 <div className="flex items-start gap-3">
-                    {/* Category Color Dot */}
-                    <div
-                        className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5"
-                        style={{ backgroundColor: categoryColor }}
-                    />
+                    {/* Category Icon */}
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <CategoryIcon
+                            iconName={transaction.category?.icon}
+                            color={transaction.category?.color}
+                            className="w-6 h-6"
+                        />
+                    </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
@@ -143,7 +209,7 @@ export default function TransactionsPage() {
                             {description}
                         </h3>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <span>{transaction.category?.name || 'Other'}</span>
+                            <span>{transaction.category?.name ? formatCategoryName(transaction.category.name) : 'Other'}</span>
                             <span>•</span>
                             <span>{formatDate(date)}</span>
                         </div>
@@ -152,26 +218,16 @@ export default function TransactionsPage() {
                     {/* Amount and Actions */}
                     <div className="flex items-start gap-3 flex-shrink-0">
                         <p className="font-semibold text-base tabular-nums">
-                            {formatCurrency(transaction.amount)}
+                            {formatCurrency(amount)}
                         </p>
 
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-1">
-                            <button
-                                onClick={() => handleEdit(transaction)}
-                                className="p-1.5 hover:bg-muted rounded-md transition-colors"
-                                aria-label="Edit transaction"
-                            >
-                                <Edit2 className="w-4 h-4 text-muted-foreground" />
-                            </button>
-                            <button
-                                onClick={() => handleDelete(transaction)}
-                                className="p-1.5 hover:bg-destructive/10 rounded-md transition-colors"
-                                aria-label="Delete transaction"
-                            >
-                                <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                            </button>
-                        </div>
+                        {/* Mobile Action Menu */}
+                        <MobileActionMenu
+                            actions={[
+                                createEditAction(() => handleEdit(transaction)),
+                                createDeleteAction(() => handleDelete(transaction)),
+                            ]}
+                        />
                     </div>
                 </div>
             </div>
@@ -184,15 +240,20 @@ export default function TransactionsPage() {
                 {/* Header */}
                 <PageHeader
                     title="Transactions"
-                    description={`Track your ${currentYear} income and expenses`}
+                    description="Track all your income and expenses"
                     action={
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-                        >
-                            <Plus className="w-5 h-5" />
-                            <span className="hidden sm:inline">Add Transaction</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <TransactionExportButton variant="outline" />
+                            <button
+                                onClick={() => router.push(ROUTES.RECURRING_EXPENSES)}
+                                className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-accent transition-colors"
+                                title="Manage Recurring Expenses"
+                            >
+                                <Repeat className="w-5 h-5" />
+                                <span className="hidden sm:inline">Recurring</span>
+                            </button>
+
+                        </div>
                     }
                 />
 
@@ -231,6 +292,8 @@ export default function TransactionsPage() {
                     )}
                 </ConfirmationModal>
 
+
+
                 {/* Filters */}
                 <div className="flex flex-col sm:flex-row gap-4">
                     {/* Search */}
@@ -238,7 +301,7 @@ export default function TransactionsPage() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                         <input
                             type="text"
-                            placeholder="Search transactions..."
+                            placeholder="Search transactions (min 2 chars)..."
                             value={search}
                             onChange={(e) => handleSearchChange(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
@@ -260,17 +323,51 @@ export default function TransactionsPage() {
                             </button>
                         ))}
                     </div>
+
+                    {/* Advanced Filters */}
+                    <TransactionFiltersComponent
+                        filters={filters}
+                        onFiltersChange={setFilters}
+                        categories={categories}
+                        maxAmount={10000}
+                    />
                 </div>
 
-                {/* Virtual List */}
-                <VirtualList
-                    fetchData={fetchTransactions}
-                    renderItem={renderTransactionCard}
-                    getItemKey={(item) => item.id}
-                    dependencies={[type, search]}
-                    itemsPerPage={ITEMS_PER_PAGE}
-                    enableDesktopPagination={true}
-                />
+                {/* Transactions List */}
+                <div className="space-y-3">
+                    {activeQuery.isLoading ? (
+                        <div className="flex justify-center py-12">
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        </div>
+                    ) : transactions.length === 0 ? (
+                        <div className="text-center py-12 text-muted-foreground">
+                            <p className="font-medium">No transactions found</p>
+                            <p className="text-sm mt-1">Try adjusting your filters or add a new transaction</p>
+                        </div>
+                    ) : (
+                        <>
+                            {transactions.map(renderTransactionCard)}
+
+                            {/* Load more trigger */}
+                            <div ref={loadMoreRef} className="py-4">
+                                {activeQuery.isFetchingNextPage && (
+                                    <div className="flex justify-center">
+                                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                {/* Floating Action Button (Mobile) */}
+                <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="md:hidden fixed bottom-20 right-4 z-50 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all flex items-center justify-center"
+                    aria-label="Add transaction"
+                >
+                    <Plus className="h-6 w-6" />
+                </button>
             </div>
         </PageWrapper>
     );

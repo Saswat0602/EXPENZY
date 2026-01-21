@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { SidebarProvider, useSidebar } from '@/contexts/sidebar-context';
+import { LayoutProvider, useLayout } from '@/contexts/layout-context';
 import { MobileHeader } from '@/components/layout/mobile-header';
 import { BottomNav } from '@/components/layout/bottom-nav';
 import { DesktopSidebar } from '@/components/layout/desktop-sidebar';
@@ -12,11 +13,12 @@ import { cn } from '@/lib/utils/cn';
 
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     const { isCollapsed } = useSidebar();
+    const { showMobileHeader, showBottomNav } = useLayout();
 
     return (
         <div className="min-h-screen bg-background">
             {/* Mobile Header - visible only on mobile */}
-            <MobileHeader />
+            <MobileHeader visible={showMobileHeader} />
 
             {/* Desktop Header - visible only on desktop */}
             <DesktopHeader />
@@ -27,7 +29,8 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
             {/* Main Content - dynamically adjusts based on sidebar state */}
             <main className={cn(
                 "pb-20 md:pb-0 md:pt-16 transition-all duration-300",
-                isCollapsed ? "md:ml-20" : "md:ml-64"
+                isCollapsed ? "md:ml-20" : "md:ml-64",
+                !showBottomNav && "pb-0"
             )}>
                 <div className="container max-w-7xl mx-auto">
                     {children}
@@ -35,7 +38,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
             </main>
 
             {/* Mobile Bottom Nav - visible only on mobile */}
-            <BottomNav />
+            <BottomNav visible={showBottomNav} />
         </div>
     );
 }
@@ -68,7 +71,9 @@ export default function DashboardLayout({
 
     return (
         <SidebarProvider>
-            <DashboardLayoutContent>{children}</DashboardLayoutContent>
+            <LayoutProvider>
+                <DashboardLayoutContent>{children}</DashboardLayoutContent>
+            </LayoutProvider>
         </SidebarProvider>
     );
 }

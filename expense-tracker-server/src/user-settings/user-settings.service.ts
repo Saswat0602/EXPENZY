@@ -48,6 +48,9 @@ export class UserSettingsService {
         ...(updateUserSettingsDto.defaultView && {
           defaultView: updateUserSettingsDto.defaultView,
         }),
+        ...(updateUserSettingsDto.textSize && {
+          textSize: updateUserSettingsDto.textSize,
+        }),
         ...(updateUserSettingsDto.notificationEnabled !== undefined && {
           notificationEnabled: updateUserSettingsDto.notificationEnabled,
         }),

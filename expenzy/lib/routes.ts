@@ -11,19 +11,18 @@ export const ROUTES = {
     // Dashboard routes
     DASHBOARD: '/dashboard',
     TRANSACTIONS: '/dashboard/transactions',
+    RECURRING_EXPENSES: '/dashboard/recurring-expenses',
     ANALYTICS: '/dashboard/analytics',
     BUDGET: '/dashboard/budget',
-    PROFILE: '/dashboard/profile',
-
-    // Feature routes
     SAVINGS: '/dashboard/savings',
-    SUBSCRIPTIONS: '/dashboard/subscriptions',
+    // SUBSCRIPTIONS: '/dashboard/subscriptions', // Removed
     GROUPS: '/dashboard/groups',
     LOANS: '/dashboard/loans',
-    TAGS: '/dashboard/tags',
-    PAYMENT_METHODS: '/dashboard/payment-methods',
-    ACCOUNTS: '/dashboard/accounts',
+    PROFILE: '/dashboard/profile',
     NOTIFICATIONS: '/dashboard/notifications',
+    PAYMENT_METHODS: '/dashboard/payment-methods',
+    TAGS: '/dashboard/tags',
+    ACCOUNTS: '/dashboard/accounts',
 
     // Settings
     SETTINGS: '/dashboard/settings',

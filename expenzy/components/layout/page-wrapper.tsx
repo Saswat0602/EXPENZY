@@ -26,7 +26,7 @@ export function PageWrapper({
             className={cn(
                 'w-full mx-auto',
                 maxWidthClasses[maxWidth],
-                !noPadding && 'px-4 py-4 md:px-0 md:py-6',
+                !noPadding && 'px-4 py-4 md:px-4 md:py-6',
                 !noPadding && 'pb-6 md:pb-6', // Extra bottom padding on mobile for bottom nav
                 className
             )}

@@ -2,10 +2,10 @@ export const API_ENDPOINTS = {
     // Auth
     AUTH: {
         LOGIN: '/auth/login',
-        SIGNUP: '/auth/register',  // Backend uses 'register' not 'signup'
+        SIGNUP: '/auth/register',
         LOGOUT: '/auth/logout',
         REFRESH: '/auth/refresh',
-        ME: '/auth/profile',  // Backend uses 'profile' not 'me'
+        ME: '/auth/profile',
     },
 
     // Users
@@ -33,8 +33,9 @@ export const API_ENDPOINTS = {
     CATEGORIES: {
         BASE: '/categories',
         BY_ID: (id: string) => `/categories/${id}`,
-        EXPENSE: '/categories?type=expense',
-        INCOME: '/categories?type=income',
+        EXPENSE: '/categories?type=EXPENSE',
+        INCOME: '/categories?type=INCOME',
+        GROUP: '/categories?type=GROUP',
     },
 
     // Budgets
@@ -68,13 +69,13 @@ export const API_ENDPOINTS = {
         PROGRESS: '/savings/goals/progress',
     },
 
-    // Subscriptions
-    SUBSCRIPTIONS: {
-        BASE: '/subscriptions',
-        BY_ID: (id: string) => `/subscriptions/${id}`,
-        UPCOMING: '/subscriptions/upcoming',
-        SUMMARY: '/subscriptions/summary',
-    },
+    // Subscriptions - REMOVED
+    // SUBSCRIPTIONS: {
+    //     BASE: '/subscriptions',
+    //     BY_ID: (id: string) => `/subscriptions/${id}`,
+    //     UPCOMING: '/subscriptions/upcoming',
+    //     SUMMARY: '/subscriptions/summary',
+    // },
 
     // Tags
     TAGS: {
@@ -97,6 +98,14 @@ export const API_ENDPOINTS = {
         BY_ID: (id: string) => `/groups/${id}`,
         MEMBERS: (id: string) => `/groups/${id}/members`,
         EXPENSES: (id: string) => `/groups/${id}/expenses`,
+        EXPENSE_BY_ID: (groupId: string, expenseId: string) => `/groups/${groupId}/expenses/${expenseId}`,
+        BALANCES: (id: string) => `/groups/${id}/balances`,
+        USER_BALANCE: (groupId: string, userId: string) => `/groups/${groupId}/balances/user/${userId}`,
+        SIMPLIFIED_DEBTS: (id: string) => `/groups/${id}/balances/simplified`,
+        SETTLE_EXPENSE: (groupId: string, expenseId: string) => `/groups/${groupId}/expenses/${expenseId}/settle`,
+        SETTLEMENTS: (id: string) => `/groups/${id}/settlements`,
+        STATISTICS: (id: string) => `/groups/${id}/statistics`,
+        MONTHLY_ANALYTICS: (id: string, months?: number) => `/groups/${id}/monthly-analytics${months ? `?months=${months}` : ''}`,
     },
 
     // Loans
@@ -104,6 +113,12 @@ export const API_ENDPOINTS = {
         LIST: '/loans',
         BY_ID: (id: string) => `/loans/${id}`,
         PAYMENTS: (id: string) => `/loans/${id}/payments`,
+        CONSOLIDATED: '/loans/consolidated',
+        STATISTICS: '/loans/statistics',
+        GROUP_BALANCES: '/loans/group-balances',
+        FROM_GROUP: '/loans/from-group',
+        ADJUSTMENTS: (id: string) => `/loans/${id}/adjustments`,
+        TRANSACTIONS: (otherUserId: string) => `/loans/transactions/${otherUserId}`,
     },
 
     // Accounts
@@ -122,5 +137,35 @@ export const API_ENDPOINTS = {
         MARK_READ: (id: string) => `/notifications/${id}/read`,
         MARK_ALL_READ: '/notifications/read-all',
         SUMMARY: '/notifications/summary',
+    },
+
+    // Avatars
+    AVATARS: {
+        BY_SEED: (seed: string) => `/avatars/${seed}`,
+        BY_STYLE_AND_SEED: (style: string, seed: string) => `/avatars/${style}/${seed}`,
+    },
+
+    // User Settings
+    USER_SETTINGS: '/user-settings',
+
+    // Export
+    EXPORT: {
+        GROUP: (groupId: string) => `/export/group/${groupId}`,
+        EXPENSES: '/export/expenses',
+        TRANSACTIONS: '/export/transactions',
+        DOWNLOAD: (filename: string) => `/export/download/${filename}`,
+    },
+
+    // Recurring Expenses
+    RECURRING_EXPENSES: {
+        BASE: '/expenses/recurring',
+        BY_ID: (id: string) => `/expenses/recurring/${id}`,
+    },
+
+    // Reminders
+    REMINDERS: {
+        BASE: '/reminders',
+        BY_ID: (id: string) => `/reminders/${id}`,
+        MARK_READ: (id: string) => `/reminders/${id}/read`,
     },
 } as const;

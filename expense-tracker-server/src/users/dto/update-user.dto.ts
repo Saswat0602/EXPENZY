@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEnum } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsIn } from 'class-validator';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -16,6 +16,15 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   avatar?: string;
+
+  @IsOptional()
+  @IsString()
+  avatarSeed?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['adventurer', 'adventurer-neutral', 'thumbs', 'fun-emoji'])
+  avatarStyle?: string;
 
   @IsOptional()
   @IsString()

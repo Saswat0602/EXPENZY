@@ -8,7 +8,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -20,10 +19,9 @@ import { DeleteAccountDto } from './dto/delete-account.dto';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
-  }
+  // POST /users endpoint removed for security reasons
+  // Users should register via POST /auth/register instead
+  // This endpoint was unprotected and duplicated registration functionality
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
@@ -62,11 +60,5 @@ export class UsersController {
     @Body() deleteAccountDto: DeleteAccountDto,
   ) {
     return this.usersService.deleteAccount(user.userId, deleteAccountDto);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('tags')
-  getUserTags(@CurrentUser() user: JwtPayload) {
-    return this.usersService.getUserTags(user.userId);
   }
 }

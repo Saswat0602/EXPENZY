@@ -18,6 +18,13 @@ export interface DashboardSummary {
         netSavings: number;
         savingsRate: number;
         totalBalance: number;
+        loanSummary: {
+            totalLent: number;
+            totalBorrowed: number;
+            netPosition: number;
+            type: 'lent' | 'borrowed';
+            amount: number;
+        };
     };
     budgets: Array<{
         id: string;

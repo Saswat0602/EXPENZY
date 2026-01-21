@@ -47,12 +47,27 @@ class ApiClient {
 
                 if (error.response?.status === 401) {
                     console.error('[API Client] 401 Unauthorized - Token expired or invalid');
-                    console.error('[API Client] Clearing token and redirecting to login');
 
-                    // Token expired or invalid - clear and redirect
-                    this.clearToken();
+                    // Only handle logout if not already on login/signup pages
                     if (typeof window !== 'undefined') {
-                        window.location.href = '/login';
+                        const currentPath = window.location.pathname;
+                        const isAuthPage = currentPath === '/login' || currentPath === '/signup' || currentPath === '/forgot-password';
+
+                        if (!isAuthPage) {
+                            console.error('[API Client] Clearing token and redirecting to login');
+
+                            // Clear all auth data
+                            this.clearToken();
+
+                            // Show toast notification (dynamically import to avoid SSR issues)
+                            import('sonner').then(({ toast }) => {
+                                toast.error('Session expired. Please login again.');
+                            });
+
+                            // Redirect to login with return URL
+                            const returnUrl = encodeURIComponent(currentPath);
+                            window.location.href = `/login?returnUrl=${returnUrl}`;
+                        }
                     }
                 }
                 return Promise.reject(this.handleError(error));
@@ -89,8 +104,21 @@ class ApiClient {
 
     private clearToken(): void {
         if (typeof window === 'undefined') return;
+
+        const oldToken = localStorage.getItem('token');
+
+        // Clear all auth-related data
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        localStorage.removeItem('auth-storage'); // Zustand persist key
+
+        // Dispatch storage event for multi-tab synchronization
+        window.dispatchEvent(new StorageEvent('storage', {
+            key: 'token',
+            oldValue: oldToken,
+            newValue: null,
+            storageArea: localStorage,
+        }));
     }
 
     public setToken(token: string): void {

@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -14,6 +15,8 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtPayload } from '../auth/jwt-payload.interface';
+import { CategoryType } from '@prisma/client';
+import { CategoryTypePipe } from './pipes/category-type.pipe';
 
 @Controller('categories')
 @UseGuards(JwtAuthGuard)
@@ -29,8 +32,11 @@ export class CategoriesController {
   }
 
   @Get()
-  findAll(@CurrentUser() user: JwtPayload) {
-    return this.categoriesService.findAll(user.userId);
+  findAll(
+    @CurrentUser() user: JwtPayload,
+    @Query('type', CategoryTypePipe) type?: CategoryType,
+  ) {
+    return this.categoriesService.findAll(user.userId, type);
   }
 
   @Get(':id')

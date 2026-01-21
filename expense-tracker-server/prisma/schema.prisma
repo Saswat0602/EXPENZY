@@ -13,54 +13,74 @@ enum Currency {
   EUR // Euro
 }
 
+enum CategoryType {
+  EXPENSE
+  INCOME
+  GROUP
+}
+
+enum UserAvatarStyle {
+  adventurer
+  adventurer_neutral
+  thumbs
+  fun_emoji
+}
+
+enum GroupIconProvider {
+  jdenticon
+}
+
 model User {
-  id                   String             @id @default(uuid())
-  email                String             @unique
-  username             String             @unique
-  passwordHash         String?            @map("password_hash")
-  phone                String?
-  defaultCurrency      Currency           @default(INR) @map("default_currency")
-  timezone             String             @default("UTC")
-  profilePictureUrl    String?            @map("profile_picture_url")
-  isActive             Boolean            @default(true) @map("is_active")
-  isVerified           Boolean            @default(false) @map("is_verified")
-  createdAt            DateTime           @default(now()) @map("created_at")
-  updatedAt            DateTime           @updatedAt @map("updated_at")
-  lastLoginAt          DateTime?          @map("last_login_at")
-  isDeleted            Boolean            @default(false) @map("is_deleted")
-  deletedAt            DateTime?          @map("deleted_at")
-  avatar               String?
-  firstName            String?            @map("first_name")
-  googleId             String?            @unique
-  lastName             String?            @map("last_name")
-  monthlyIncomeTarget  Decimal?           @map("monthly_income_target") @db.Decimal(15, 2)
-  monthlyExpenseTarget Decimal?           @map("monthly_expense_target") @db.Decimal(15, 2)
-  onboardingCompleted  Boolean            @default(false) @map("onboarding_completed")
-  twoFactorEnabled     Boolean            @default(false) @map("two_factor_enabled")
-  lastPasswordChange   DateTime?          @map("last_password_change")
-  attachments          Attachment[]
-  auditLogs            AuditLog[]
-  budgets              Budget[]
-  categories           Category[]
-  expenses             Expense[]
-  loansBorrowed        Loan[]             @relation("Borrower")
-  loansLent            Loan[]             @relation("Lender")
-  monthlySummaries     MonthlySummary[]
-  notifications        Notification[]
-  recurringPatterns    RecurringPattern[]
-  splitExpensesPaid    SplitExpense[]     @relation("PaidBy")
-  splitParticipations  SplitParticipant[]
-  yearlySummaries      YearlySummary[]
-  groupsCreated        Group[]            @relation("GroupCreator")
-  groupMemberships     GroupMember[]      @relation("GroupMemberships")
-  incomes              Income[]
-  incomeCategories     IncomeCategory[]
-  savingsGoals         SavingsGoal[]
-  subscriptions        Subscription[]
-  tags                 Tag[]
-  paymentMethods       PaymentMethod[]
-  accounts             Account[]
-  settings             UserSettings?
+  id                    String              @id @default(uuid())
+  email                 String              @unique
+  username              String              @unique
+  passwordHash          String?             @map("password_hash")
+  phone                 String?
+  defaultCurrency       Currency            @default(INR) @map("default_currency")
+  timezone              String              @default("UTC")
+  profilePictureUrl     String?             @map("profile_picture_url")
+  isActive              Boolean             @default(true) @map("is_active")
+  isVerified            Boolean             @default(false) @map("is_verified")
+  createdAt             DateTime            @default(now()) @map("created_at")
+  updatedAt             DateTime            @updatedAt @map("updated_at")
+  lastLoginAt           DateTime?           @map("last_login_at")
+  isDeleted             Boolean             @default(false) @map("is_deleted")
+  deletedAt             DateTime?           @map("deleted_at")
+  avatar                String?
+  avatarSeed            String?             @map("avatar_seed")
+  avatarStyle           UserAvatarStyle?    @default(adventurer) @map("avatar_style")
+  avatarUrl             String?             @map("avatar_url")
+  firstName             String?             @map("first_name")
+  googleId              String?             @unique
+  lastName              String?             @map("last_name")
+  monthlyIncomeTarget   Decimal?            @map("monthly_income_target") @db.Decimal(15, 2)
+  monthlyExpenseTarget  Decimal?            @map("monthly_expense_target") @db.Decimal(15, 2)
+  onboardingCompleted   Boolean             @default(false) @map("onboarding_completed")
+  twoFactorEnabled      Boolean             @default(false) @map("two_factor_enabled")
+  lastPasswordChange    DateTime?           @map("last_password_change")
+  budgets               Budget[]
+  categories            Category[]
+  expenses              Expense[]
+  loansBorrowed         Loan[]              @relation("Borrower")
+  loansLent             Loan[]              @relation("Lender")
+  notifications         Notification[]
+  recurringPatterns     RecurringPattern[]
+  splitExpensesPaid     SplitExpense[]      @relation("PaidBy")
+  splitParticipations   SplitParticipant[]  @relation("SplitParticipations")
+  groupsCreated         Group[]             @relation("GroupCreator")
+  groupMemberships      GroupMember[]       @relation("GroupMemberships")
+  incomes               Income[]
+  savingsGoals          SavingsGoal[]
+  settings              UserSettings?
+  groupExpensesPaid     GroupExpense[]      @relation("GroupExpensePaidBy")
+  groupExpensesModified GroupExpense[]      @relation("ExpenseLastModifier")
+  groupExpenseSplits    GroupExpenseSplit[] @relation("GroupExpenseSplitUser")
+  settlementsFrom       Settlement[]        @relation("SettlementFrom")
+  settlementsTo         Settlement[]        @relation("SettlementTo")
+  loanAdjustments       LoanAdjustment[]    @relation("LoanAdjustmentCreator")
+  contacts              UserContact[]       @relation("UserContacts")
+  contactedBy           UserContact[]       @relation("ContactedBy")
+  splitExpenses         SplitExpense[]
 
   @@index([email])
   @@index([googleId])
@@ -76,7 +96,7 @@ model Category {
   name             String
   icon             String?
   color            String?
-  type             String
+  type             CategoryType
   isSystem         Boolean        @default(false) @map("is_system")
   parentCategoryId String?        @map("parent_category_id")
   createdAt        DateTime       @default(now()) @map("created_at")
@@ -86,7 +106,8 @@ model Category {
   subCategories    Category[]     @relation("CategoryHierarchy")
   user             User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
   expenses         Expense[]
-  subscriptions    Subscription[]
+  incomes          Income[]
+  groupExpenses    GroupExpense[]
 
   @@unique([userId, name, type])
   @@index([userId, type])
@@ -98,32 +119,34 @@ model Category {
 }
 
 model Expense {
-  id                 String            @id @default(uuid())
-  userId             String            @map("user_id")
-  categoryId         String?           @map("category_id")
-  amount             Decimal           @db.Decimal(15, 2)
-  currency           Currency          @default(INR)
-  originalAmount     Decimal?          @map("original_amount") @db.Decimal(15, 2)
-  originalCurrency   String?           @map("original_currency")
-  exchangeRate       Decimal?          @map("exchange_rate") @db.Decimal(10, 4)
-  description        String?
-  expenseDate        DateTime          @map("expense_date") @db.Date
-  paymentMethod      String?           @map("payment_method")
-  isRecurring        Boolean           @default(false) @map("is_recurring")
-  recurringPatternId String?           @map("recurring_pattern_id")
-  receiptUrl         String?           @map("receipt_url")
-  notes              String?
-  locationLat        Decimal?          @map("location_lat") @db.Decimal(10, 8)
-  locationLng        Decimal?          @map("location_lng") @db.Decimal(11, 8)
-  locationName       String?           @map("location_name")
-  createdAt          DateTime          @default(now()) @map("created_at")
-  updatedAt          DateTime          @updatedAt @map("updated_at")
-  deletedAt          DateTime?         @map("deleted_at")
-  category           Category?         @relation(fields: [categoryId], references: [id])
-  recurringPattern   RecurringPattern? @relation(fields: [recurringPatternId], references: [id])
-  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  splitExpense       SplitExpense[]
-  expenseTags        ExpenseTag[]
+  id                   String            @id @default(uuid())
+  userId               String            @map("user_id")
+  categoryId           String?           @map("category_id")
+  amount               Decimal           @db.Decimal(15, 2)
+  currency             Currency          @default(INR)
+  originalAmount       Decimal?          @map("original_amount") @db.Decimal(15, 2)
+  originalCurrency     String?           @map("original_currency")
+  exchangeRate         Decimal?          @map("exchange_rate") @db.Decimal(10, 4)
+  description          String?
+  expenseDate          DateTime          @map("expense_date") @db.Date
+  paymentMethod        String?           @map("payment_method")
+  isRecurring          Boolean           @default(false) @map("is_recurring")
+  recurringPatternId   String?           @map("recurring_pattern_id")
+  receiptUrl           String?           @map("receipt_url")
+  notes                String?
+  locationLat          Decimal?          @map("location_lat") @db.Decimal(10, 8)
+  locationLng          Decimal?          @map("location_lng") @db.Decimal(11, 8)
+  locationName         String?           @map("location_name")
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
+  deletedAt            DateTime?         @map("deleted_at")
+  autoDetectedCategory Boolean           @default(false) @map("auto_detected_category")
+  categoryConfidence   Float?            @map("category_confidence")
+  categorySource       String?           @map("category_source")
+  category             Category?         @relation(fields: [categoryId], references: [id])
+  recurringPattern     RecurringPattern? @relation(fields: [recurringPatternId], references: [id])
+  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  splitExpense         SplitExpense[]
 
   @@index([userId, expenseDate(sort: Desc)])
   @@index([categoryId])
@@ -179,6 +202,8 @@ model SplitExpense {
   group        Group?             @relation("GroupSplits", fields: [groupId], references: [id])
   paidByUser   User               @relation("PaidBy", fields: [paidByUserId], references: [id])
   participants SplitParticipant[]
+  user         User?              @relation(fields: [userId], references: [id])
+  userId       String?
 
   @@index([paidByUserId])
   @@index([isSettled])
@@ -203,7 +228,7 @@ model SplitParticipant {
   createdAt      DateTime     @default(now()) @map("created_at")
   updatedAt      DateTime     @updatedAt @map("updated_at")
   splitExpense   SplitExpense @relation(fields: [splitExpenseId], references: [id], onDelete: Cascade)
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User         @relation("SplitParticipations", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([splitExpenseId, userId])
   @@index([userId, isSettled])
@@ -213,24 +238,40 @@ model SplitParticipant {
 }
 
 model Loan {
-  id              String        @id @default(uuid())
-  lenderUserId    String        @map("lender_user_id")
-  borrowerUserId  String        @map("borrower_user_id")
-  amount          Decimal       @db.Decimal(15, 2)
-  currency        String        @default("USD")
-  interestRate    Decimal?      @default(0) @map("interest_rate") @db.Decimal(5, 2)
+  id              String    @id @default(uuid())
+  lenderUserId    String    @map("lender_user_id")
+  borrowerUserId  String    @map("borrower_user_id")
+  amount          Decimal   @db.Decimal(15, 2)
+  currency        String    @default("USD")
+  interestRate    Decimal?  @default(0) @map("interest_rate") @db.Decimal(5, 2)
   description     String?
-  loanDate        DateTime      @map("loan_date") @db.Date
-  dueDate         DateTime?     @map("due_date") @db.Date
-  status          String        @default("active")
-  amountPaid      Decimal       @default(0) @map("amount_paid") @db.Decimal(15, 2)
-  amountRemaining Decimal       @map("amount_remaining") @db.Decimal(15, 2)
-  paymentTerms    String?       @map("payment_terms")
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
-  payments        LoanPayment[]
-  borrower        User          @relation("Borrower", fields: [borrowerUserId], references: [id])
-  lender          User          @relation("Lender", fields: [lenderUserId], references: [id])
+  loanDate        DateTime  @map("loan_date") @db.Date
+  dueDate         DateTime? @map("due_date") @db.Date
+  status          String    @default("active")
+  amountPaid      Decimal   @default(0) @map("amount_paid") @db.Decimal(15, 2)
+  amountRemaining Decimal   @map("amount_remaining") @db.Decimal(15, 2)
+  paymentTerms    String?   @map("payment_terms")
+
+  // Group integration
+  groupId    String? @map("group_id")
+  sourceType String  @default("direct") @map("source_type") // 'direct', 'group_balance', 'settlement'
+  sourceId   String? @map("source_id") // ID of source entity
+
+  // Enhanced payment tracking
+  lastPaymentDate DateTime? @map("last_payment_date")
+
+  // Soft delete
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  adjustments LoanAdjustment[]
+  settlements Settlement[]
+  group       Group?           @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  borrower    User             @relation("Borrower", fields: [borrowerUserId], references: [id])
+  lender      User             @relation("Lender", fields: [lenderUserId], references: [id])
 
   @@index([lenderUserId, status])
   @@index([borrowerUserId, status])
@@ -239,25 +280,66 @@ model Loan {
   @@index([lenderUserId, dueDate])
   @@index([borrowerUserId, dueDate])
   @@index([loanDate])
+  @@index([groupId])
+  @@index([sourceType])
+  @@index([lenderUserId, isDeleted])
+  @@index([borrowerUserId, isDeleted])
   @@map("loans")
 }
 
-model LoanPayment {
-  id            String   @id @default(uuid())
-  loanId        String   @map("loan_id")
-  amount        Decimal  @db.Decimal(15, 2)
-  currency      String   @default("USD")
-  paymentDate   DateTime @map("payment_date") @db.Date
-  paymentMethod String?  @map("payment_method")
-  notes         String?
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-  loan          Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+model LoanAdjustment {
+  id             String    @id @default(uuid())
+  loanId         String    @map("loan_id")
+  adjustmentType String    @map("adjustment_type") // 'payment', 'increase', 'decrease', 'waive'
+  amount         Decimal   @db.Decimal(15, 2)
+  currency       String    @default("INR")
+  reason         String?
+  notes          String?
+  paymentMethod  String?   @map("payment_method") // For payment type adjustments
+  paymentDate    DateTime? @map("payment_date") @db.Date // For payment type adjustments
+  createdBy      String    @map("created_by")
+  createdAt      DateTime  @default(now()) @map("created_at")
 
-  @@index([loanId])
-  @@index([paymentDate(sort: Desc)])
-  @@index([loanId, paymentDate(sort: Desc)])
-  @@map("loan_payments")
+  loan    Loan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  creator User @relation("LoanAdjustmentCreator", fields: [createdBy], references: [id])
+
+  @@index([loanId, createdAt(sort: Desc)])
+  @@index([adjustmentType])
+  @@index([createdBy])
+  @@map("loan_adjustments")
+}
+
+// ============================================
+// USER CONTACTS MODEL
+// ============================================
+
+model UserContact {
+  id     String @id @default(uuid())
+  userId String @map("user_id") // Owner of this contact
+
+  // For external contacts (not registered users)
+  contactName  String? @map("contact_name")
+  contactEmail String? @map("contact_email")
+  contactPhone String? @map("contact_phone")
+
+  // For registered users
+  contactUserId String? @map("contact_user_id") // Reference to User
+
+  // Privacy control
+  isVerified Boolean @default(false) @map("is_verified") // Did contact accept?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user         User          @relation("UserContacts", fields: [userId], references: [id], onDelete: Cascade)
+  contactUser  User?         @relation("ContactedBy", fields: [contactUserId], references: [id], onDelete: Cascade)
+  groupMembers GroupMember[]
+
+  @@unique([userId, contactUserId]) // Can't have duplicate registered contacts
+  @@unique([userId, contactEmail]) // Can't have duplicate email contacts
+  @@index([userId])
+  @@index([contactUserId])
+  @@map("user_contacts")
 }
 
 model Budget {
@@ -287,53 +369,6 @@ model Budget {
   @@map("budgets")
 }
 
-model MonthlySummary {
-  id                String   @id @default(uuid())
-  userId            String   @map("user_id")
-  year              Int
-  month             Int
-  currency          String   @default("USD")
-  totalIncome       Decimal  @default(0) @map("total_income") @db.Decimal(15, 2)
-  totalExpenses     Decimal  @default(0) @map("total_expenses") @db.Decimal(15, 2)
-  netSavings        Decimal  @default(0) @map("net_savings") @db.Decimal(15, 2)
-  categoryBreakdown Json?    @map("category_breakdown")
-  expenseCount      Int      @default(0) @map("expense_count")
-  averageExpense    Decimal  @default(0) @map("average_expense") @db.Decimal(15, 2)
-  largestExpense    Decimal  @default(0) @map("largest_expense") @db.Decimal(15, 2)
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, year, month, currency])
-  @@index([userId, year, month])
-  @@index([year, month])
-  @@index([userId, year])
-  @@map("monthly_summaries")
-}
-
-model YearlySummary {
-  id                      String   @id @default(uuid())
-  userId                  String   @map("user_id")
-  year                    Int
-  currency                String   @default("USD")
-  totalIncome             Decimal  @default(0) @map("total_income") @db.Decimal(15, 2)
-  totalExpenses           Decimal  @default(0) @map("total_expenses") @db.Decimal(15, 2)
-  netSavings              Decimal  @default(0) @map("net_savings") @db.Decimal(15, 2)
-  categoryBreakdown       Json?    @map("category_breakdown")
-  expenseCount            Int      @default(0) @map("expense_count")
-  averageMonthlyExpense   Decimal  @default(0) @map("average_monthly_expense") @db.Decimal(15, 2)
-  largestExpense          Decimal  @default(0) @map("largest_expense") @db.Decimal(15, 2)
-  monthWithHighestExpense Int?     @map("month_with_highest_expense")
-  createdAt               DateTime @default(now()) @map("created_at")
-  updatedAt               DateTime @updatedAt @map("updated_at")
-  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, year, currency])
-  @@index([userId, year])
-  @@index([year])
-  @@map("yearly_summaries")
-}
-
 model Notification {
   id                String    @id @default(uuid())
   userId            String    @map("user_id")
@@ -361,104 +396,85 @@ model Notification {
   @@map("notifications")
 }
 
-model AuditLog {
-  id         String   @id @default(uuid())
-  userId     String?  @map("user_id")
-  entityType String   @map("entity_type")
-  entityId   String   @map("entity_id")
-  action     String
-  oldValues  Json?    @map("old_values")
-  newValues  Json?    @map("new_values")
-  ipAddress  String?  @map("ip_address")
-  userAgent  String?  @map("user_agent")
-  createdAt  DateTime @default(now()) @map("created_at")
-  user       User?    @relation(fields: [userId], references: [id])
-
-  @@index([userId, createdAt(sort: Desc)])
-  @@index([entityType, entityId])
-  @@index([action])
-  @@index([createdAt(sort: Desc)])
-  @@map("audit_logs")
-}
-
-model ExchangeRate {
-  id             String   @id @default(uuid())
-  baseCurrency   String   @map("base_currency")
-  targetCurrency String   @map("target_currency")
-  rate           Decimal  @db.Decimal(15, 6)
-  rateDate       DateTime @map("rate_date") @db.Date
-  source         String?
-  createdAt      DateTime @default(now()) @map("created_at")
-
-  @@unique([baseCurrency, targetCurrency, rateDate])
-  @@index([baseCurrency, targetCurrency, rateDate(sort: Desc)])
-  @@index([rateDate(sort: Desc)])
-  @@map("exchange_rates")
-}
-
-model Attachment {
-  id         String   @id @default(uuid())
-  userId     String   @map("user_id")
-  entityType String   @map("entity_type")
-  entityId   String   @map("entity_id")
-  fileName   String   @map("file_name")
-  fileUrl    String   @map("file_url")
-  fileSize   Int?     @map("file_size")
-  mimeType   String?  @map("mime_type")
-  createdAt  DateTime @default(now()) @map("created_at")
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([entityType, entityId])
-  @@index([createdAt(sort: Desc)])
-  @@map("attachments")
-}
-
 model Group {
-  id              String   @id @default(uuid())
-  name            String
-  description     String?
-  imageUrl        String?  @map("image_url")
-  createdByUserId String   @map("created_by_user_id")
-  createdBy       User     @relation("GroupCreator", fields: [createdByUserId], references: [id])
-  isActive        Boolean  @default(true) @map("is_active")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id           String             @id @default(uuid())
+  name         String
+  description  String?
+  imageUrl     String?            @map("image_url")
+  iconSeed     String?            @map("icon_seed")
+  iconProvider GroupIconProvider? @default(jdenticon) @map("icon_provider")
+  iconUrl      String?            @map("icon_url")
+
+  // Group type/category
+  groupType String @default("other") @map("group_type")
+
+  // Default currency for the group
+  currency Currency @default(INR)
+
+  // Simplify debts (minimize transactions)
+  simplifyDebts Boolean @default(true) @map("simplify_debts")
+
+  // Allow non-member expenses
+  allowNonMembers Boolean @default(false) @map("allow_non_members")
+
+  // Group icon/emoji
+  icon String? @default("friends")
+
+  // Group color theme
+  color String? @default("purple")
+
+  createdByUserId String  @map("created_by_user_id")
+  createdBy       User    @relation("GroupCreator", fields: [createdByUserId], references: [id])
+  isActive        Boolean @default(true) @map("is_active")
+
+  // Archive instead of delete
+  isArchived Boolean   @default(false) @map("is_archived")
+  archivedAt DateTime? @map("archived_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   members       GroupMember[]
   splitExpenses SplitExpense[] @relation("GroupSplits")
+  groupExpenses GroupExpense[]
+  settlements   Settlement[]
+  loans         Loan[]
 
   @@index([createdByUserId])
   @@index([isActive])
+  @@index([isArchived])
+  @@index([groupType])
+  @@index([currency])
   @@index([createdAt(sort: Desc)])
   @@index([createdByUserId, isActive])
   @@map("groups")
 }
 
 model GroupMember {
-  id           String    @id @default(uuid())
-  groupId      String    @map("group_id")
-  group        Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  userId       String?   @map("user_id")
-  user         User?     @relation("GroupMemberships", fields: [userId], references: [id])
-  memberName   String?   @map("member_name")
-  memberEmail  String?   @map("member_email")
-  memberPhone  String?   @map("member_phone")
-  role         String    @default("member")
-  inviteToken  String?   @unique @map("invite_token")
-  inviteStatus String?   @default("pending") @map("invite_status")
-  joinedAt     DateTime? @map("joined_at")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  id           String       @id @default(uuid())
+  groupId      String       @map("group_id")
+  group        Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId       String?      @map("user_id")
+  user         User?        @relation("GroupMemberships", fields: [userId], references: [id])
+  contactId    String?      @map("contact_id") // Link to UserContact for non-registered members
+  contact      UserContact? @relation(fields: [contactId], references: [id])
+  role         String       @default("member")
+  inviteToken  String?      @unique @map("invite_token")
+  inviteStatus String?      @default("pending") @map("invite_status")
+  joinedAt     DateTime?    @map("joined_at")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
 
   @@unique([groupId, userId])
   @@index([groupId])
   @@index([userId])
+  @@index([contactId])
   @@index([inviteStatus])
   @@index([groupId, inviteStatus])
   @@index([groupId, role])
   @@index([inviteToken])
-  @@index([memberEmail])
+  @@index([groupId, userId, inviteStatus]) // Composite index for membership checks
+  @@index([userId, inviteStatus]) // For user's group list
   @@map("group_members")
 }
 
@@ -484,7 +500,7 @@ model Income {
   deletedAt          DateTime? @map("deleted_at")
 
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category         IncomeCategory?   @relation(fields: [categoryId], references: [id])
+  category         Category?         @relation(fields: [categoryId], references: [id])
   recurringPattern RecurringPattern? @relation(fields: [recurringPatternId], references: [id])
 
   @@index([userId, incomeDate(sort: Desc)])
@@ -496,24 +512,6 @@ model Income {
   @@index([userId, categoryId])
   @@index([incomeDate])
   @@map("incomes")
-}
-
-model IncomeCategory {
-  id        String   @id @default(uuid())
-  userId    String?  @map("user_id")
-  name      String
-  icon      String?
-  color     String?
-  isSystem  Boolean  @default(false) @map("is_system")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  incomes Income[]
-
-  @@unique([userId, name])
-  @@index([userId, isSystem])
-  @@map("income_categories")
 }
 
 // ============================================
@@ -568,149 +566,13 @@ model SavingsContribution {
 // SUBSCRIPTION TRACKING MODEL
 // ============================================
 
-model Subscription {
-  id              String    @id @default(uuid())
-  userId          String    @map("user_id")
-  name            String
-  description     String?
-  amount          Decimal   @db.Decimal(15, 2)
-  currency        String    @default("USD")
-  billingCycle    String    @map("billing_cycle")
-  categoryId      String?   @map("category_id")
-  startDate       DateTime  @map("start_date") @db.Date
-  nextBillingDate DateTime  @map("next_billing_date") @db.Date
-  endDate         DateTime? @map("end_date") @db.Date
-  paymentMethod   String?   @map("payment_method")
-  website         String?
-  reminderDays    Int       @default(3) @map("reminder_days")
-  isActive        Boolean   @default(true) @map("is_active")
-  icon            String?
-  color           String?
-  notes           String?
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category Category? @relation(fields: [categoryId], references: [id])
-
-  @@index([userId, isActive])
-  @@index([userId, nextBillingDate])
-  @@index([nextBillingDate, isActive])
-  @@index([billingCycle])
-  @@index([userId, billingCycle])
-  @@index([categoryId])
-  @@map("subscriptions")
-}
-
-// ============================================
-// NORMALIZED TAGS MODELS
-// ============================================
-
-model Tag {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  name      String
-  color     String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expenses ExpenseTag[]
-
-  @@unique([userId, name])
-  @@index([userId])
-  @@index([userId, createdAt(sort: Desc)])
-  @@map("tags")
-}
-
-model ExpenseTag {
-  expenseId String   @map("expense_id")
-  tagId     String   @map("tag_id")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
-  tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@id([expenseId, tagId])
-  @@index([tagId])
-  @@index([expenseId])
-  @@map("expense_tags")
-}
-
 // ============================================
 // PAYMENT METHODS MODEL
 // ============================================
 
-model PaymentMethod {
-  id             String   @id @default(uuid())
-  userId         String   @map("user_id")
-  name           String
-  type           String
-  lastFourDigits String?  @map("last_four_digits")
-  bankName       String?  @map("bank_name")
-  icon           String?
-  color          String?
-  isDefault      Boolean  @default(false) @map("is_default")
-  isActive       Boolean  @default(true) @map("is_active")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, isActive])
-  @@index([userId, isDefault])
-  @@index([userId, type])
-  @@map("payment_methods")
-}
-
 // ============================================
 // FINANCIAL ACCOUNTS MODELS
 // ============================================
-
-model Account {
-  id             String   @id @default(uuid())
-  userId         String   @map("user_id")
-  name           String
-  type           String
-  balance        Decimal  @default(0) @db.Decimal(15, 2)
-  currency       String   @default("USD")
-  bankName       String?  @map("bank_name")
-  accountNumber  String?  @map("account_number")
-  icon           String?
-  color          String?
-  isActive       Boolean  @default(true) @map("is_active")
-  includeInTotal Boolean  @default(true) @map("include_in_total")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-
-  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions AccountTransaction[]
-
-  @@index([userId, isActive])
-  @@index([userId, includeInTotal])
-  @@index([userId, type])
-  @@index([type])
-  @@map("accounts")
-}
-
-model AccountTransaction {
-  id          String   @id @default(uuid())
-  accountId   String   @map("account_id")
-  type        String
-  amount      Decimal  @db.Decimal(15, 2)
-  description String?
-  date        DateTime @db.Date
-  relatedType String?  @map("related_type")
-  relatedId   String?  @map("related_id")
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
-
-  @@index([accountId, date(sort: Desc)])
-  @@index([relatedType, relatedId])
-  @@index([accountId, type, date(sort: Desc)])
-  @@map("account_transactions")
-}
 
 // ============================================
 // USER SETTINGS MODEL
@@ -725,6 +587,7 @@ model UserSettings {
   timeFormat            String   @default("24h") @map("time_format")
   weekStartDay          String   @default("monday") @map("week_start_day")
   defaultView           String   @default("dashboard") @map("default_view")
+  textSize              String   @default("medium") @map("text_size")
   notificationEnabled   Boolean  @default(true) @map("notification_enabled")
   emailNotifications    Boolean  @default(true) @map("email_notifications")
   pushNotifications     Boolean  @default(true) @map("push_notifications")
@@ -740,4 +603,106 @@ model UserSettings {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_settings")
+}
+
+// ============================================
+// IMPROVED GROUP EXPENSES (Splitwise-like)
+// ============================================
+
+model GroupExpense {
+  id           String   @id @default(uuid())
+  groupId      String   @map("group_id")
+  paidByUserId String?  @map("paid_by_user_id") // Can be null for non-members
+  paidByName   String?  @map("paid_by_name") // For non-member payers
+  categoryId   String?  @map("category_id")
+  amount       Decimal  @db.Decimal(15, 2)
+  currency     String   @default("INR")
+  description  String
+  expenseDate  DateTime @map("expense_date") @db.Date
+  notes        String?
+  receiptUrl   String?  @map("receipt_url")
+  splitType    String   @default("equal") @map("split_type") // 'equal', 'exact', 'percentage'
+  isSettled    Boolean  @default(false) @map("is_settled")
+
+  // Validation tracking
+  splitValidationStatus String? @default("valid") @map("split_validation_status") // 'valid', 'sum_mismatch', 'percentage_mismatch', 'pending'
+  hasAdjustments        Boolean @default(false) @map("has_adjustments")
+  adjustmentReason      String? @map("adjustment_reason")
+
+  // Optimistic locking
+  version        Int       @default(1)
+  lastModifiedBy String?   @map("last_modified_by")
+  lastModifiedAt DateTime? @map("last_modified_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  group        Group               @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  paidBy       User?               @relation("GroupExpensePaidBy", fields: [paidByUserId], references: [id])
+  category     Category?           @relation(fields: [categoryId], references: [id])
+  lastModifier User?               @relation("ExpenseLastModifier", fields: [lastModifiedBy], references: [id])
+  splits       GroupExpenseSplit[]
+
+  @@index([groupId])
+  @@index([paidByUserId])
+  @@index([expenseDate])
+  @@index([isSettled])
+  @@index([categoryId])
+  @@index([splitValidationStatus])
+  @@index([groupId, expenseDate(sort: Desc)]) // Composite index for paginated expense list
+  @@index([groupId, isSettled]) // For filtering settled/unsettled expenses
+  @@map("group_expenses")
+}
+
+model GroupExpenseSplit {
+  id             String    @id @default(uuid())
+  groupExpenseId String    @map("group_expense_id")
+  userId         String?   @map("user_id") // Can be null for non-members
+  memberName     String?   @map("member_name") // For non-member participants
+  amountOwed     Decimal   @map("amount_owed") @db.Decimal(15, 2)
+  amountPaid     Decimal   @default(0) @map("amount_paid") @db.Decimal(15, 2)
+  percentage     Decimal?  @db.Decimal(5, 2) // For percentage splits
+  isPaid         Boolean   @default(false) @map("is_paid")
+  paidAt         DateTime? @map("paid_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  groupExpense GroupExpense @relation(fields: [groupExpenseId], references: [id], onDelete: Cascade)
+  user         User?        @relation("GroupExpenseSplitUser", fields: [userId], references: [id])
+
+  @@unique([groupExpenseId, userId])
+  @@index([groupExpenseId])
+  @@index([userId])
+  @@index([isPaid])
+  @@index([groupExpenseId, userId]) // Composite index for split lookups
+  @@index([userId, isPaid]) // For user's unpaid splits
+  @@map("group_expense_splits")
+}
+
+model Settlement {
+  id         String   @id @default(uuid())
+  groupId    String   @map("group_id")
+  fromUserId String   @map("from_user_id")
+  toUserId   String   @map("to_user_id")
+  amount     Decimal  @db.Decimal(15, 2)
+  currency   String   @default("INR")
+  settledAt  DateTime @map("settled_at")
+  notes      String?
+
+  // Loan tracking
+  loanId String? @map("loan_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  group    Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  fromUser User  @relation("SettlementFrom", fields: [fromUserId], references: [id])
+  toUser   User  @relation("SettlementTo", fields: [toUserId], references: [id])
+  loan     Loan? @relation(fields: [loanId], references: [id], onDelete: SetNull)
+
+  @@index([groupId])
+  @@index([fromUserId])
+  @@index([toUserId])
+  @@index([settledAt])
+  @@index([loanId])
+  @@map("settlements")
 }

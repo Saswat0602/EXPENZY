@@ -1,5 +1,11 @@
-import { IsOptional, IsString, IsDateString, IsNumber, IsEnum } from 'class-validator';
 import { Currency } from '@prisma/client';
+import {
+  IsOptional,
+  IsString,
+  IsDateString,
+  IsNumber,
+  MinLength,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
@@ -65,11 +71,13 @@ export class ExpenseFilterDto {
   tags?: string;
 
   @ApiPropertyOptional({
-    description: 'Search in description and notes',
+    description: 'Search in description and notes (minimum 2 characters)',
     example: 'lunch',
+    minLength: 2,
   })
   @IsString()
   @IsOptional()
+  @MinLength(2, { message: 'Search query must be at least 2 characters long' })
   search?: string;
 
   @ApiPropertyOptional({
@@ -90,7 +98,20 @@ export class ExpenseFilterDto {
   }
 }
 
+/**
+ * Query DTO supporting both offset and cursor-based pagination
+ * Use cursor for infinite scroll, page/limit for traditional pagination
+ */
 export class ExpenseQueryDto extends PaginationQueryDto {
+  // Cursor pagination (alternative to page/limit)
+  @ApiPropertyOptional({
+    description: 'Cursor for pagination (use instead of page)',
+    example: 'clh1234567890',
+  })
+  @IsString()
+  @IsOptional()
+  cursor?: string;
+
   @ApiPropertyOptional({
     description: 'Field to sort by',
     example: 'expenseDate',
@@ -147,9 +168,14 @@ export class ExpenseQueryDto extends PaginationQueryDto {
   @IsOptional()
   tags?: string;
 
-  @ApiPropertyOptional({ type: String })
+  @ApiPropertyOptional({
+    type: String,
+    minLength: 2,
+    description: 'Search query (minimum 2 characters)',
+  })
   @IsString()
   @IsOptional()
+  @MinLength(2, { message: 'Search query must be at least 2 characters long' })
   search?: string;
 
   @ApiPropertyOptional({ type: String })
@@ -162,4 +188,16 @@ export class ExpenseQueryDto extends PaginationQueryDto {
       ? this.tags.split(',').map((tag) => tag.trim())
       : undefined;
   }
+
+  // Set default limit to 50 for cursor pagination
+  @ApiPropertyOptional({
+    description: 'Number of items (default 50 for cursor, 20 for offset)',
+    minimum: 1,
+    maximum: 100,
+    default: 50,
+  })
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  limit?: number = 50;
 }

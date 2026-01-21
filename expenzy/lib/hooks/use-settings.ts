@@ -11,6 +11,7 @@ export interface UserSettings {
     timeFormat: '12h' | '24h';
     weekStartDay: string;
     defaultView: string;
+    textSize: 'small' | 'medium' | 'large';
     notificationEnabled: boolean;
     emailNotifications: boolean;
     pushNotifications: boolean;
@@ -29,6 +30,7 @@ export interface UpdateUserSettingsDto {
     timeFormat?: '12h' | '24h';
     weekStartDay?: string;
     defaultView?: string;
+    textSize?: 'small' | 'medium' | 'large';
     notificationEnabled?: boolean;
     emailNotifications?: boolean;
     pushNotifications?: boolean;

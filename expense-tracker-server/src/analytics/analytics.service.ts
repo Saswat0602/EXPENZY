@@ -29,7 +29,8 @@ export class AnalyticsService {
           start = new Date(now.setMonth(now.getMonth() - 3));
           break;
         case AnalyticsPeriod.YEAR:
-          start = new Date(now.setFullYear(now.getFullYear() - 1));
+          // Use start of current year (Jan 1) instead of 1 year ago
+          start = new Date(now.getFullYear(), 0, 1); // Jan 1 of current year
           break;
         default:
           start = new Date(now.setMonth(now.getMonth() - 1));
@@ -52,10 +53,9 @@ export class AnalyticsService {
       totalExpenses,
       budgets,
       savingsGoals,
-      upcomingSubscriptions,
       recentTransactions,
       topCategories,
-      accountBalances,
+      loanSummary,
     ] = await Promise.all([
       // Total Income
       this.prisma.income.aggregate({
@@ -100,21 +100,6 @@ export class AnalyticsService {
         take: 5,
       }),
 
-      // Upcoming Subscriptions (next 30 days)
-      this.prisma.subscription.findMany({
-        where: {
-          userId,
-          isActive: true,
-          nextBillingDate: {
-            gte: new Date(),
-            lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          },
-        },
-        include: { category: true },
-        orderBy: { nextBillingDate: 'asc' },
-        take: 10,
-      }),
-
       // Recent Transactions (expenses)
       this.prisma.expense.findMany({
         where: {
@@ -140,23 +125,13 @@ export class AnalyticsService {
         take: 5,
       }),
 
-      // Account Balances
-      this.prisma.account.findMany({
-        where: {
-          userId,
-          isActive: true,
-          includeInTotal: true,
-        },
-      }),
+      // Loan Summary
+      this.getLoanSummaryForDashboard(userId),
     ]);
 
     const income = Number(totalIncome._sum.amount || 0);
     const expenses = Number(totalExpenses._sum.amount || 0);
     const netSavings = income - expenses;
-    const totalBalance = accountBalances.reduce(
-      (sum, acc) => sum + Number(acc.balance),
-      0,
-    );
 
     // Get category details for top categories
     const categoryIds = topCategories
@@ -208,23 +183,15 @@ export class AnalyticsService {
         totalExpenses: expenses,
         netSavings,
         savingsRate: income > 0 ? (netSavings / income) * 100 : 0,
-        totalBalance,
+        loanSummary,
       },
       budgets: budgetUtilization,
       savingsGoals: savingsProgress,
-      upcomingSubscriptions: upcomingSubscriptions.map((sub) => ({
-        ...sub,
-        amount: Number(sub.amount),
-      })),
       recentTransactions: recentTransactions.map((tx) => ({
         ...tx,
         amount: Number(tx.amount),
       })),
       topCategories: topCategoriesWithDetails,
-      accounts: accountBalances.map((acc) => ({
-        ...acc,
-        balance: Number(acc.balance),
-      })),
     };
   }
 
@@ -468,6 +435,111 @@ export class AnalyticsService {
         exceededCount: performance.filter((b) => b.status === 'exceeded')
           .length,
       },
+    };
+  }
+
+  /**
+   * Get loan summary for dashboard (direct loans + group balances)
+   */
+  async getLoanSummaryForDashboard(userId: string) {
+    // Get direct loans
+    const [loansLent, loansBorrowed] = await Promise.all([
+      this.prisma.loan.findMany({
+        where: {
+          lenderUserId: userId,
+          isDeleted: false,
+          status: { in: ['active', 'paid'] },
+        },
+      }),
+      this.prisma.loan.findMany({
+        where: {
+          borrowerUserId: userId,
+          isDeleted: false,
+          status: { in: ['active', 'paid'] },
+        },
+      }),
+    ]);
+
+    // Calculate direct loan totals (only outstanding amounts)
+    let totalLent = loansLent.reduce(
+      (sum, loan) => sum + Number(loan.amountRemaining),
+      0,
+    );
+    let totalBorrowed = loansBorrowed.reduce(
+      (sum, loan) => sum + Number(loan.amountRemaining),
+      0,
+    );
+
+    // Get group-derived balances
+    const groupMemberships = await this.prisma.groupMember.findMany({
+      where: {
+        userId,
+        inviteStatus: 'accepted',
+      },
+      include: {
+        group: {
+          include: {
+            groupExpenses: {
+              where: {
+                isSettled: false,
+              },
+              include: {
+                splits: {
+                  include: {
+                    user: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Calculate group balances
+    for (const membership of groupMemberships) {
+      const group = membership.group;
+      const balances = new Map<string, number>();
+
+      for (const expense of group.groupExpenses) {
+        for (const split of expense.splits) {
+          if (!split.userId) continue;
+
+          const owedAmount =
+            Number(split.amountOwed) - Number(split.amountPaid);
+
+          if (split.userId === userId) {
+            // This user owes money
+            if (expense.paidByUserId && expense.paidByUserId !== userId) {
+              const currentBalance = balances.get(expense.paidByUserId) || 0;
+              balances.set(expense.paidByUserId, currentBalance - owedAmount);
+            }
+          } else if (expense.paidByUserId === userId) {
+            // This user is owed money
+            const currentBalance = balances.get(split.userId) || 0;
+            balances.set(split.userId, currentBalance + owedAmount);
+          }
+        }
+      }
+
+      // Add group balances to totals
+      for (const balance of balances.values()) {
+        if (balance > 0) {
+          totalLent += balance;
+        } else if (balance < 0) {
+          totalBorrowed += Math.abs(balance);
+        }
+      }
+    }
+
+    const netPosition = totalLent - totalBorrowed;
+
+    return {
+      totalLent,
+      totalBorrowed,
+      netPosition,
+      type: netPosition >= 0 ? 'lent' : 'borrowed',
+      amount: Math.abs(netPosition),
     };
   }
 }

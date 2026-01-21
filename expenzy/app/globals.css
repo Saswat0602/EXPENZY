@@ -272,6 +272,138 @@
   }
 }
 
+/* Text Size Scaling - Outside layer for higher specificity */
+:root {
+  --text-scale: 1;
+}
+
+[data-text-size="small"] {
+  --text-scale: 0.85;
+}
+
+[data-text-size="medium"] {
+  --text-scale: 1;
+}
+
+[data-text-size="large"] {
+  --text-scale: 1.15;
+}
+
+/* Apply scaling to body */
+body {
+  font-size: calc(1rem * var(--text-scale)) !important;
+}
+
+/* Scale all text size utility classes with !important */
+.text-xs {
+  font-size: calc(0.75rem * var(--text-scale)) !important;
+}
+
+.text-sm {
+  font-size: calc(0.875rem * var(--text-scale)) !important;
+}
+
+.text-base {
+  font-size: calc(1rem * var(--text-scale)) !important;
+}
+
+.text-lg {
+  font-size: calc(1.125rem * var(--text-scale)) !important;
+}
+
+.text-xl {
+  font-size: calc(1.25rem * var(--text-scale)) !important;
+}
+
+.text-2xl {
+  font-size: calc(1.5rem * var(--text-scale)) !important;
+}
+
+.text-3xl {
+  font-size: calc(1.875rem * var(--text-scale)) !important;
+}
+
+.text-4xl {
+  font-size: calc(2.25rem * var(--text-scale)) !important;
+}
+
+.text-5xl {
+  font-size: calc(3rem * var(--text-scale)) !important;
+}
+
+/* Scale headings */
+h1 {
+  font-size: calc(2.25rem * var(--text-scale)) !important;
+}
+
+h2 {
+  font-size: calc(1.875rem * var(--text-scale)) !important;
+}
+
+h3 {
+  font-size: calc(1.5rem * var(--text-scale)) !important;
+}
+
+h4 {
+  font-size: calc(1.25rem * var(--text-scale)) !important;
+}
+
+h5 {
+  font-size: calc(1.125rem * var(--text-scale)) !important;
+}
+
+h6 {
+  font-size: calc(1rem * var(--text-scale)) !important;
+}
+
+/* Scale common text elements */
+p {
+  font-size: calc(1em * var(--text-scale)) !important;
+}
+
+span {
+  font-size: calc(1em * var(--text-scale)) !important;
+}
+
+label {
+  font-size: calc(1em * var(--text-scale)) !important;
+}
+
+a {
+  font-size: calc(1em * var(--text-scale)) !important;
+}
+
+li {
+  font-size: calc(1em * var(--text-scale)) !important;
+}
+
+td {
+  font-size: calc(1em * var(--text-scale)) !important;
+}
+
+th {
+  font-size: calc(1em * var(--text-scale)) !important;
+}
+
+/* Scale button text */
+button {
+  font-size: calc(1em * var(--text-scale)) !important;
+}
+
+/* Scale input/form text */
+input {
+  font-size: calc(1em * var(--text-scale)) !important;
+}
+
+textarea {
+  font-size: calc(1em * var(--text-scale)) !important;
+}
+
+select {
+  font-size: calc(1em * var(--text-scale)) !important;
+}
+
+
 /* Theme Transition Effect */
 ::view-transition-group(root) {
   animation-duration: 0.5s;

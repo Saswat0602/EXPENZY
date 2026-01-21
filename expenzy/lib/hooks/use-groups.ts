@@ -2,39 +2,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { toast } from 'sonner';
-
-export interface Group {
-    id: string;
-    name: string;
-    description?: string;
-    createdById: string;
-    createdAt: string;
-    updatedAt: string;
-    members?: GroupMember[];
-    _count?: {
-        members: number;
-        expenses: number;
-    };
-}
-
-export interface GroupMember {
-    id: string;
-    groupId: string;
-    userId: string;
-    role: 'ADMIN' | 'MEMBER';
-    joinedAt: string;
-    user?: {
-        id: string;
-        name: string;
-        email: string;
-        avatar?: string;
-    };
-}
+import type { Group, GroupMember } from '@/types/group';
 
 export interface CreateGroupData {
     name: string;
     description?: string;
     memberEmails?: string[];
+    groupType?: string;
+    iconSeed?: string;
+    iconProvider?: string;
 }
 
 export interface UpdateGroupData {
@@ -173,6 +149,25 @@ export function useRemoveGroupMember() {
         },
         onError: () => {
             toast.error('Failed to remove member');
+        },
+    });
+}
+
+// Leave group
+export function useLeaveGroup() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (groupId: string) => {
+            await apiClient.post(`${API_ENDPOINTS.GROUPS.LIST}/${groupId}/leave`, {});
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['groups'] });
+            toast.success('You have left the group');
+        },
+        onError: (error: unknown) => {
+            const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to leave group';
+            toast.error(message);
         },
     });
 }

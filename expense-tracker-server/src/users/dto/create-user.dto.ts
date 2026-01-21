@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsString,
   MinLength,
+  IsIn,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -35,6 +36,15 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   avatar?: string;
+
+  @IsOptional()
+  @IsString()
+  avatarSeed?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['adventurer', 'adventurer-neutral', 'thumbs', 'fun-emoji'])
+  avatarStyle?: string;
 
   @IsOptional()
   @IsString()

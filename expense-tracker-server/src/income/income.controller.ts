@@ -7,83 +7,69 @@ import {
   Param,
   Delete,
   UseGuards,
-  Req,
   Query,
-  ParseIntPipe,
-  DefaultValuePipe,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { IncomeService } from './income.service';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
+import { IncomeQueryDto } from './dto/income-query.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { Request } from 'express';
+import { CurrentUser } from '../auth/current-user.decorator';
+import type { JwtPayload } from '../auth/jwt-payload.interface';
 
-interface AuthenticatedRequest extends Request {
-  user: {
-    userId: string;
-    email: string;
-  };
-}
-
+@ApiTags('income')
 @Controller('income')
 @UseGuards(JwtAuthGuard)
 export class IncomeController {
   constructor(private readonly incomeService: IncomeService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create a new income' })
   create(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Body() createIncomeDto: CreateIncomeDto,
   ) {
-    return this.incomeService.create(req.user.userId, createIncomeDto);
+    return this.incomeService.create(user.userId, createIncomeDto);
   }
 
   @Get()
-  findAll(
-    @Req() req: AuthenticatedRequest,
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-    @Query('categoryId') categoryId?: string,
-    @Query('source') source?: string,
-  ) {
-    return this.incomeService.findAll(
-      req.user.userId,
-      page,
-      limit,
-      startDate,
-      endDate,
-      categoryId,
-      source,
-    );
+  @ApiOperation({
+    summary: 'Get all income with pagination, sorting, and filtering',
+  })
+  findAll(@CurrentUser() user: JwtPayload, @Query() query: IncomeQueryDto) {
+    return this.incomeService.findAll(user.userId, query);
   }
 
   @Get('stats')
+  @ApiOperation({ summary: 'Get income statistics' })
   getStats(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
-    return this.incomeService.getStats(req.user.userId, startDate, endDate);
+    return this.incomeService.getStats(user.userId, startDate, endDate);
   }
 
   @Get(':id')
-  findOne(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.incomeService.findOne(req.user.userId, id);
+  @ApiOperation({ summary: 'Get a specific income by ID' })
+  findOne(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.incomeService.findOne(user.userId, id);
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update an income' })
   update(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
     @Body() updateIncomeDto: UpdateIncomeDto,
   ) {
-    return this.incomeService.update(req.user.userId, id, updateIncomeDto);
+    return this.incomeService.update(user.userId, id, updateIncomeDto);
   }
 
   @Delete(':id')
-  remove(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.incomeService.remove(req.user.userId, id);
+  @ApiOperation({ summary: 'Delete an income' })
+  remove(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.incomeService.remove(user.userId, id);
   }
 }

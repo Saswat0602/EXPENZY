@@ -1,18 +1,18 @@
-'use client';
-
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useCategories } from '@/lib/hooks/use-categories';
 import { useCreateExpense, useUpdateExpense } from '@/lib/hooks/use-expenses';
 import { useCreateIncome, useUpdateIncome } from '@/lib/hooks/use-income';
+import { useKeywordMatcher, CategoryMatch } from '@/lib/categorization/keyword-matcher';
+import { CategoryIcon, formatCategoryName } from '@/lib/categorization/category-icons';
+import { CategorySelector } from '@/components/shared/category-selector';
+import { useCalculatorInput } from '@/lib/hooks/use-calculator-input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, TrendingUp, TrendingDown } from 'lucide-react';
@@ -26,10 +26,9 @@ const transactionSchema = z.object({
     amount: z.string().min(1, 'Amount is required').refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
         message: 'Amount must be a positive number',
     }),
-    description: z.string().min(1, 'Description is required').max(200, 'Description too long'),
+    description: z.string().min(3, 'Description must be at least 3 characters').max(200, 'Description too long'),
     categoryId: z.string().min(1, 'Category is required'),
     date: z.date(),
-    notes: z.string().optional(),
 });
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
@@ -58,14 +57,59 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
     });
 
     const selectedDate = useWatch({ control, name: 'date' });
-    const selectedCategory = useWatch({ control, name: 'categoryId' });
     const selectedType = useWatch({ control, name: 'type' }) || 'expense';
+    const description = useWatch({ control, name: 'description' });
 
-    const { data: categories = [], isLoading: categoriesLoading } = useCategories(selectedType);
+    const { data: categories = [] } = useCategories(selectedType === 'expense' ? 'EXPENSE' : 'INCOME');
     const createExpense = useCreateExpense();
     const createIncome = useCreateIncome();
     const updateExpense = useUpdateExpense();
     const updateIncome = useUpdateIncome();
+
+    // Keyword Matcher Integration with Multi-Category Support
+    const { matchAll, isReady } = useKeywordMatcher();
+    const [categoryMatches, setCategoryMatches] = useState<CategoryMatch[]>([]);
+    const [selectedMatchCategory, setSelectedMatchCategory] = useState<string | null>(null);
+    const calculatorInput = useCalculatorInput('');
+
+
+
+    // Auto-detect categories based on description (min 3 chars) with debouncing
+    useEffect(() => {
+        // Debounce timer - wait 300ms after user stops typing
+        const debounceTimer = setTimeout(() => {
+            if (mode === 'add' && isReady && description && description.length >= 3 && selectedType === 'expense') {
+                const matches = matchAll(description);
+                setCategoryMatches(matches);
+
+                if (matches.length === 1) {
+                    // Single match - auto-select (includes 'other' fallback)
+                    const matchingCategory = categories.find(c =>
+                        c.name.toLowerCase() === matches[0].category.toLowerCase() ||
+                        c.name.toLowerCase().includes(matches[0].category.toLowerCase())
+                    );
+
+                    if (matchingCategory) {
+                        setValue('categoryId', matchingCategory.id);
+                        setSelectedMatchCategory(matches[0].category);
+                    }
+                } else if (matches.length > 1) {
+                    // Multiple matches - user needs to choose
+                    // Don't reset if user has already selected one
+                    if (!selectedMatchCategory || !matches.find(m => m.category === selectedMatchCategory)) {
+                        setSelectedMatchCategory(null);
+                    }
+                }
+            } else if (mode === 'add') {
+                setCategoryMatches([]);
+                // Don't reset selectedMatchCategory if user manually selected something
+            }
+        }, 300); // 300ms debounce delay
+
+        // Cleanup function to cancel timer if description changes before delay completes
+        return () => clearTimeout(debounceTimer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [description, isReady, matchAll, mode, selectedType, categories]);
 
     // Pre-populate form in edit mode
     useEffect(() => {
@@ -80,37 +124,48 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
 
             // Set all form values at once
             setValue('type', transaction.type);
-            setValue('amount', transaction.amount.toString());
+            calculatorInput.setValue(transaction.amount.toString());
             setValue('description', description);
             setValue('categoryId', transaction.categoryId);
             setValue('date', new Date(date));
-            setValue('notes', transaction.notes || '');
+
+            // For edit mode, we can show the existing category icon if we want, 
+            // but for now let's just rely on the stored categoryId
+            if (transaction.type === 'expense' && transaction.category) {
+                setSelectedMatchCategory(transaction.category.name.toLowerCase());
+            }
         }
     }, [mode, transaction, open, setValue]);
 
     const handleTypeChange = (type: 'income' | 'expense') => {
         setValue('type', type);
         setValue('categoryId', ''); // Reset category when type changes
+        calculatorInput.setValue(''); // Reset calculator
     };
 
     const onSubmit = async (data: TransactionFormData) => {
         try {
+            // Get the final calculated amount
+            const finalAmount = calculatorInput.result.calculatedValue || parseFloat(calculatorInput.value);
+
+            if (isNaN(finalAmount) || finalAmount <= 0) {
+                return; // Form validation will handle this
+            }
+
             if (mode === 'add') {
                 if (data.type === 'expense') {
                     await createExpense.mutateAsync({
-                        amount: Number(data.amount),
+                        amount: finalAmount,
                         description: data.description,
                         categoryId: data.categoryId,
                         expenseDate: data.date.toISOString(),
-                        notes: data.notes,
                     });
                 } else {
                     await createIncome.mutateAsync({
-                        amount: Number(data.amount),
+                        amount: finalAmount,
                         source: data.description,
                         categoryId: data.categoryId,
                         incomeDate: data.date.toISOString(),
-                        notes: data.notes,
                     });
                 }
             } else {
@@ -121,22 +176,20 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
                     await updateExpense.mutateAsync({
                         id: transaction.id,
                         data: {
-                            amount: Number(data.amount),
+                            amount: finalAmount,
                             description: data.description,
                             categoryId: data.categoryId,
                             expenseDate: data.date.toISOString(),
-                            notes: data.notes,
                         },
                     });
                 } else {
                     await updateIncome.mutateAsync({
                         id: transaction.id,
                         data: {
-                            amount: Number(data.amount),
+                            amount: finalAmount,
                             source: data.description,
                             categoryId: data.categoryId,
                             incomeDate: data.date.toISOString(),
-                            notes: data.notes,
                         },
                     });
                 }
@@ -204,78 +257,91 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
                     {/* Amount */}
                     <div className="space-y-2">
                         <Label htmlFor="amount">Amount *</Label>
-                        <Input
-                            id="amount"
-                            type="number"
-                            step="0.01"
-                            placeholder="0.00"
-                            {...register('amount')}
-                            className={errors.amount ? 'border-destructive' : ''}
-                        />
-                        {errors.amount && (
+                        <div className="relative">
+                            <Input
+                                id="amount"
+                                type="text"
+                                placeholder="0.00"
+                                value={calculatorInput.value}
+                                onChange={calculatorInput.handleChange}
+                                className="pr-20"
+                            />
+                            {calculatorInput.result.isExpression && calculatorInput.result.calculatedValue !== null && (
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-green-600 dark:text-green-400">
+                                    = {calculatorInput.result.calculatedValue.toFixed(2)}
+                                </div>
+                            )}
+                        </div>
+                        {!calculatorInput.value && errors.amount && (
                             <p className="text-sm text-destructive">{errors.amount.message}</p>
                         )}
                     </div>
 
-                    {/* Description */}
+                    {/* Description with Auto-detected Category Icon */}
                     <div className="space-y-2">
                         <Label htmlFor="description">
                             {selectedType === 'expense' ? 'Description' : 'Source'} *
                         </Label>
-                        <Input
-                            id="description"
-                            placeholder={
-                                selectedType === 'expense'
-                                    ? 'e.g., Lunch at restaurant'
-                                    : 'e.g., Salary, Freelance work'
-                            }
-                            {...register('description')}
-                            className={errors.description ? 'border-destructive' : ''}
-                        />
+                        <div className="relative">
+                            <Input
+                                id="description"
+                                placeholder={
+                                    selectedType === 'expense'
+                                        ? 'e.g., Lunch at restaurant, Uber ride, Buy chicken'
+                                        : 'e.g., Salary, Freelance work'
+                                }
+                                {...register('description')}
+                                className={cn(
+                                    errors.description ? 'border-destructive' : '',
+                                    selectedMatchCategory && categoryMatches.length === 1 && selectedType === 'expense' ? 'pr-12' : ''
+                                )}
+                            />
+                            {/* Auto-detected Category Icon (single match only) */}
+                            {selectedMatchCategory && categoryMatches.length === 1 && selectedType === 'expense' && (
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                    <CategoryIcon
+                                        iconName={categories.find(c => c.name.toLowerCase() === selectedMatchCategory.toLowerCase() || c.name.toLowerCase().includes(selectedMatchCategory.toLowerCase()))?.icon}
+                                        color={categories.find(c => c.name.toLowerCase() === selectedMatchCategory.toLowerCase() || c.name.toLowerCase().includes(selectedMatchCategory.toLowerCase()))?.color}
+                                        className="w-5 h-5"
+                                    />
+                                </div>
+                            )}
+                        </div>
                         {errors.description && (
                             <p className="text-sm text-destructive">{errors.description.message}</p>
                         )}
-                    </div>
 
-                    {/* Category */}
-                    <div className="space-y-2">
-                        <Label htmlFor="category">Category *</Label>
-                        <Select
-                            key={selectedType} // Force re-render when type changes
-                            value={selectedCategory || ''}
-                            onValueChange={(value) => setValue('categoryId', value)}
-                        >
-                            <SelectTrigger className={errors.categoryId ? 'border-destructive' : ''}>
-                                <SelectValue placeholder="Select category" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {categoriesLoading ? (
-                                    <SelectItem value="loading" disabled>
-                                        Loading...
-                                    </SelectItem>
-                                ) : categories.length === 0 ? (
-                                    <SelectItem value="empty" disabled>
-                                        No categories available
-                                    </SelectItem>
-                                ) : (
-                                    categories.map((category) => (
-                                        <SelectItem key={category.id} value={category.id}>
-                                            <div className="flex items-center gap-2">
-                                                {category.color && (
-                                                    <div
-                                                        className="w-3 h-3 rounded-full"
-                                                        style={{ backgroundColor: category.color }}
-                                                    />
-                                                )}
-                                                <span>{category.name}</span>
-                                            </div>
-                                        </SelectItem>
-                                    ))
-                                )}
-                            </SelectContent>
-                        </Select>
-                        {errors.categoryId && (
-                            <p className="text-sm text-destructive">{errors.categoryId.message}</p>
+                        {/* Multiple Category Matches - Show selector */}
+                        {categoryMatches.length > 1 && selectedType === 'expense' && description && description.length >= 3 && (
+                            <CategorySelector
+                                matches={categoryMatches}
+                                selectedCategory={selectedMatchCategory || undefined}
+                                onSelect={(category) => {
+                                    const matchingCategory = categories.find(c =>
+                                        c.name.toLowerCase() === category.toLowerCase() ||
+                                        c.name.toLowerCase().includes(category.toLowerCase())
+                                    );
+                                    if (matchingCategory) {
+                                        setValue('categoryId', matchingCategory.id);
+                                        setSelectedMatchCategory(category);
+                                    }
+                                }}
+                                categories={categories}
+                            />
+                        )}
+
+                        {/* Single match display */}
+                        {selectedMatchCategory && categoryMatches.length <= 1 && selectedType === 'expense' && description && description.length >= 3 && (
+                            <div className="flex items-center gap-2 p-2.5 rounded-md bg-muted/50 border border-border">
+                                <CategoryIcon
+                                    iconName={categories.find(c => c.name.toLowerCase() === selectedMatchCategory.toLowerCase() || c.name.toLowerCase().includes(selectedMatchCategory.toLowerCase()))?.icon}
+                                    color={categories.find(c => c.name.toLowerCase() === selectedMatchCategory.toLowerCase() || c.name.toLowerCase().includes(selectedMatchCategory.toLowerCase()))?.color}
+                                    className="w-5 h-5 flex-shrink-0"
+                                />
+                                <span className="text-sm font-medium text-foreground">
+                                    Category: {formatCategoryName(selectedMatchCategory)}
+                                </span>
+                            </div>
                         )}
                     </div>
 
@@ -306,16 +372,7 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
                         </Popover>
                     </div>
 
-                    {/* Notes */}
-                    <div className="space-y-2">
-                        <Label htmlFor="notes">Notes (Optional)</Label>
-                        <Textarea
-                            id="notes"
-                            placeholder="Add any additional notes..."
-                            rows={3}
-                            {...register('notes')}
-                        />
-                    </div>
+
 
                     {/* Actions */}
                     <div className="flex gap-3 justify-end pt-4">

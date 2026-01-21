@@ -40,6 +40,10 @@ export class UpdateUserSettingsDto {
   @IsOptional()
   defaultView?: string;
 
+  @IsEnum(['small', 'medium', 'large'])
+  @IsOptional()
+  textSize?: 'small' | 'medium' | 'large';
+
   @IsBoolean()
   @IsOptional()
   notificationEnabled?: boolean;

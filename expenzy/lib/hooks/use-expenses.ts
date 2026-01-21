@@ -1,5 +1,5 @@
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { QUERY_KEYS } from '@/lib/config/query-client';
@@ -15,6 +15,15 @@ interface PaginatedResponse<T> {
         totalPages: number;
         hasNext: boolean;
         hasPrevious: boolean;
+    };
+}
+
+interface CursorResponse<T> {
+    data: T[];
+    meta: {
+        nextCursor: string | null;
+        hasMore: boolean;
+        limit: number;
     };
 }
 
@@ -113,5 +122,63 @@ export function useDeleteExpense() {
         onError: (error: { message: string }) => {
             toast.error(error.message || 'Failed to delete expense');
         },
+    });
+}
+
+/**
+ * Cursor-based infinite query for expenses
+ * Uses cursor pagination with 50 items per page
+ * Minimum 2 characters required for search
+ */
+export function useInfiniteExpenses(filters?: ExpenseFilters) {
+    return useInfiniteQuery({
+        queryKey: ['expenses', 'infinite', filters],
+        queryFn: async ({ pageParam }) => {
+            const params = new URLSearchParams();
+
+            // Add cursor if available
+            if (pageParam) {
+                params.append('cursor', pageParam);
+            }
+
+            // Set limit to 50
+            params.append('limit', '50');
+
+            // Only add search if >= 2 chars
+            if (filters?.search && filters.search.trim().length >= 2) {
+                params.append('search', filters.search.trim());
+            }
+
+            // Add other filters
+            if (filters?.categoryId) {
+                params.append('categoryId', filters.categoryId);
+            }
+            if (filters?.startDate) {
+                params.append('startDate', filters.startDate);
+            }
+            if (filters?.endDate) {
+                params.append('endDate', filters.endDate);
+            }
+            if (filters?.minAmount !== undefined) {
+                params.append('minAmount', filters.minAmount.toString());
+            }
+            if (filters?.maxAmount !== undefined) {
+                params.append('maxAmount', filters.maxAmount.toString());
+            }
+            if (filters?.sortBy) {
+                params.append('sortBy', filters.sortBy);
+            }
+            if (filters?.sortOrder) {
+                params.append('sortOrder', filters.sortOrder);
+            }
+
+            const url = `${API_ENDPOINTS.EXPENSES.BASE}?${params.toString()}`;
+            const response = await apiClient.getRaw<CursorResponse<Expense>>(url);
+
+            return response;
+        },
+        getNextPageParam: (lastPage) => lastPage?.meta?.nextCursor ?? null,
+        initialPageParam: undefined as string | undefined,
+        staleTime: 1000 * 60, // 1 minute
     });
 }

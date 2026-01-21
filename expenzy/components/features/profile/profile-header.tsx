@@ -2,6 +2,7 @@
 
 import { Mail, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import type { User } from '@/types/user';
 
 interface ProfileHeaderProps {
@@ -14,43 +15,39 @@ export function ProfileHeader({ user, onEditProfile }: ProfileHeaderProps) {
         ? `${user.firstName} ${user.lastName}`
         : user?.username || 'User';
 
-    const initials = displayName
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
-
     return (
-        <div className="rounded-xl bg-card border border-border p-8 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                {user?.avatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                        src={user.avatar}
-                        alt={displayName}
-                        className="w-24 h-24 rounded-full object-cover ring-2 ring-primary/20"
-                    />
-                ) : (
-                    <div className="w-24 h-24 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-3xl font-bold">
-                        {initials}
-                    </div>
-                )}
-                <div className="flex-1 text-center md:text-left">
-                    <h2 className="text-2xl font-bold mb-2">{displayName}</h2>
-                    <div className="space-y-1 text-muted-foreground">
-                        <p className="flex items-center gap-2 justify-center md:justify-start">
-                            <Mail className="w-4 h-4" />
-                            {user?.email}
-                        </p>
-                        {user?.phone && (
-                            <p className="flex items-center gap-2 justify-center md:justify-start">
-                                <Smartphone className="w-4 h-4" />
-                                {user.phone}
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-6 lg:p-8 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6">
+                <UserAvatar
+                    seed={user?.avatarSeed}
+                    style={user?.avatarStyle as string | undefined}
+                    fallbackUrl={user?.avatar}
+                    fallbackName={displayName}
+                    size={96}
+                    className="ring-4 ring-primary/10 shadow-lg"
+                />
+                <div className="flex-1 text-center sm:text-left space-y-4">
+                    <div>
+                        <h2 className="text-2xl font-bold mb-2">{displayName}</h2>
+                        <div className="space-y-1.5 text-muted-foreground">
+                            <p className="flex items-center gap-2.5 justify-center sm:justify-start text-sm">
+                                <Mail className="w-4 h-4 text-primary/70" />
+                                <span>{user?.email}</span>
                             </p>
-                        )}
+                            {user?.phone && (
+                                <p className="flex items-center gap-2.5 justify-center sm:justify-start text-sm">
+                                    <Smartphone className="w-4 h-4 text-primary/70" />
+                                    <span>{user.phone}</span>
+                                </p>
+                            )}
+                        </div>
                     </div>
-                    <Button className="mt-4" onClick={onEditProfile}>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 px-6 font-medium"
+                        onClick={onEditProfile}
+                    >
                         Edit Profile
                     </Button>
                 </div>

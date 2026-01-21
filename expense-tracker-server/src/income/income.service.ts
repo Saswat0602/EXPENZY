@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
+import { IncomeQueryDto } from './dto/income-query.dto';
 import { IncomeResponseDto } from './dto/income-response.dto';
 import { Prisma } from '@prisma/client';
 
@@ -36,56 +37,113 @@ export class IncomeService {
     return new IncomeResponseDto(income);
   }
 
-  async findAll(
-    userId: string,
-    page: number = 1,
-    limit: number = 50,
-    startDate?: string,
-    endDate?: string,
-    categoryId?: string,
-    source?: string,
-  ): Promise<{
-    data: IncomeResponseDto[];
-    total: number;
-    page: number;
-    limit: number;
-  }> {
-    const skip = (page - 1) * limit;
+  async findAll(userId: string, query: IncomeQueryDto) {
+    // Determine pagination mode: cursor or offset
+    const useCursor = !!query.cursor;
+    const limit = query.limit || (useCursor ? 50 : 20);
 
+    // Build where clause
     const where: Prisma.IncomeWhereInput = {
       userId,
       deletedAt: null,
-      ...(startDate &&
-        endDate && {
-          incomeDate: {
-            gte: new Date(startDate),
-            lte: new Date(endDate),
-          },
-        }),
-      ...(categoryId && { categoryId }),
-      ...(source && { source }),
     };
 
-    const [incomes, total] = await Promise.all([
-      this.prisma.income.findMany({
+    // Add cursor for cursor-based pagination
+    if (useCursor && query.cursor) {
+      const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
+      where.id =
+        sortOrder === 'desc' ? { lt: query.cursor } : { gt: query.cursor };
+    }
+
+    // Add filters
+    if (query.categoryId) {
+      where.categoryId = query.categoryId;
+    }
+
+    if (query.startDate || query.endDate) {
+      const dateFilter: Prisma.DateTimeFilter = {};
+      if (query.startDate) {
+        dateFilter.gte = new Date(query.startDate);
+      }
+      if (query.endDate) {
+        dateFilter.lte = new Date(query.endDate);
+      }
+      where.incomeDate = dateFilter;
+    }
+
+    // Search filter (minimum 2 characters validated by DTO)
+    if (query.search) {
+      where.OR = [
+        { source: { contains: query.search, mode: 'insensitive' } },
+        { description: { contains: query.search, mode: 'insensitive' } },
+      ];
+    }
+
+    // Build sorting
+    const sortBy =
+      query.sortBy === 'amount' ||
+      query.sortBy === 'createdAt' ||
+      query.sortBy === 'updatedAt'
+        ? query.sortBy
+        : 'incomeDate';
+    const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
+
+    const orderBy: Prisma.IncomeOrderByWithRelationInput = {
+      [sortBy]: sortOrder,
+    };
+
+    if (useCursor) {
+      // Cursor-based pagination
+      const data = await this.prisma.income.findMany({
         where,
         include: {
           category: true,
           recurringPattern: true,
         },
-        orderBy: { incomeDate: 'desc' },
-        skip,
-        take: limit,
-      }),
-      this.prisma.income.count({ where }),
-    ]);
+        orderBy,
+        take: limit + 1,
+      });
 
-    return {
-      data: incomes.map((income) => new IncomeResponseDto(income)),
-      total,
-      page,
-      limit,
-    };
+      const hasMore = data.length > limit;
+      const items = hasMore ? data.slice(0, limit) : data;
+      const nextCursor =
+        hasMore && items.length > 0 ? items[items.length - 1].id : null;
+
+      return {
+        data: items.map((income) => new IncomeResponseDto(income)),
+        meta: {
+          nextCursor,
+          hasMore,
+          limit,
+        },
+      };
+    } else {
+      // Offset-based pagination (backward compatible)
+      const total = await this.prisma.income.count({ where });
+
+      const findOptions: Prisma.IncomeFindManyArgs = {
+        where,
+        include: {
+          category: true,
+          recurringPattern: true,
+        },
+        orderBy,
+      };
+
+      if (query.page !== undefined && query.limit !== undefined) {
+        findOptions.skip = query.skip;
+        findOptions.take = query.take;
+      }
+
+      const data = await this.prisma.income.findMany(findOptions);
+
+      return {
+        data: data.map((income) => new IncomeResponseDto(income)),
+        total,
+        page: query.page || 1,
+        limit: query.limit || total,
+      };
+    }
   }
 
   async findOne(userId: string, id: string): Promise<IncomeResponseDto> {

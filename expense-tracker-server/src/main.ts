@@ -19,10 +19,17 @@ async function bootstrap() {
           defaultSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
           scriptSrc: ["'self'", "'unsafe-inline'"],
-          imgSrc: ["'self'", 'data:', 'https:'],
+          imgSrc: [
+            "'self'",
+            'data:',
+            'https:',
+            'http://localhost:5000',
+            'http://localhost:3000',
+          ],
         },
       },
       crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
     }),
   );
 
@@ -53,13 +60,34 @@ async function bootstrap() {
   // Enable CORS with proper configuration
   const allowedOrigins = process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN.split(',')
-    : ['http://localhost:3000', 'http://localhost:5173'];
+    : [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://localhost:5173',
+      ];
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin: any, callback: any) => {
+      // Allow requests with no origin (like mobile apps, Postman, etc.)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      if (!origin) return callback(null, true);
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        callback(null, true);
+      } else {
+        console.warn(`[CORS] Blocked request from origin: ${String(origin)}`);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    exposedHeaders: ['Authorization'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
 
   // Set Global Prefix

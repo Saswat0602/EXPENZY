@@ -21,6 +21,7 @@ import { PageWrapper } from '@/components/layout/page-wrapper';
 
 export default function ProfilePage() {
     const { logout } = useAuth();
+    // const { setLayoutVisibility } = useLayout(); // Removed
     const { data: user, isLoading: userLoading } = useProfile();
     const { data: settings, isLoading: settingsLoading } = useSettings();
     const updateSettings = useUpdateSettings();
@@ -38,9 +39,14 @@ export default function ProfilePage() {
     const handleToggle = async (key: string, value: boolean) => {
         await updateSettings.mutateAsync({ [key]: value });
     };
+    // ... (rest of handlers unchanged)
 
     const handleCurrencyChange = (currency: string) => {
         updateProfile.mutate({ defaultCurrency: currency as 'USD' | 'EUR' | 'INR' });
+    };
+
+    const handleTextSizeChange = (textSize: 'small' | 'medium' | 'large') => {
+        updateSettings.mutate({ textSize });
     };
 
     const handlePasswordChange = async (data: ChangePasswordFormData) => {
@@ -60,40 +66,54 @@ export default function ProfilePage() {
 
     return (
         <PageWrapper>
-            <div className="space-y-6">
-                {/* Header */}
-                <div className="mb-6">
-                    <h1 className="text-3xl md:text-4xl font-bold">Profile & Settings</h1>
-                    <p className="text-muted-foreground mt-1">Manage your account and preferences</p>
+            <div className="max-w-5xl mx-auto py-4 sm:py-6 lg:py-8">
+                {/* Page Header */}
+                <div className="mb-6 sm:mb-8 lg:mb-10">
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Profile & Settings</h1>
+                    <p className="text-sm sm:text-base text-muted-foreground mt-1.5 sm:mt-2">Manage your account and preferences</p>
                 </div>
 
-                {/* Profile Header */}
-                <ProfileHeader user={user} onEditProfile={() => setIsEditProfileOpen(true)} />
+                {/* Profile Header Card */}
+                <div className="mb-5 sm:mb-6 lg:mb-8">
+                    <ProfileHeader user={user} onEditProfile={() => setIsEditProfileOpen(true)} />
+                </div>
 
-                {/* Settings Grid */}
-                <div className="grid lg:grid-cols-2 gap-6">
-                    <AppearanceSettings settings={settings} onSettingChange={handleSettingChange} />
-                    <PreferencesSettings user={user} onCurrencyChange={handleCurrencyChange} />
-                    <NotificationSettings settings={settings} onToggle={handleToggle} />
-                    <DataPrivacySettings
-                        settings={settings}
-                        onSettingChange={handleSettingChange}
-                        onToggle={handleToggle}
+                {/* Settings Sections */}
+                <div className="space-y-4 sm:space-y-5 lg:space-y-8">
+                    {/* Appearance & Preferences Row */}
+                    <div className="grid lg:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
+                        <AppearanceSettings settings={settings} onSettingChange={handleSettingChange} />
+                        <PreferencesSettings
+                            user={user}
+                            userSettings={settings}
+                            onCurrencyChange={handleCurrencyChange}
+                            onTextSizeChange={handleTextSizeChange}
+                        />
+                    </div>
+
+                    {/* Notifications & Data Privacy Row */}
+                    <div className="grid lg:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
+                        <NotificationSettings settings={settings} onToggle={handleToggle} />
+                        <DataPrivacySettings
+                            settings={settings}
+                            onSettingChange={handleSettingChange}
+                            onToggle={handleToggle}
+                        />
+                    </div>
+
+                    {/* Security - Full Width */}
+                    <SecuritySettings
+                        user={user}
+                        onPasswordChange={handlePasswordChange}
+                        isChangingPassword={changePassword.isPending}
+                    />
+
+                    {/* Danger Zone - Full Width */}
+                    <DangerZone
+                        onLogout={() => setIsLogoutConfirmOpen(true)}
+                        onDeleteAccount={() => setIsDeleteAccountOpen(true)}
                     />
                 </div>
-
-                {/* Security - Full Width */}
-                <SecuritySettings
-                    user={user}
-                    onPasswordChange={handlePasswordChange}
-                    isChangingPassword={changePassword.isPending}
-                />
-
-                {/* Danger Zone */}
-                <DangerZone
-                    onLogout={() => setIsLogoutConfirmOpen(true)}
-                    onDeleteAccount={() => setIsDeleteAccountOpen(true)}
-                />
 
                 {/* Modals */}
                 <EditProfileModal

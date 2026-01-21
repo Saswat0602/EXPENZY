@@ -22,7 +22,7 @@ interface AddBudgetModalProps {
 }
 
 export function AddBudgetModal({ open, onClose }: AddBudgetModalProps) {
-    const { data: categories = [] } = useCategories('expense');
+    const { data: categories = [] } = useCategories('EXPENSE');
     const createBudget = useCreateBudget();
 
     const {

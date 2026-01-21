@@ -6,6 +6,9 @@ export interface User {
     lastName?: string;
     phone?: string;
     avatar?: string;
+    avatarSeed?: string;
+    avatarStyle?: string;
+    avatarUrl?: string;
     defaultCurrency: 'USD' | 'EUR' | 'INR';
     timezone: string;
     isActive: boolean;
