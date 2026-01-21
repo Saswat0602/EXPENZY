@@ -28,7 +28,6 @@ export default function AccountsPage() {
     return (
         <PageWrapper>
             <div className="space-y-6">
-                {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl md:text-3xl font-bold">Accounts</h1>
@@ -40,7 +39,6 @@ export default function AccountsPage() {
                     </Button>
                 </div>
 
-                {/* Total Balance */}
                 {totalBalanceData && (
                     <Card className="p-6">
                         <div className="flex items-center justify-between">
@@ -57,7 +55,6 @@ export default function AccountsPage() {
                     </Card>
                 )}
 
-                {/* Accounts List */}
                 {accounts.length === 0 ? (
                     <EmptyState
                         icon={Wallet}

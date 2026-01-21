@@ -203,4 +203,99 @@ If you didn't expect this invitation, you can safely ignore this email.
       html,
     });
   }
+
+  async sendOtpEmail(
+    to: string,
+    code: string,
+    purpose: 'registration' | 'login' | 'password_reset',
+  ): Promise<boolean> {
+    const purposeText = {
+      registration: 'Email Verification',
+      login: 'Login Verification',
+      password_reset: 'Password Reset',
+    }[purpose];
+
+    const messageText = {
+      registration:
+        'Thank you for signing up with EXPENZY! Please use the code below to verify your email address and activate your account.',
+      login: 'Please use the code below to complete your login.',
+      password_reset:
+        'You requested to reset your password. Please use the code below to proceed with password reset.',
+    }[purpose];
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+          .otp-box { background: white; padding: 30px; border-radius: 8px; margin: 30px 0; text-align: center; border: 2px dashed #667eea; }
+          .otp-code { font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #667eea; font-family: 'Courier New', monospace; }
+          .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
+          .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+          .expiry { color: #dc3545; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔐 ${purposeText}</h1>
+          </div>
+          <div class="content">
+            <p>Hi there!</p>
+            <p>${messageText}</p>
+            
+            <div class="otp-box">
+              <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">Your verification code is:</p>
+              <div class="otp-code">${code}</div>
+              <p style="margin: 10px 0 0 0; color: #666; font-size: 12px;">This code will expire in <span class="expiry">10 minutes</span></p>
+            </div>
+
+            <div class="warning">
+              <strong>⚠️ Security Notice:</strong>
+              <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+                <li>Never share this code with anyone</li>
+                <li>EXPENZY will never ask for this code via phone or email</li>
+                <li>If you didn't request this code, please ignore this email</li>
+              </ul>
+            </div>
+
+            <p style="margin-top: 20px;">If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+          </div>
+          <div class="footer">
+            <p>This is an automated email from EXPENZY</p>
+            <p>© ${new Date().getFullYear()} EXPENZY. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+${purposeText}
+
+${messageText}
+
+Your verification code is: ${code}
+
+This code will expire in 10 minutes.
+
+SECURITY NOTICE:
+- Never share this code with anyone
+- EXPENZY will never ask for this code via phone or email
+- If you didn't request this code, please ignore this email
+
+© ${new Date().getFullYear()} EXPENZY. All rights reserved.
+    `;
+
+    return this.sendEmail({
+      to,
+      subject: `${purposeText} - Your OTP Code`,
+      text: text.trim(),
+      html,
+    });
+  }
 }

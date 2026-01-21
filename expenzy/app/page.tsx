@@ -44,7 +44,6 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted">
-      {/* Header */}
       <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -60,7 +59,6 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero Section */}
       < section className="container mx-auto px-4 py-20 md:py-32" >
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
@@ -81,7 +79,6 @@ export default function LandingPage() {
         </div>
       </section >
 
-      {/* Features Grid */}
       < section className="container mx-auto px-4 py-20" >
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
           Everything You Need to Manage Money
@@ -120,7 +117,6 @@ export default function LandingPage() {
         </div>
       </section >
 
-      {/* CTA Section */}
       < section className="container mx-auto px-4 py-20" >
         <div className="max-w-3xl mx-auto bg-primary text-primary-foreground rounded-2xl p-12 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -136,7 +132,6 @@ export default function LandingPage() {
         </div>
       </section >
 
-      {/* Footer */}
       <footer className="border-t border-border py-8">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
           <p>&copy; 2024 Expenzy. All rights reserved.</p>

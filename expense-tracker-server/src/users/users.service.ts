@@ -20,7 +20,7 @@ interface GoogleProfile {
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto) {
     // Check if user with this email already exists

@@ -39,7 +39,9 @@ export default function SignupPage() {
 
         try {
             await signup({ username, email, password });
-            toast.success('Account created successfully!');
+            toast.success('Account created! Please check your email for verification code.');
+            // Redirect to OTP verification page
+            router.push(`/verify-otp?email=${encodeURIComponent(email)}&purpose=registration`);
         } catch (error) {
             const err = error as { message: string };
             toast.error(err.message || 'Failed to create account');

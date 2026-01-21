@@ -146,7 +146,6 @@ export default function DashboardPage() {
     return (
         <PageWrapper>
             <div className="space-y-3 sm:space-y-4 lg:space-y-6">
-                {/* Hero Section - Compact */}
                 <div className="relative overflow-hidden rounded-lg sm:rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 p-4 sm:p-5 lg:p-6">
                     <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-primary/10 rounded-full blur-2xl" />
                     <div className="absolute bottom-0 left-0 w-24 h-24 sm:w-32 sm:h-32 bg-accent/10 rounded-full blur-2xl" />
@@ -178,7 +177,6 @@ export default function DashboardPage() {
                     mode="add"
                 />
 
-                {/* Summary Cards - Mobile First */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
                     <StatCard
                         title={summary.loanSummary?.type === 'lent' ? 'Total Lent' : 'Total Borrowed'}
@@ -208,7 +206,6 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-                    {/* Savings Goals Widget */}
                     <div className="rounded-lg sm:rounded-xl border bg-card p-4 sm:p-5">
                         <SectionHeader
                             icon={Target}
@@ -255,7 +252,6 @@ export default function DashboardPage() {
                         )}
                     </div>
 
-                    {/* Recent Transactions */}
                     <div className="rounded-lg sm:rounded-xl border bg-card p-4 sm:p-5">
                         <SectionHeader
                             icon={TrendingUp}
@@ -312,7 +308,6 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                {/* Top Categories */}
                 <div className="rounded-lg sm:rounded-xl border bg-card p-4 sm:p-5">
                     <h2 className="text-base sm:text-lg lg:text-xl font-semibold mb-3 sm:mb-4">Top Spending Categories</h2>
                     {dashboard?.topCategories && dashboard.topCategories.length > 0 ? (

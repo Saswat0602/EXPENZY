@@ -38,8 +38,15 @@ export default function LoginPage() {
 
         try {
             await login(formData);
-        } catch {
-            toast.error('Invalid email or password');
+        } catch (error) {
+            const err = error as { message?: string };
+            // Check if user is unverified
+            if (err.message?.includes('verify your email')) {
+                toast.error('Please verify your email address first');
+                router.push(`/verify-otp?email=${encodeURIComponent(formData.email)}&purpose=registration`);
+            } else {
+                toast.error('Invalid email or password');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -136,6 +143,15 @@ export default function LoginPage() {
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                 >
                                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
+                            <div className="text-right">
+                                <button
+                                    type="button"
+                                    onClick={() => router.push('/forgot-password')}
+                                    className="text-sm text-primary hover:text-primary/80 font-medium hover:underline transition-colors"
+                                >
+                                    Forgot password?
                                 </button>
                             </div>
                         </div>

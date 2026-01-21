@@ -44,7 +44,6 @@ export default function BudgetPage() {
     return (
         <PageWrapper>
             <div className="space-y-6">
-                {/* Header */}
                 <PageHeader
                     title="Budgets"
                     description="Manage your spending limits"

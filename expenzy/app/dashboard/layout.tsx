@@ -17,16 +17,9 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
     return (
         <div className="min-h-screen bg-background">
-            {/* Mobile Header - visible only on mobile */}
             <MobileHeader visible={showMobileHeader} />
-
-            {/* Desktop Header - visible only on desktop */}
             <DesktopHeader />
-
-            {/* Desktop Sidebar - visible only on desktop */}
             <DesktopSidebar />
-
-            {/* Main Content - dynamically adjusts based on sidebar state */}
             <main className={cn(
                 "pb-20 md:pb-0 md:pt-16 transition-all duration-300",
                 isCollapsed ? "md:ml-20" : "md:ml-64",
@@ -36,8 +29,6 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                     {children}
                 </div>
             </main>
-
-            {/* Mobile Bottom Nav - visible only on mobile */}
             <BottomNav visible={showBottomNav} />
         </div>
     );

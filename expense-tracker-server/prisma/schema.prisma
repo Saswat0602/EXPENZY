@@ -81,6 +81,7 @@ model User {
   contacts              UserContact[]       @relation("UserContacts")
   contactedBy           UserContact[]       @relation("ContactedBy")
   splitExpenses         SplitExpense[]
+  otps                  Otp[]
 
   @@index([email])
   @@index([googleId])
@@ -706,4 +707,30 @@ model Settlement {
   @@index([settledAt])
   @@index([loanId])
   @@map("settlements")
+}
+
+// ============================================
+// OTP VERIFICATION MODEL
+// ============================================
+
+model Otp {
+  id          String    @id @default(uuid())
+  userId      String?   @map("user_id")
+  email       String
+  code        String
+  purpose     String // 'registration', 'login', 'password_reset'
+  expiresAt   DateTime  @map("expires_at")
+  isUsed      Boolean   @default(false) @map("is_used")
+  usedAt      DateTime? @map("used_at")
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(5) @map("max_attempts")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email, purpose])
+  @@index([code])
+  @@index([expiresAt])
+  @@index([email, createdAt])
+  @@map("otps")
 }
