@@ -1,9 +1,11 @@
+import { Currency } from '@prisma/client';
 import {
   IsOptional,
   IsString,
   IsDateString,
   IsNumber,
   MinLength,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
@@ -83,9 +85,9 @@ export class ExpenseFilterDto {
     description: 'Filter by currency',
     example: 'USD',
   })
-  @IsString()
+  @IsEnum(Currency)
   @IsOptional()
-  currency?: string;
+  currency?: Currency;
 
   /**
    * Get tags as array
@@ -178,9 +180,9 @@ export class ExpenseQueryDto extends PaginationQueryDto {
   search?: string;
 
   @ApiPropertyOptional({ type: String })
-  @IsString()
+  @IsEnum(Currency)
   @IsOptional()
-  currency?: string;
+  currency?: Currency;
 
   getTagsArray(): string[] | undefined {
     return this.tags

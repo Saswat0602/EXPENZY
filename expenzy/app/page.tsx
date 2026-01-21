@@ -1,12 +1,47 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { ArrowRight, BarChart3, PiggyBank, Users, Wallet, TrendingUp, Shield } from 'lucide-react';
+import { ArrowRight, BarChart3, PiggyBank, Users, Wallet, TrendingUp, Shield, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/lib/routes';
+import { useState, useEffect } from 'react';
 
 export default function LandingPage() {
   const router = useRouter();
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setIsInstallable(true);
+    };
+
+    const handleAppInstalled = () => {
+      setIsInstallable(false);
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    await deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setIsInstallable(false);
+      setDeferredPrompt(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted">
       {/* Header */}
@@ -102,12 +137,20 @@ export default function LandingPage() {
       </section >
 
       {/* Footer */}
-      < footer className="border-t border-border py-8" >
+      <footer className="border-t border-border py-8">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
           <p>&copy; 2024 Expenzy. All rights reserved.</p>
+          {isInstallable && (
+            <div className="mt-4">
+              <Button onClick={handleInstallClick} variant="outline" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                Download App
+              </Button>
+            </div>
+          )}
         </div>
-      </footer >
-    </div >
+      </footer>
+    </div>
   );
 }
 
@@ -129,4 +172,13 @@ function FeatureCard({
       <p className="text-muted-foreground">{description}</p>
     </div>
   );
+}
+
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
 }

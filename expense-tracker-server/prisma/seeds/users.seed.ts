@@ -36,8 +36,8 @@ export async function seedUsers(prisma: PrismaClient) {
             isActive: true,
             isVerified: true,
             lastLoginAt: new Date(),
-            avatarSeed: generateRandomSeed(),
-            avatarStyle: getRandomStyle() as any,
+            // avatarSeed: generateRandomSeed(),
+            // avatarStyle: getRandomStyle() as any,
         },
     });
 
@@ -65,8 +65,8 @@ export async function seedUsers(prisma: PrismaClient) {
             isActive: true,
             isVerified: true,
             lastLoginAt: new Date(),
-            avatarSeed: generateRandomSeed(),
-            avatarStyle: getRandomStyle() as any,
+            // avatarSeed: generateRandomSeed(),
+            // avatarStyle: getRandomStyle() as any,
         },
     });
 
@@ -93,8 +93,8 @@ export async function seedUsers(prisma: PrismaClient) {
             isActive: true,
             isVerified: true,
             lastLoginAt: new Date(),
-            avatarSeed: generateRandomSeed(),
-            avatarStyle: getRandomStyle() as any,
+            // avatarSeed: generateRandomSeed(),
+            // avatarStyle: getRandomStyle() as any,
         },
     });
 

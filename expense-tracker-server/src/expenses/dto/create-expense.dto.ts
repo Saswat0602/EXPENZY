@@ -6,8 +6,10 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { Currency } from '@prisma/client';
 
 export class CreateExpenseDto {
   @IsUUID()
@@ -19,9 +21,9 @@ export class CreateExpenseDto {
   @IsNotEmpty()
   amount: number;
 
-  @IsString()
+  @IsEnum(Currency)
   @IsOptional()
-  currency?: string;
+  currency?: Currency;
 
   @IsString()
   @IsOptional()

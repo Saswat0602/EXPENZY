@@ -9,19 +9,19 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { CategoriesModule } from './categories/categories.module';
-import { LoansModule } from './loans/loans.module';
+// import { LoansModule } from './loans/loans.module';
 import { SplitsModule } from './splits/splits.module';
-import { GroupsModule } from './groups/groups.module';
-import { InvitesModule } from './invites/invites.module';
+// import { GroupsModule } from './groups/groups.module';
+// import { InvitesModule } from './invites/invites.module';
 import { IncomeModule } from './income/income.module';
 import { SavingsModule } from './savings/savings.module';
 import { UserSettingsModule } from './user-settings/user-settings.module';
-import { AnalyticsModule } from './analytics/analytics.module';
+// import { AnalyticsModule } from './analytics/analytics.module';
 import { configuration } from './config/configuration';
 import { validationSchema } from './config/env.validation';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { AvatarModule } from './avatar/avatar.module';
-import { ExportModule } from './export/export.module';
+// import { ExportModule } from './export/export.module';
 import { CommonModule } from './common/common.module';
 
 @Module({
@@ -48,17 +48,17 @@ import { CommonModule } from './common/common.module';
     UsersModule,
     ExpensesModule,
     CategoriesModule,
-    LoansModule,
-    SplitsModule,
-    GroupsModule,
-    InvitesModule,
+    // LoansModule,
+    // SplitsModule,
+    // GroupsModule,
+    // InvitesModule,
     IncomeModule,
     SavingsModule,
     UserSettingsModule,
-    AnalyticsModule,
+    // AnalyticsModule,
     SchedulerModule,
     AvatarModule,
-    ExportModule,
+    // ExportModule,
   ],
   controllers: [AppController],
   providers: [
@@ -70,4 +70,4 @@ import { CommonModule } from './common/common.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }
