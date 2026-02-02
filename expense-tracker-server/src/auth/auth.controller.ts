@@ -6,7 +6,9 @@ import {
   Req,
   UseGuards,
   UnauthorizedException,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -25,7 +27,7 @@ interface RequestWithGoogleUser {
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
@@ -62,7 +64,13 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  googleAuthRedirect(@Req() req: RequestWithGoogleUser) {
-    return this.authService.login(req.user);
+  async googleAuthRedirect(@Req() req: RequestWithGoogleUser, @Res() res: Response) {
+    const { access_token, user } = await this.authService.login(req.user);
+    // Redirect to frontend with token and user data
+    // Encode user data to handle special characters
+    const userData = encodeURIComponent(JSON.stringify(user));
+    res.redirect(
+      `http://localhost:3000/auth/callback?token=${access_token}&user=${userData}`,
+    );
   }
 }

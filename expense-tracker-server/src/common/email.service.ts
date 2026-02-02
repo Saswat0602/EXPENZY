@@ -16,10 +16,19 @@ export class EmailService {
   private readonly emailEnabled: boolean;
 
   constructor(private configService: ConfigService) {
-    const emailHost = this.configService.get<string>('EMAIL_HOST');
-    const emailPort = this.configService.get<number>('EMAIL_PORT');
-    const emailUser = this.configService.get<string>('EMAIL_USER');
-    const emailPass = this.configService.get<string>('EMAIL_PASS');
+    // Check for SMTP_ variables (standard) or EMAIL_ variables (legacy/fallback)
+    const emailHost =
+      this.configService.get<string>('SMTP_HOST') ||
+      this.configService.get<string>('EMAIL_HOST');
+    const emailPort =
+      this.configService.get<number>('SMTP_PORT') ||
+      this.configService.get<number>('EMAIL_PORT');
+    const emailUser =
+      this.configService.get<string>('SMTP_USER') ||
+      this.configService.get<string>('EMAIL_USER');
+    const emailPass =
+      this.configService.get<string>('SMTP_PASS') ||
+      this.configService.get<string>('EMAIL_PASS');
 
     this.emailEnabled = !!(emailHost && emailPort && emailUser && emailPass);
 
@@ -27,7 +36,7 @@ export class EmailService {
       this.transporter = nodemailer.createTransport({
         host: emailHost,
         port: emailPort,
-        secure: emailPort === 465,
+        secure: emailPort === 465, // true for 465, false for other ports
         auth: {
           user: emailUser,
           pass: emailPass,
@@ -36,8 +45,14 @@ export class EmailService {
 
       this.logger.log('Email service initialized successfully');
     } else {
+      const missing: string[] = [];
+      if (!emailHost) missing.push('SMTP_HOST/EMAIL_HOST');
+      if (!emailPort) missing.push('SMTP_PORT/EMAIL_PORT');
+      if (!emailUser) missing.push('SMTP_USER/EMAIL_USER');
+      if (!emailPass) missing.push('SMTP_PASS/EMAIL_PASS');
+
       this.logger.warn(
-        'Email service not configured - emails will be logged only',
+        `Email service not configured. Missing variables: ${missing.join(', ')} - emails will be logged only`,
       );
     }
   }
@@ -52,7 +67,9 @@ export class EmailService {
 
     try {
       const emailFrom =
-        this.configService.get<string>('EMAIL_FROM') || 'noreply@expenzy.com';
+        this.configService.get<string>('SMTP_FROM') ||
+        this.configService.get<string>('EMAIL_FROM') ||
+        'noreply@expenzy.com';
 
       await this.transporter.sendMail({
         from: emailFrom,

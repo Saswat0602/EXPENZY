@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,14 +44,10 @@ export default function LoginPage() {
         }
     };
 
-    const handleGoogleSignIn = async () => {
+    const handleGoogleSignIn = () => {
         setIsLoading(true);
-        try {
-            await signIn('google', { callbackUrl: ROUTES.DASHBOARD });
-        } catch {
-            toast.error('Failed to sign in with Google');
-            setIsLoading(false);
-        }
+        // Redirect to backend Google Auth URL
+        window.location.href = 'http://localhost:5000/api/auth/google';
     };
 
     return (
