@@ -54,7 +54,7 @@ export default function LoginPage() {
     const handleGoogleSignIn = () => {
         setIsLoading(true);
         // Redirect to backend Google Auth URL
-        window.location.href = 'http://localhost:5000/api/auth/google';
+        window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google`;
     };
 
     return (
