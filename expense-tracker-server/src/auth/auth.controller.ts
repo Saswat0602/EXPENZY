@@ -77,11 +77,7 @@ export class AuthController {
 
   @Post('resend-otp')
   async resendOtp(@Body() resendOtpDto: ResendOtpDto) {
-    await this.otpService.resendOtp(resendOtpDto.email, resendOtpDto.purpose);
-
-    return {
-      message: 'OTP has been resent to your email',
-    };
+    return this.authService.resendOtp(resendOtpDto.email, resendOtpDto.purpose);
   }
 
   @Post('forgot-password')

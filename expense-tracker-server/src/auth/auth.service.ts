@@ -22,7 +22,7 @@ export class AuthService {
     private prisma: PrismaService,
     private otpService: OtpService,
     private emailService: EmailService,
-  ) {}
+  ) { }
 
   async validateUser(
     email: string,
@@ -154,6 +154,19 @@ export class AuthService {
     return {
       message:
         'Password reset successful. You can now login with your new password.',
+    };
+  }
+
+
+  async resendOtp(email: string, purpose: 'registration' | 'login' | 'password_reset') {
+    // Generate new OTP
+    const otpCode = await this.otpService.generateOtp(email, purpose);
+
+    // Send email
+    await this.emailService.sendOtpEmail(email, otpCode, purpose);
+
+    return {
+      message: 'OTP has been resent to your email',
     };
   }
 }

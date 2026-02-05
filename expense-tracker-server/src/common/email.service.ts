@@ -71,7 +71,10 @@ export class EmailService {
         this.configService.get<string>('EMAIL_FROM') ||
         'noreply@expenzy.com';
 
-      await this.transporter.sendMail({
+      this.logger.log(`Attempting to send email to ${options.to} from ${emailFrom} with subject "${options.subject}"`);
+      this.logger.debug(`Transporter config: Host=${this.transporter.options['host']}, Port=${this.transporter.options['port']}, User=${this.transporter.options['auth']?.user}`);
+
+      const info = await this.transporter.sendMail({
         from: emailFrom,
         to: options.to,
         subject: options.subject,
@@ -79,10 +82,11 @@ export class EmailService {
         html: options.html,
       });
 
-      this.logger.log(`Email sent successfully to ${options.to}`);
+      this.logger.log(`Email sent successfully to ${options.to}. MessageID: ${info.messageId}`);
       return true;
     } catch (error) {
-      this.logger.error(`Failed to send email to ${options.to}:`, error);
+      this.logger.error(`Failed to send email to ${options.to}`, error.stack);
+      console.error('Email Send Error Details:', JSON.stringify(error, null, 2));
       return false;
     }
   }
