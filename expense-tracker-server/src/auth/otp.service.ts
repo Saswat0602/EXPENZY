@@ -6,9 +6,9 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 export class OtpService {
   private readonly logger = new Logger(OtpService.name);
   private readonly OTP_EXPIRATION_MINUTES = 10;
-  private readonly MAX_OTP_PER_DAY = 5;
+  private readonly MAX_OTP_PER_DAY = 50;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Generate a 6-digit OTP code
