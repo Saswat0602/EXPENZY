@@ -5,10 +5,11 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 @ApiTags('health')
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: AppService) { }
 
   @Get()
-  getHello(): string {
+  @ApiOperation({ summary: 'Welcome endpoint - API information' })
+  getHello(): object {
     return this.appService.getHello();
   }
 

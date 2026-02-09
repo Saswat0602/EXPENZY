@@ -61,12 +61,12 @@ async function bootstrap() {
   const allowedOrigins = process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN.split(',')
     : [
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'http://localhost:5173',
-        'https://expenzy-iota.vercel.app',
-        'https://expenzy-iota.vercel.app/',
-      ];
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:5173',
+      'https://expenzy-iota.vercel.app',
+      'https://expenzy-iota.vercel.app/',
+    ];
 
   app.enableCors({
     origin: (origin: any, callback: any) => {
@@ -93,7 +93,7 @@ async function bootstrap() {
   });
 
   // Set Global Prefix
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', { exclude: ['/'] });
 
   // Swagger Configuration
   const config = new DocumentBuilder()
@@ -132,7 +132,8 @@ async function bootstrap() {
 
   const port = process.env.PORT || 5000;
   await app.listen(port);
-  console.log(`🚀 Application is running on: http://localhost:${port}/api`);
+  console.log(`🚀 Server is running on: http://localhost:${port}`);
+  console.log(`🌐 API base path: http://localhost:${port}/api`);
   console.log(`📚 Swagger documentation: http://localhost:${port}/api/docs`);
   console.log(`❤️  Health check: http://localhost:${port}/api/health`);
 }
