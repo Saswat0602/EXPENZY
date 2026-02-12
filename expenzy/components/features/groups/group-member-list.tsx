@@ -92,7 +92,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     // For accepted members with user accounts, show name; for pending invites, show email
                     const fullName = member.user
                         ? `${member.user.firstName || ''} ${member.user.lastName || ''}`.trim() || member.user.username
-                        : member.invitedEmail || 'Unknown';
+                        : member.contact?.contactName || member.invitedEmail || 'Unknown';
 
                     return (
                         <MemberListItem

@@ -120,6 +120,11 @@ export class GroupExpenseService {
         include: {
           splits: true,
           paidBy: true,
+          paidByMember: {
+            include: {
+              contact: true,
+            },
+          },
           category: true,
         },
       });
@@ -271,6 +276,11 @@ export class GroupExpenseService {
             include: {
               splits: true,
               paidBy: true,
+              paidByMember: {
+                include: {
+                  contact: true,
+                },
+              },
               category: true,
             },
           });
@@ -304,6 +314,11 @@ export class GroupExpenseService {
         include: {
           splits: true,
           paidBy: true,
+          paidByMember: {
+            include: {
+              contact: true,
+            },
+          },
           category: true,
         },
       });

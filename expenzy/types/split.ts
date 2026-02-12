@@ -30,6 +30,13 @@ export interface Split {
             avatarStyle?: string;
             avatarUrl?: string;
         } | null;
+        contact?: {
+            id: string;
+            contactName?: string | null;
+            contactEmail?: string | null;
+            contactPhone?: string | null;
+            contactAvatar?: string | null;
+        } | null;
     };
     user?: {
         id: string;
@@ -68,6 +75,13 @@ export interface GroupExpense {
             avatarSeed?: string;
             avatarStyle?: string;
             avatarUrl?: string;
+        } | null;
+        contact?: {
+            id: string;
+            contactName?: string | null;
+            contactEmail?: string | null;
+            contactPhone?: string | null;
+            contactAvatar?: string | null;
         } | null;
     };
     paidBy: {

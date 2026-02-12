@@ -70,9 +70,13 @@ export function ExpenseCard({ expense, groupId, currentUserId }: ExpenseCardProp
 
                     {/* Paid by */}
                     <div className="text-sm text-muted-foreground mb-2">
-                        Paid by{' '}
                         <span className="font-medium">
-                            {isPayer ? 'you' : expense.paidBy.username}
+                            {isPayer
+                                ? 'you'
+                                : (expense.paidByMember?.contact?.contactName ||
+                                    (expense.paidByMember?.user?.firstName && expense.paidByMember?.user?.lastName
+                                        ? `${expense.paidByMember.user.firstName} ${expense.paidByMember.user.lastName}`
+                                        : expense.paidByMember?.user?.username || 'Unknown'))}
                         </span>
                         {' • '}
                         <span className="text-xs">{getSplitTypeLabel(expense.splitType)}</span>
@@ -129,7 +133,10 @@ export function ExpenseCard({ expense, groupId, currentUserId }: ExpenseCardProp
                                 className="flex justify-between text-sm py-1"
                             >
                                 <span className={split.userId === currentUserId ? 'font-medium' : ''}>
-                                    {split.user?.username || 'Unknown'}
+                                    {split.member?.contact?.contactName ||
+                                        (split.member?.user?.firstName && split.member?.user?.lastName
+                                            ? `${split.member.user.firstName} ${split.member.user.lastName}`
+                                            : split.member?.user?.username || 'Unknown')}
                                     {split.userId === currentUserId && ' (you)'}
                                 </span>
                                 <span className="text-muted-foreground">

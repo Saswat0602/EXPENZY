@@ -104,6 +104,7 @@ export class GroupsService {
                 avatarUrl: true,
               },
             },
+            contact: true,
           },
         },
         _count: {
@@ -151,6 +152,7 @@ export class GroupsService {
                 avatarUrl: true,
               },
             },
+            contact: true,
           },
         },
         _count: {
@@ -496,6 +498,7 @@ export class GroupsService {
             avatarUrl: true,
           },
         },
+        contact: true,
       },
       orderBy: {
         createdAt: 'asc',
@@ -541,10 +544,20 @@ export class GroupsService {
         },
         include: {
           paidBy: true,
+          paidByMember: {
+            include: {
+              contact: true,
+            },
+          },
           category: true,
           splits: {
             include: {
               user: true,
+              member: {
+                include: {
+                  contact: true,
+                },
+              },
             },
           },
         },
@@ -573,10 +586,20 @@ export class GroupsService {
         },
         include: {
           paidBy: true,
+          paidByMember: {
+            include: {
+              contact: true,
+            },
+          },
           category: true,
           splits: {
             include: {
               user: true,
+              member: {
+                include: {
+                  contact: true,
+                },
+              },
             },
           },
         },
@@ -1044,6 +1067,20 @@ export class GroupsService {
           : new Date(),
         notes: settlementDto.notes,
       },
+      include: {
+        fromUser: true,
+        toUser: true,
+        fromMember: {
+          include: {
+            contact: true,
+          }
+        },
+        toMember: {
+          include: {
+            contact: true,
+          }
+        }
+      }
     });
   }
 
@@ -1058,6 +1095,16 @@ export class GroupsService {
       include: {
         fromUser: true,
         toUser: true,
+        fromMember: {
+          include: {
+            contact: true,
+          }
+        },
+        toMember: {
+          include: {
+            contact: true,
+          }
+        }
       },
       orderBy: {
         settledAt: 'desc',

@@ -44,6 +44,13 @@ export interface GroupMember {
         avatarStyle?: string;
         avatarUrl?: string;
     } | null;
+    contact?: {
+        id: string;
+        contactName?: string | null;
+        contactEmail?: string | null;
+        contactPhone?: string | null;
+        contactAvatar?: string | null;
+    } | null;
 }
 
 // GroupExpense is now defined in split.ts with more comprehensive fields
