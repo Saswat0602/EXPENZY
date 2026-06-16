@@ -110,7 +110,7 @@ export class GroupExpenseService {
           amount: createExpenseDto.amount,
           currency: createExpenseDto.currency || 'INR',
           description: createExpenseDto.description,
-          expenseDate: createExpenseDto.expenseDate || new Date(),
+          expenseDate: createExpenseDto.expenseDate ? new Date(createExpenseDto.expenseDate) : new Date(),
           notes: createExpenseDto.notes,
           categoryId: createExpenseDto.categoryId,
           splitType: createExpenseDto.splitType,
@@ -142,9 +142,6 @@ export class GroupExpenseService {
             userId: resolvedP?.userId || null,
             amountOwed: split.amountOwed,
             percentage: split.percentage,
-            calculatedAmount: split.calculatedAmount,
-            adjustmentAmount: split.adjustmentAmount,
-            isRoundingAdjustment: split.isRoundingAdjustment,
           };
         }),
       });
@@ -271,7 +268,7 @@ export class GroupExpenseService {
               description: updateDto.description,
               notes: updateDto.notes,
               categoryId: updateDto.categoryId,
-              expenseDate: updateDto.expenseDate,
+              expenseDate: updateDto.expenseDate ? new Date(updateDto.expenseDate) : undefined,
             },
             include: {
               splits: true,
@@ -292,9 +289,6 @@ export class GroupExpenseService {
               userId: split.userId,
               amountOwed: split.amountOwed,
               percentage: split.percentage,
-              calculatedAmount: split.calculatedAmount,
-              adjustmentAmount: split.adjustmentAmount,
-              isRoundingAdjustment: split.isRoundingAdjustment,
             })),
           });
 
@@ -309,7 +303,7 @@ export class GroupExpenseService {
           description: updateDto.description,
           notes: updateDto.notes,
           categoryId: updateDto.categoryId,
-          expenseDate: updateDto.expenseDate,
+          expenseDate: updateDto.expenseDate ? new Date(updateDto.expenseDate) : undefined,
         },
         include: {
           splits: true,
