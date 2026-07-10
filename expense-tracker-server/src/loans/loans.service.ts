@@ -315,34 +315,77 @@ export class LoansService {
       throw new BadRequestException('Payment amount must be greater than zero');
     }
 
-    // Validate payment amount doesn't exceed remaining
-    if (createLoanPaymentDto.amount > Number(loan.amountRemaining)) {
-      throw new BadRequestException(
-        `Payment amount (${createLoanPaymentDto.amount}) exceeds remaining amount (${Number(loan.amountRemaining)})`,
-      );
+    // Idempotency check: if a payment with this key was already processed, just return the loan
+    if (createLoanPaymentDto.idempotencyKey) {
+      const existingPayment = await this.prisma.loanAdjustment.findFirst({
+        where: { idempotencyKey: createLoanPaymentDto.idempotencyKey },
+      });
+      if (existingPayment) {
+        return this.prisma.loan.findUnique({
+          where: { id },
+          include: { lender: true, borrower: true, adjustments: true },
+        });
+      }
     }
 
     return this.prisma.$transaction(async (tx) => {
-      // Create loan adjustment (payment)
+      // 1. Lock the loan row to prevent concurrent payment race conditions
+      await tx.$executeRawUnsafe(
+        'SELECT id FROM loans WHERE id = $1 FOR UPDATE',
+        id,
+      );
+
+      // 2. Re-fetch the locked loan within the transaction
+      const lockedLoan = await tx.loan.findUnique({ where: { id } });
+      if (!lockedLoan) throw new NotFoundException('Loan not found');
+
+      // 3. Calculate simple interest
+      const paymentDate = new Date(createLoanPaymentDto.paymentDate);
+      const loanDate = new Date(lockedLoan.loanDate);
+      const msPerYear = 1000 * 60 * 60 * 24 * 365;
+      const yearsElapsed = (paymentDate.getTime() - loanDate.getTime()) / msPerYear;
+      
+      const principal = Number(lockedLoan.amount);
+      const interestRate = Number(lockedLoan.interestRate || 0);
+      const totalOwed = principal + (principal * (interestRate / 100) * Math.max(0, yearsElapsed));
+
+      const currentAmountPaid = Number(lockedLoan.amountPaid);
+      const actualRemaining = Math.max(0, totalOwed - currentAmountPaid);
+
+      // Validate payment amount doesn't exceed newly calculated remaining
+      if (createLoanPaymentDto.amount > actualRemaining) {
+        throw new BadRequestException(
+          `Payment amount (${createLoanPaymentDto.amount}) exceeds remaining amount with interest (${actualRemaining.toFixed(2)})`,
+        );
+      }
+
+      // 4. Calculate new amounts
+      const newAmountPaid = currentAmountPaid + createLoanPaymentDto.amount;
+      const newAmountRemaining = Math.max(0, totalOwed - newAmountPaid);
+      const newStatus = newAmountRemaining <= 0 ? 'paid' : 'active';
+
+      // 5. Create loan adjustment (payment)
       await tx.loanAdjustment.create({
         data: {
           loanId: id,
           adjustmentType: 'payment',
           amount: createLoanPaymentDto.amount,
-          currency: createLoanPaymentDto.currency || loan.currency,
-          paymentDate: new Date(createLoanPaymentDto.paymentDate),
+          currency: createLoanPaymentDto.currency || lockedLoan.currency,
+          paymentDate,
           paymentMethod: createLoanPaymentDto.paymentMethod,
           notes: createLoanPaymentDto.notes,
+          idempotencyKey: createLoanPaymentDto.idempotencyKey,
           createdBy: userId,
         },
       });
 
-      // Update loan with atomic operators
+      // 6. Update loan
       const updatedLoan = await tx.loan.update({
         where: { id },
         data: {
-          amountPaid: { increment: createLoanPaymentDto.amount },
-          amountRemaining: { decrement: createLoanPaymentDto.amount },
+          amountPaid: newAmountPaid,
+          amountRemaining: newAmountRemaining,
+          status: newStatus,
         },
         include: {
           lender: true,
@@ -350,19 +393,6 @@ export class LoansService {
           adjustments: true,
         },
       });
-
-      // If fully paid, update status
-      if (Number(updatedLoan.amountRemaining) <= 0 && updatedLoan.status !== 'paid') {
-        return tx.loan.update({
-          where: { id },
-          data: { status: 'paid' },
-          include: {
-            lender: true,
-            borrower: true,
-            adjustments: true,
-          },
-        });
-      }
 
       return updatedLoan;
     });

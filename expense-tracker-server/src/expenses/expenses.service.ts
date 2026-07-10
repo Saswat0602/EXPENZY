@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { Prisma, Currency } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -10,10 +11,17 @@ import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { ExpenseQueryDto } from './dto/expense-query.dto';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 import { QueryBuilder } from '../common/utils/query-builder.util';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ExpenseDeletedEvent } from '../events/expense-deleted.event';
 
 @Injectable()
 export class ExpensesService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(ExpensesService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   async create(createExpenseDto: CreateExpenseDto, userId: string) {
     return this.prisma.expense.create({
@@ -241,11 +249,19 @@ export class ExpensesService {
     }
 
     // Soft delete
-    return this.prisma.expense.update({
+    const deletedExpense = await this.prisma.expense.update({
       where: { id },
       data: {
         deletedAt: new Date(),
       },
     });
+
+    // Fire event for cleanup
+    this.eventEmitter.emit(
+      'expense.deleted',
+      new ExpenseDeletedEvent(deletedExpense.id, deletedExpense.receiptUrl),
+    );
+
+    return deletedExpense;
   }
 }

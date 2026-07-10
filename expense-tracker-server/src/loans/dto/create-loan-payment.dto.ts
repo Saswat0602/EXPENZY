@@ -27,5 +27,9 @@ export class CreateLoanPaymentDto {
 
   @IsString()
   @IsOptional()
+  idempotencyKey?: string;
+
+  @IsString()
+  @IsOptional()
   notes?: string;
 }

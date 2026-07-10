@@ -216,15 +216,7 @@ export class GroupExpenseService {
         throw new BadRequestException('Cannot edit a fully settled expense');
       }
 
-      // Cannot edit if partial payments made
-      const hasPartialPayments = expense.splits.some(
-        (s) => Number(s.amountPaid) > 0,
-      );
-      if (hasPartialPayments) {
-        throw new BadRequestException(
-          'Cannot edit expense with partial payments. Please settle or cancel payments first.',
-        );
-      }
+
 
       // If amount or split type changed, recalculate splits
       if (updateDto.amount || updateDto.splitType || updateDto.participants) {
@@ -244,6 +236,10 @@ export class GroupExpenseService {
               userId: s.userId as string,
               amount: Number(s.amountOwed),
             }));
+
+        const oldSplitsMap = new Map(
+          expense.splits.map((s) => [s.userId, s])
+        );
 
         const newSplits = splitService.calculateSplits(
           Number(newAmount),
@@ -282,14 +278,22 @@ export class GroupExpenseService {
             },
           });
 
-          // Create new splits
+          // Create new splits while preserving payment history
           await tx.groupExpenseSplit.createMany({
-            data: newSplits.map((split) => ({
-              groupExpenseId: expenseId,
-              userId: split.userId,
-              amountOwed: split.amountOwed,
-              percentage: split.percentage,
-            })),
+            data: newSplits.map((split) => {
+              const oldSplit = oldSplitsMap.get(split.userId);
+              const amountPaid = oldSplit ? Number(oldSplit.amountPaid) : 0;
+              const isPaid = amountPaid > 0 && amountPaid >= split.amountOwed;
+              return {
+                groupExpenseId: expenseId,
+                userId: split.userId,
+                amountOwed: split.amountOwed,
+                percentage: split.percentage,
+                amountPaid: amountPaid,
+                isPaid: isPaid,
+                paidAt: isPaid && oldSplit && !oldSplit.isPaid ? new Date() : (oldSplit?.paidAt || null),
+              };
+            }),
           });
 
           return updated;

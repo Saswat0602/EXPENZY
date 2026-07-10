@@ -295,6 +295,7 @@ model LoanAdjustment {
   notes          String?
   paymentMethod  String?   @map("payment_method") // For payment type adjustments
   paymentDate    DateTime? @map("payment_date") @db.Date // For payment type adjustments
+  idempotencyKey String?   @unique @map("idempotency_key")
   createdBy      String    @map("created_by")
   createdAt      DateTime  @default(now()) @map("created_at")
 

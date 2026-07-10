@@ -3,10 +3,11 @@ import { ExpensesService } from './expenses.service';
 import { ExpensesController } from './expenses.controller';
 import { RecurringExpensesService } from './recurring-expenses.service';
 import { RecurringExpensesController } from './recurring-expenses.controller';
+import { StorageEventListener } from '../storage/storage-event.listener';
 
 @Module({
   controllers: [RecurringExpensesController, ExpensesController], // Recurring MUST come first!
-  providers: [ExpensesService, RecurringExpensesService],
+  providers: [ExpensesService, RecurringExpensesService, StorageEventListener],
   exports: [ExpensesService, RecurringExpensesService],
 })
 export class ExpensesModule {}
