@@ -4,10 +4,12 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsPositive,
 } from 'class-validator';
 
 export class CreateLoanPaymentDto {
   @IsDecimal()
+  @IsPositive()
   @IsNotEmpty()
   amount: number;
 

@@ -310,7 +310,12 @@ export class LoansService {
       );
     }
 
-    // Validate payment amount
+    // Validate payment amount is positive
+    if (createLoanPaymentDto.amount <= 0) {
+      throw new BadRequestException('Payment amount must be greater than zero');
+    }
+
+    // Validate payment amount doesn't exceed remaining
     if (createLoanPaymentDto.amount > Number(loan.amountRemaining)) {
       throw new BadRequestException(
         `Payment amount (${createLoanPaymentDto.amount}) exceeds remaining amount (${Number(loan.amountRemaining)})`,

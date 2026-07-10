@@ -41,52 +41,95 @@ export class SchedulerService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // Find all active recurring income
-      const recurringIncomes = await this.prisma.income.findMany({
+      const duePatterns = await this.prisma.recurringPattern.findMany({
         where: {
-          isRecurring: true,
-          deletedAt: null,
-          recurringPattern: {
-            isActive: true,
-            OR: [{ endDate: null }, { endDate: { gte: today } }],
+          isActive: true,
+          nextOccurrence: {
+            lte: today,
           },
+          OR: [
+            { endDate: null },
+            {
+              endDate: {
+                gte: today,
+              },
+            },
+          ],
         },
         include: {
-          recurringPattern: true,
+          incomes: {
+            where: {
+              isRecurring: true,
+            },
+            orderBy: {
+              incomeDate: 'desc',
+            },
+            take: 1,
+          },
         },
       });
 
+      this.logger.log(
+        `Found ${duePatterns.length} recurring patterns to process for income`,
+      );
+
       let createdCount = 0;
 
-      for (const income of recurringIncomes) {
-        if (!income.recurringPattern) continue;
+      for (const pattern of duePatterns) {
+        try {
+          // Get the last income created from this pattern to copy its details
+          const lastIncome = pattern.incomes[0];
 
-        const pattern = income.recurringPattern;
-        const shouldCreate = this.shouldCreateRecurringEntry(
-          pattern,
-          income.incomeDate,
-          today,
-        );
+          if (!lastIncome) {
+            this.logger.warn(
+              `No template income found for pattern ${pattern.id}, skipping`,
+            );
+            continue;
+          }
 
-        if (shouldCreate) {
-          // Create new income entry
+          // Create new income based on the pattern
           await this.prisma.income.create({
             data: {
-              userId: income.userId,
-              categoryId: income.categoryId,
-              amount: income.amount,
-              currency: income.currency,
-              source: income.source,
-              description: income.description,
-              incomeDate: today,
-              paymentMethod: income.paymentMethod,
+              userId: pattern.userId,
+              categoryId: lastIncome.categoryId,
+              amount: lastIncome.amount,
+              currency: lastIncome.currency,
+              source: lastIncome.source,
+              description: lastIncome.description,
+              incomeDate: pattern.nextOccurrence,
+              paymentMethod: lastIncome.paymentMethod,
+              notes: lastIncome.notes,
               isRecurring: true,
-              recurringPatternId: income.recurringPatternId,
-              notes: `Auto-created from recurring pattern`,
+              recurringPatternId: pattern.id,
+            },
+          });
+
+          // Calculate next occurrence
+          const nextOccurrence = this.recurringExpensesService.calculateNextOccurrence(
+            pattern.nextOccurrence,
+            pattern.frequency,
+            pattern.interval,
+            pattern.dayOfWeek ?? undefined,
+            pattern.dayOfMonth ?? undefined,
+          );
+
+          // Update pattern with next occurrence
+          await this.prisma.recurringPattern.update({
+            where: { id: pattern.id },
+            data: {
+              nextOccurrence,
             },
           });
 
           createdCount++;
+          this.logger.log(
+            `Created recurring income for pattern ${pattern.id}, next occurrence: ${nextOccurrence.toISOString()}`,
+          );
+        } catch (error) {
+          this.logger.error(
+            `Error processing recurring income pattern ${pattern.id}:`,
+            error,
+          );
         }
       }
 
@@ -229,50 +272,5 @@ export class SchedulerService {
     }
   }
 
-  /**
-   * Helper method to determine if a recurring entry should be created
-   */
-  private shouldCreateRecurringEntry(
-    pattern: {
-      frequency: string;
-      interval: number;
-      dayOfWeek?: number | null;
-      dayOfMonth?: number | null;
-    },
-    lastDate: Date,
-    today: Date,
-  ): boolean {
-    const daysSinceLastEntry = Math.floor(
-      (today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24),
-    );
 
-    switch (pattern.frequency) {
-      case 'daily':
-        return daysSinceLastEntry >= pattern.interval;
-
-      case 'weekly':
-        if (pattern.dayOfWeek !== null && pattern.dayOfWeek !== undefined) {
-          return (
-            today.getDay() === pattern.dayOfWeek &&
-            daysSinceLastEntry >= 7 * pattern.interval
-          );
-        }
-        return daysSinceLastEntry >= 7 * pattern.interval;
-
-      case 'monthly':
-        if (pattern.dayOfMonth !== null && pattern.dayOfMonth !== undefined) {
-          return (
-            today.getDate() === pattern.dayOfMonth &&
-            daysSinceLastEntry >= 28 * pattern.interval
-          );
-        }
-        return daysSinceLastEntry >= 30 * pattern.interval;
-
-      case 'yearly':
-        return daysSinceLastEntry >= 365 * pattern.interval;
-
-      default:
-        return false;
-    }
-  }
 }

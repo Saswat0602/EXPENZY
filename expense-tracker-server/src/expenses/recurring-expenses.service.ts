@@ -264,7 +264,7 @@ export class RecurringExpensesService {
   /**
    * Calculate the next occurrence date based on frequency and interval
    */
-  private calculateNextOccurrence(
+  public calculateNextOccurrence(
     fromDate: Date,
     frequency: string,
     interval: number,
