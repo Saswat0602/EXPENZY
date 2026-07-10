@@ -332,18 +332,12 @@ export class LoansService {
         },
       });
 
-      // Update loan
-      const newAmountPaid =
-        Number(loan.amountPaid) + Number(createLoanPaymentDto.amount);
-      const newAmountRemaining = Number(loan.amount) - newAmountPaid;
-      const newStatus = newAmountRemaining <= 0 ? 'paid' : 'active';
-
+      // Update loan with atomic operators
       const updatedLoan = await tx.loan.update({
         where: { id },
         data: {
-          amountPaid: newAmountPaid,
-          amountRemaining: newAmountRemaining,
-          status: newStatus,
+          amountPaid: { increment: createLoanPaymentDto.amount },
+          amountRemaining: { decrement: createLoanPaymentDto.amount },
         },
         include: {
           lender: true,
@@ -351,6 +345,19 @@ export class LoansService {
           adjustments: true,
         },
       });
+
+      // If fully paid, update status
+      if (Number(updatedLoan.amountRemaining) <= 0 && updatedLoan.status !== 'paid') {
+        return tx.loan.update({
+          where: { id },
+          data: { status: 'paid' },
+          include: {
+            lender: true,
+            borrower: true,
+            adjustments: true,
+          },
+        });
+      }
 
       return updatedLoan;
     });

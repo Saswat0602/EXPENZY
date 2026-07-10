@@ -387,32 +387,43 @@ export class GroupExpenseService {
       throw new BadRequestException('User is not part of this expense');
     }
 
-    // Update the split payment
-    const updatedSplit = await this.prisma.groupExpenseSplit.update({
-      where: { id: userSplit.id },
-      data: {
-        amountPaid: settleDto.amount,
-        isPaid:
-          settleDto.markAsFullyPaid ||
-          Number(userSplit.amountOwed) <= settleDto.amount,
-        paidAt: new Date(),
-      },
-    });
+    // Transaction to prevent race conditions during settlement check
+    const updatedSplit = await this.prisma.$transaction(async (tx) => {
+      // 1. Acquire row-level write lock on the parent expense
+      await tx.$executeRawUnsafe(
+        'SELECT id FROM group_expenses WHERE id = $1 FOR UPDATE',
+        expenseId,
+      );
 
-    // Check if all splits are paid
-    const allSplits = await this.prisma.groupExpenseSplit.findMany({
-      where: { groupExpenseId: expenseId },
-    });
-
-    const allPaid = allSplits.every((s) => s.isPaid);
-
-    // Update expense settlement status
-    if (allPaid) {
-      await this.prisma.groupExpense.update({
-        where: { id: expenseId },
-        data: { isSettled: true },
+      // 2. Update the split payment
+      const split = await tx.groupExpenseSplit.update({
+        where: { id: userSplit.id },
+        data: {
+          amountPaid: settleDto.amount,
+          isPaid:
+            settleDto.markAsFullyPaid ||
+            Number(userSplit.amountOwed) <= settleDto.amount,
+          paidAt: new Date(),
+        },
       });
-    }
+
+      // 3. Check if all splits are paid (now race-free due to the lock)
+      const allSplits = await tx.groupExpenseSplit.findMany({
+        where: { groupExpenseId: expenseId },
+      });
+
+      const allPaid = allSplits.every((s) => s.isPaid);
+
+      // 4. Update expense settlement status
+      if (allPaid) {
+        await tx.groupExpense.update({
+          where: { id: expenseId },
+          data: { isSettled: true },
+        });
+      }
+
+      return split;
+    });
 
     // Invalidate caches
     this.cacheService.invalidateGroupCaches(groupId);
