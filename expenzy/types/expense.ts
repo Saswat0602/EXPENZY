@@ -8,6 +8,10 @@ export interface Expense {
     expenseDate: string;
     paymentMethod?: string;
     notes?: string;
+    receiptUrl?: string;
+    locationLat?: number;
+    locationLng?: number;
+    locationName?: string;
     isRecurring: boolean;
     recurringPatternId?: string;
     createdAt: string;
@@ -29,6 +33,10 @@ export interface CreateExpenseDto {
     expenseDate: string;
     paymentMethod?: string;
     notes?: string;
+    receiptUrl?: string;
+    locationLat?: number;
+    locationLng?: number;
+    locationName?: string;
     isRecurring?: boolean;
 }
 

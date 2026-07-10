@@ -15,20 +15,26 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, TrendingUp, TrendingDown } from 'lucide-react';
+import { CalendarIcon, TrendingUp, TrendingDown, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils/cn';
 import type { Expense } from '@/types/expense';
 import type { Income } from '@/types/income';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getAllCurrencies } from '@/lib/utils/currency';
 
 const transactionSchema = z.object({
     type: z.enum(['income', 'expense']),
     amount: z.string().min(1, 'Amount is required').refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
         message: 'Amount must be a positive number',
     }),
+    currency: z.string().optional(),
     description: z.string().min(3, 'Description must be at least 3 characters').max(200, 'Description too long'),
     categoryId: z.string().min(1, 'Category is required'),
     date: z.date(),
+    paymentMethod: z.string().optional(),
+    receiptUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+    notes: z.string().optional(),
 });
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
@@ -53,12 +59,14 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
         defaultValues: {
             type: 'expense',
             date: new Date(),
+            currency: 'INR',
         },
     });
 
     const selectedDate = useWatch({ control, name: 'date' });
     const selectedType = useWatch({ control, name: 'type' }) || 'expense';
     const description = useWatch({ control, name: 'description' });
+    const selectedCurrency = useWatch({ control, name: 'currency' }) || 'INR';
 
     const { data: categories = [] } = useCategories(selectedType === 'expense' ? 'EXPENSE' : 'INCOME');
     const createExpense = useCreateExpense();
@@ -71,6 +79,7 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
     const [categoryMatches, setCategoryMatches] = useState<CategoryMatch[]>([]);
     const [selectedMatchCategory, setSelectedMatchCategory] = useState<string | null>(null);
     const calculatorInput = useCalculatorInput('');
+    const [showAdvanced, setShowAdvanced] = useState(false);
 
 
 
@@ -125,9 +134,21 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
             // Set all form values at once
             setValue('type', transaction.type);
             calculatorInput.setValue(transaction.amount.toString());
+            setValue('currency', transaction.currency || 'INR');
             setValue('description', description);
             setValue('categoryId', transaction.categoryId);
             setValue('date', new Date(date));
+            
+            if (transaction.type === 'expense') {
+                const exp = transaction as Expense;
+                setValue('paymentMethod', exp.paymentMethod || '');
+                setValue('receiptUrl', exp.receiptUrl || '');
+                setValue('notes', exp.notes || '');
+            } else {
+                const inc = transaction as Income;
+                setValue('paymentMethod', inc.paymentMethod || '');
+                setValue('notes', inc.notes || '');
+            }
 
             // For edit mode, we can show the existing category icon if we want, 
             // but for now let's just rely on the stored categoryId
@@ -156,16 +177,23 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
                 if (data.type === 'expense') {
                     await createExpense.mutateAsync({
                         amount: finalAmount,
+                        currency: data.currency,
                         description: data.description,
                         categoryId: data.categoryId,
                         expenseDate: data.date.toISOString(),
+                        paymentMethod: data.paymentMethod || undefined,
+                        receiptUrl: data.receiptUrl || undefined,
+                        notes: data.notes || undefined,
                     });
                 } else {
                     await createIncome.mutateAsync({
                         amount: finalAmount,
+                        currency: data.currency,
                         source: data.description,
                         categoryId: data.categoryId,
                         incomeDate: data.date.toISOString(),
+                        paymentMethod: data.paymentMethod || undefined,
+                        notes: data.notes || undefined,
                     });
                 }
             } else {
@@ -177,9 +205,13 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
                         id: transaction.id,
                         data: {
                             amount: finalAmount,
+                            currency: data.currency,
                             description: data.description,
                             categoryId: data.categoryId,
                             expenseDate: data.date.toISOString(),
+                            paymentMethod: data.paymentMethod || undefined,
+                            receiptUrl: data.receiptUrl || undefined,
+                            notes: data.notes || undefined,
                         },
                     });
                 } else {
@@ -187,9 +219,12 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
                         id: transaction.id,
                         data: {
                             amount: finalAmount,
+                            currency: data.currency,
                             source: data.description,
                             categoryId: data.categoryId,
                             incomeDate: data.date.toISOString(),
+                            paymentMethod: data.paymentMethod || undefined,
+                            notes: data.notes || undefined,
                         },
                     });
                 }
@@ -257,20 +292,39 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
                     {/* Amount */}
                     <div className="space-y-2">
                         <Label htmlFor="amount">Amount *</Label>
-                        <div className="relative">
-                            <Input
-                                id="amount"
-                                type="text"
-                                placeholder="0.00"
-                                value={calculatorInput.value}
-                                onChange={calculatorInput.handleChange}
-                                className="pr-20"
-                            />
-                            {calculatorInput.result.isExpression && calculatorInput.result.calculatedValue !== null && (
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-green-600 dark:text-green-400">
-                                    = {calculatorInput.result.calculatedValue.toFixed(2)}
-                                </div>
-                            )}
+                        <div className="flex gap-2">
+                            <div className="w-1/3 min-w-[100px]">
+                                <Select
+                                    value={selectedCurrency}
+                                    onValueChange={(val) => setValue('currency', val)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Currency" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {getAllCurrencies().map((c) => (
+                                            <SelectItem key={c.code} value={c.code}>
+                                                {c.code}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="relative flex-1">
+                                <Input
+                                    id="amount"
+                                    type="text"
+                                    placeholder="0.00"
+                                    value={calculatorInput.value}
+                                    onChange={calculatorInput.handleChange}
+                                    className="pr-20"
+                                />
+                                {calculatorInput.result.isExpression && calculatorInput.result.calculatedValue !== null && (
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-green-600 dark:text-green-400">
+                                        = {calculatorInput.result.calculatedValue.toFixed(2)}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         {!calculatorInput.value && errors.amount && (
                             <p className="text-sm text-destructive">{errors.amount.message}</p>
@@ -373,6 +427,52 @@ export function TransactionModal({ open, onClose, mode, transaction }: Transacti
                     </div>
 
 
+
+                    {/* Advanced Options Toggle */}
+                    <button
+                        type="button"
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
+                    >
+                        {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        {showAdvanced ? 'Hide Advanced Options' : 'Show Advanced Options'}
+                    </button>
+
+                    {showAdvanced && (
+                        <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
+                            <div className="space-y-2">
+                                <Label htmlFor="paymentMethod">Payment Method</Label>
+                                <Input
+                                    id="paymentMethod"
+                                    placeholder="e.g., Credit Card, Cash"
+                                    {...register('paymentMethod')}
+                                />
+                            </div>
+                            
+                            {selectedType === 'expense' && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="receiptUrl">Receipt URL</Label>
+                                    <Input
+                                        id="receiptUrl"
+                                        placeholder="https://..."
+                                        {...register('receiptUrl')}
+                                    />
+                                    {errors.receiptUrl && (
+                                        <p className="text-sm text-destructive">{errors.receiptUrl.message}</p>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className="space-y-2">
+                                <Label htmlFor="notes">Notes</Label>
+                                <Input
+                                    id="notes"
+                                    placeholder="Additional details..."
+                                    {...register('notes')}
+                                />
+                            </div>
+                        </div>
+                    )}
 
                     {/* Actions */}
                     <div className="flex gap-3 justify-end pt-4">

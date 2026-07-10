@@ -216,7 +216,7 @@ export default function TransactionsPage() {
                     {/* Amount and Actions */}
                     <div className="flex items-start gap-3 flex-shrink-0">
                         <p className="font-semibold text-base tabular-nums">
-                            {formatCurrency(amount)}
+                            {formatCurrency(amount, (transaction as any).currency || 'INR')}
                         </p>
 
                         {/* Mobile Action Menu */}
